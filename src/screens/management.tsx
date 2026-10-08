@@ -14,10 +14,12 @@ export function Manage() {
     try { if (!motivo.trim()) throw new Error('Informe o motivo.'); await requisitar(`/campanhas/${campanha!.id}/encerrar`, 'PATCH', { motivo }); definirJanela(false); consulta.atualizar(); }
     catch (problema) { definirErro(mensagemErro(problema)); } finally { definirOcupado(false); }
   }
-  return <Screen title="Gerenciar campanha" heading={campanha?.titulo} subtitle="Painel do responsável"><EstadoConexao {...consulta}/>
+  return <Screen variant="ledger" title="Gerenciar campanha" heading={campanha?.titulo} subtitle="Painel do responsável"><EstadoConexao {...consulta}/>
     {!pessoa ? <PedirLogin/> : campanha && !permitido ? <Notice>Você não é responsável por esta campanha.</Notice> : campanha ? <>
       <Tag>{campanha.estado.toLocaleUpperCase()}</Tag>
-      {campanha.necessidades.map(pedido => <Card key={pedido.id} title={pedido.nome} subtitle={`${pedido.recebido} recebidos · ${pedido.reservado} reservados`}/>)}
+      <Heading>Necessidades da campanha</Heading>
+      {campanha.necessidades.map(pedido => <Card variant="row" key={pedido.id} title={pedido.nome} subtitle={`${pedido.recebido} recebidos · ${pedido.reservado} reservados`}/>)}
+      <Heading>Organize a próxima etapa</Heading>
       <Card title="Confirmar ajudas" icon="checkmark-circle-outline" onPress={() => roteador.push({ pathname: '/confirmar', params: { campanha: campanha.id } })}/>
       <Card title="Publicar atualização" icon="document-text-outline" onPress={() => roteador.push({ pathname: '/publicar', params: { campanha: campanha.id } })}/>
       <Card title="Editar campanha" icon="create-outline" onPress={() => roteador.push({ pathname: '/criar', params: parametrosDaCampanha(campanha) })}/>
@@ -56,7 +58,7 @@ export function PublishUpdate() {
     try { await requisitar(`/campanhas/${campanha || 'biblioteca'}/atualizacoes`, 'POST', { titulo, relato }); roteador.replace({ pathname: '/atualizacoes', params: { campanha: campanha || 'biblioteca' } }); }
     catch (problema) { definirErro(mensagemErro(problema)); } finally { definirOcupado(false); }
   }
-  return <Screen title="Publicar atualização" heading="O que mudou na causa?">{!usuarioLogado() ? <PedirLogin/> : <><Field label="Título da atualização *" value={titulo} onChangeText={definirTitulo}/><Field label="Relato *" multiline value={relato} onChangeText={definirRelato}/>{erro ? <Notice error>{erro}</Notice> : null}<Button title="Publicar atualização" disabled={ocupado} onPress={publicar}/></>}</Screen>;
+  return <Screen variant="form" title="Publicar atualização" heading="O que mudou na causa?">{!usuarioLogado() ? <PedirLogin/> : <><Field label="Título da atualização *" value={titulo} onChangeText={definirTitulo}/><Field label="Relato *" multiline value={relato} onChangeText={definirRelato}/>{erro ? <Notice error>{erro}</Notice> : null}<Button title="Publicar atualização" disabled={ocupado} onPress={publicar}/></>}</Screen>;
 }
 
 export function Report() {

@@ -1,4 +1,6 @@
-# Soma / Pulso
+# SOMA
+
+Identidade **Enlace + azul royal**, com temas claro/escuro, tipografia local e movimento reduzido. O redesign mantém as 35 rotas e os fluxos solidários existentes. Consulte a [direção visual e validação do redesign](docs/REDESIGN.md).
 
 Projeto acadêmico com front React Native/Expo e backend em **Node.js puro + MySQL**. Os nomes das variáveis, funções da API, tabelas e mensagens estão em português. O servidor usa `http`, funções e comandos SQL, sem Express ou ORM. A única dependência adicionada ao backend é `mysql2`, para conectar ao MySQL.
 

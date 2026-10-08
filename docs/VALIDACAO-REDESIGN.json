@@ -1,0 +1,423 @@
+{
+  "data": "Fixtures da API; não valida MySQL",
+  "routes": [
+    {
+      "mode": "visitante",
+      "route": "/acao"
+    },
+    {
+      "mode": "visitante",
+      "route": "/acesso"
+    },
+    {
+      "mode": "visitante",
+      "route": "/administracao"
+    },
+    {
+      "mode": "visitante",
+      "route": "/ajuda"
+    },
+    {
+      "mode": "visitante",
+      "route": "/analise"
+    },
+    {
+      "mode": "visitante",
+      "route": "/atualizacoes"
+    },
+    {
+      "mode": "visitante",
+      "route": "/avisos"
+    },
+    {
+      "mode": "visitante",
+      "route": "/campanha"
+    },
+    {
+      "mode": "visitante",
+      "route": "/confirmar"
+    },
+    {
+      "mode": "visitante",
+      "route": "/contribuir"
+    },
+    {
+      "mode": "visitante",
+      "route": "/criar-conta"
+    },
+    {
+      "mode": "visitante",
+      "route": "/denunciar"
+    },
+    {
+      "mode": "visitante",
+      "route": "/doacao"
+    },
+    {
+      "mode": "visitante",
+      "route": "/editar-necessidade"
+    },
+    {
+      "mode": "visitante",
+      "route": "/entrar"
+    },
+    {
+      "mode": "visitante",
+      "route": "/excedente"
+    },
+    {
+      "mode": "visitante",
+      "route": "/gerenciar"
+    },
+    {
+      "mode": "visitante",
+      "route": "/necessidade"
+    },
+    {
+      "mode": "visitante",
+      "route": "/operacao"
+    },
+    {
+      "mode": "visitante",
+      "route": "/organizacao"
+    },
+    {
+      "mode": "visitante",
+      "route": "/pagamento"
+    },
+    {
+      "mode": "visitante",
+      "route": "/pedidos"
+    },
+    {
+      "mode": "visitante",
+      "route": "/publicar"
+    },
+    {
+      "mode": "visitante",
+      "route": "/repasse"
+    },
+    {
+      "mode": "visitante",
+      "route": "/resultado"
+    },
+    {
+      "mode": "visitante",
+      "route": "/revisao"
+    },
+    {
+      "mode": "visitante",
+      "route": "/revisar-ajuda"
+    },
+    {
+      "mode": "visitante",
+      "route": "/saldo"
+    },
+    {
+      "mode": "visitante",
+      "route": "/solicitar-repasse"
+    },
+    {
+      "mode": "visitante",
+      "route": "/voluntariado"
+    },
+    {
+      "mode": "visitante",
+      "route": "/"
+    },
+    {
+      "mode": "visitante",
+      "route": "/explorar"
+    },
+    {
+      "mode": "visitante",
+      "route": "/criar"
+    },
+    {
+      "mode": "visitante",
+      "route": "/atividade"
+    },
+    {
+      "mode": "visitante",
+      "route": "/perfil"
+    },
+    {
+      "mode": "administrador",
+      "route": "/acao"
+    },
+    {
+      "mode": "administrador",
+      "route": "/acesso"
+    },
+    {
+      "mode": "administrador",
+      "route": "/administracao"
+    },
+    {
+      "mode": "administrador",
+      "route": "/ajuda"
+    },
+    {
+      "mode": "administrador",
+      "route": "/analise"
+    },
+    {
+      "mode": "administrador",
+      "route": "/atualizacoes"
+    },
+    {
+      "mode": "administrador",
+      "route": "/avisos"
+    },
+    {
+      "mode": "administrador",
+      "route": "/campanha"
+    },
+    {
+      "mode": "administrador",
+      "route": "/confirmar"
+    },
+    {
+      "mode": "administrador",
+      "route": "/contribuir"
+    },
+    {
+      "mode": "administrador",
+      "route": "/criar-conta"
+    },
+    {
+      "mode": "administrador",
+      "route": "/denunciar"
+    },
+    {
+      "mode": "administrador",
+      "route": "/doacao"
+    },
+    {
+      "mode": "administrador",
+      "route": "/editar-necessidade"
+    },
+    {
+      "mode": "administrador",
+      "route": "/entrar"
+    },
+    {
+      "mode": "administrador",
+      "route": "/excedente"
+    },
+    {
+      "mode": "administrador",
+      "route": "/gerenciar"
+    },
+    {
+      "mode": "administrador",
+      "route": "/necessidade"
+    },
+    {
+      "mode": "administrador",
+      "route": "/operacao"
+    },
+    {
+      "mode": "administrador",
+      "route": "/organizacao"
+    },
+    {
+      "mode": "administrador",
+      "route": "/pagamento"
+    },
+    {
+      "mode": "administrador",
+      "route": "/pedidos"
+    },
+    {
+      "mode": "administrador",
+      "route": "/publicar"
+    },
+    {
+      "mode": "administrador",
+      "route": "/repasse"
+    },
+    {
+      "mode": "administrador",
+      "route": "/resultado"
+    },
+    {
+      "mode": "administrador",
+      "route": "/revisao"
+    },
+    {
+      "mode": "administrador",
+      "route": "/revisar-ajuda"
+    },
+    {
+      "mode": "administrador",
+      "route": "/saldo"
+    },
+    {
+      "mode": "administrador",
+      "route": "/solicitar-repasse"
+    },
+    {
+      "mode": "administrador",
+      "route": "/voluntariado"
+    },
+    {
+      "mode": "administrador",
+      "route": "/"
+    },
+    {
+      "mode": "administrador",
+      "route": "/explorar"
+    },
+    {
+      "mode": "administrador",
+      "route": "/criar"
+    },
+    {
+      "mode": "administrador",
+      "route": "/atividade"
+    },
+    {
+      "mode": "administrador",
+      "route": "/perfil"
+    }
+  ],
+  "layouts": [
+    "visitante/acao",
+    "visitante/acesso",
+    "visitante/administracao",
+    "visitante/ajuda",
+    "visitante/analise",
+    "visitante/atualizacoes",
+    "visitante/avisos",
+    "visitante/campanha",
+    "visitante/confirmar",
+    "visitante/contribuir",
+    "visitante/criar-conta",
+    "visitante/denunciar",
+    "visitante/doacao",
+    "visitante/editar-necessidade",
+    "visitante/entrar",
+    "visitante/excedente",
+    "visitante/gerenciar",
+    "visitante/necessidade",
+    "visitante/operacao",
+    "visitante/organizacao",
+    "visitante/pagamento",
+    "visitante/pedidos",
+    "visitante/publicar",
+    "visitante/repasse",
+    "visitante/resultado",
+    "visitante/revisao",
+    "visitante/revisar-ajuda",
+    "visitante/saldo",
+    "visitante/solicitar-repasse",
+    "visitante/voluntariado",
+    "visitante/",
+    "visitante/explorar",
+    "visitante/criar",
+    "visitante/atividade",
+    "visitante/perfil",
+    "administrador/acao",
+    "administrador/acesso",
+    "administrador/administracao",
+    "administrador/ajuda",
+    "administrador/analise",
+    "administrador/atualizacoes",
+    "administrador/avisos",
+    "administrador/campanha",
+    "administrador/confirmar",
+    "administrador/contribuir",
+    "administrador/criar-conta",
+    "administrador/denunciar",
+    "administrador/doacao",
+    "administrador/editar-necessidade",
+    "administrador/entrar",
+    "administrador/excedente",
+    "administrador/gerenciar",
+    "administrador/necessidade",
+    "administrador/operacao",
+    "administrador/organizacao",
+    "administrador/pagamento",
+    "administrador/pedidos",
+    "administrador/publicar",
+    "administrador/repasse",
+    "administrador/resultado",
+    "administrador/revisao",
+    "administrador/revisar-ajuda",
+    "administrador/saldo",
+    "administrador/solicitar-repasse",
+    "administrador/voluntariado",
+    "administrador/",
+    "administrador/explorar",
+    "administrador/criar",
+    "administrador/atividade",
+    "administrador/perfil",
+    "light/320/",
+    "light/320/entrar",
+    "light/320/explorar",
+    "light/320/criar",
+    "light/320/necessidade?id=cobertores",
+    "light/320/saldo",
+    "light/320/administracao",
+    "light/390/",
+    "light/390/entrar",
+    "light/390/explorar",
+    "light/390/criar",
+    "light/390/necessidade?id=cobertores",
+    "light/390/saldo",
+    "light/390/administracao",
+    "light/768/",
+    "light/768/entrar",
+    "light/768/explorar",
+    "light/768/criar",
+    "light/768/necessidade?id=cobertores",
+    "light/768/saldo",
+    "light/768/administracao",
+    "light/1280/",
+    "light/1280/entrar",
+    "light/1280/explorar",
+    "light/1280/criar",
+    "light/1280/necessidade?id=cobertores",
+    "light/1280/saldo",
+    "light/1280/administracao",
+    "dark/320/",
+    "dark/320/entrar",
+    "dark/320/explorar",
+    "dark/320/criar",
+    "dark/320/necessidade?id=cobertores",
+    "dark/320/saldo",
+    "dark/320/administracao",
+    "dark/390/",
+    "dark/390/entrar",
+    "dark/390/explorar",
+    "dark/390/criar",
+    "dark/390/necessidade?id=cobertores",
+    "dark/390/saldo",
+    "dark/390/administracao",
+    "dark/768/",
+    "dark/768/entrar",
+    "dark/768/explorar",
+    "dark/768/criar",
+    "dark/768/necessidade?id=cobertores",
+    "dark/768/saldo",
+    "dark/768/administracao",
+    "dark/1280/",
+    "dark/1280/entrar",
+    "dark/1280/explorar",
+    "dark/1280/criar",
+    "dark/1280/necessidade?id=cobertores",
+    "dark/1280/saldo",
+    "dark/1280/administracao"
+  ],
+  "flows": [
+    "Login e navegação com resposta de API controlada",
+    "Busca, filtro de região e modal",
+    "Reserva e cancelamento com API controlada",
+    "Doação e status com API controlada",
+    "Criação nos quatro passos e contrato enviado à API",
+    "Perfil e logout com API controlada",
+    "Introdução termina e não captura toques; movimento reduzido sem introdução"
+  ],
+  "pageErrors": []
+}

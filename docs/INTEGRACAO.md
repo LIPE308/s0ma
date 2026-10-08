@@ -1,5 +1,7 @@
 # Integração do SOMA na base oficial
 
+Este relatório registra a migração inicial, anterior ao redesign. As comparações de arquivos e capturas abaixo se referem àquele momento. A evolução visual aprovada posteriormente está documentada em [REDESIGN.md](REDESIGN.md).
+
 ## Origem e destino
 
 - Fonte: `soma-pulso-windows.zip`, recebido em 08/10/2026.

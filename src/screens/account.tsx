@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Switch, View } from 'react-native';
-import { Button, Card, Choices, Copy, Dialog, Field, Heading, Notice, Screen, colors, s } from '../components/ui';
+import { Button, Card, Choices, Copy, Dialog, Field, Heading, Notice, Screen, useTheme } from '../components/ui';
 import { EstadoConexao, PedirLogin } from '../components/conexao';
 import { requisitar, guardarSessao, limparSessao, atualizarUsuario, usuarioLogado, useDados, mensagemErro, type Usuario, type Aviso } from '../servicos/api';
 
@@ -16,7 +16,7 @@ export function Login() {
     try { const sessao = await requisitar<{ token: string; usuario: Usuario }>('/login', 'POST', { email, senha }); guardarSessao(sessao.token, sessao.usuario); roteador.replace('/'); }
     catch (problema) { definirErro(mensagemErro(problema)); } finally { definirOcupado(false); }
   }
-  return <Screen title="soma" heading={'Sua ajuda põe tudo\nem movimento.'} subtitle="Toda ajuda conta." back={false}>
+  return <Screen variant="account" title="soma" heading={'Sua ajuda põe tudo\nem movimento.'} subtitle="Toda ajuda conta." back={false}>
     <Field label="E-mail" email value={email} onChangeText={definirEmail} placeholder="seu@email.com"/>
     <Field label="Senha" secret value={senha} onChangeText={definirSenha} placeholder="Digite sua senha"/>
     {erro ? <Notice error>{erro}</Notice> : null}
@@ -29,6 +29,7 @@ export function Login() {
 }
 
 export function SignUp() {
+  const { s, colors } = useTheme();
   const roteador = useRouter();
   const [nome, definirNome] = useState(''); const [email, definirEmail] = useState('');
   const [senha, definirSenha] = useState(''); const [confirmacao, definirConfirmacao] = useState('');
@@ -44,7 +45,7 @@ export function SignUp() {
       guardarSessao(sessao.token, sessao.usuario); roteador.replace('/acesso');
     } catch (problema) { definirErro(mensagemErro(problema)); } finally { definirOcupado(false); }
   }
-  return <Screen title="Criar conta" heading="Uma conta. Muitas formas." subtitle="Ajude e organize com o mesmo cadastro.">
+  return <Screen variant="form" title="Criar conta" heading="Uma conta. Muitas formas." subtitle="Ajude e organize com o mesmo cadastro.">
     <Field label="Nome completo *" value={nome} onChangeText={definirNome}/><Field label="E-mail *" email value={email} onChangeText={definirEmail}/>
     <Field label="Senha *" secret value={senha} onChangeText={definirSenha} placeholder="Mínimo de 6 caracteres"/><Field label="Confirmar senha *" secret value={confirmacao} onChangeText={definirConfirmacao}/>
     <View style={s.row}><Switch accessibilityLabel="Aceito os termos" value={aceito} onValueChange={definirAceito} trackColor={{ false: colors.line, true: colors.primary }}/><Copy>Aceito os termos</Copy></View>
@@ -75,7 +76,7 @@ export function Profile() {
     catch (problema) { definirMensagem(mensagemErro(problema)); } finally { definirOcupado(false); }
   }
   async function sair() { try { await requisitar('/sair', 'POST'); } catch { /* A sessão local também pode ser encerrada sem conexão. */ } finally { limparSessao(); roteador.replace('/entrar'); } }
-  return <Screen title="Perfil" heading="Sua conta, seus dados." subtitle={consulta.dados?.email} back={false}>
+  return <Screen variant="form" title="Perfil" heading="Sua conta, seus dados." subtitle={consulta.dados?.email} back={false}>
     {!pessoa ? <PedirLogin/> : <>
       <EstadoConexao {...consulta}/><Choices options={['Perfil', 'Pagamentos', 'Recebimento']} selected={secao} onSelect={definirSecao}/>
       {secao === 'Perfil' ? <><Field label="Nome completo" value={nome} onChangeText={definirNome}/><Field label="Telefone" value={telefone} onChangeText={definirTelefone}/><Field label="Cidade e bairro" value={regiao} onChangeText={definirRegiao}/><Button title="Salvar dados" disabled={ocupado} onPress={salvar}/></> : <><Notice>Financeiro apenas para apresentação. Não coletamos CPF, cartão ou chave Pix reais.</Notice><Button secondary title="Ver minha atividade" onPress={() => roteador.push('/atividade')}/></>}
@@ -88,6 +89,7 @@ export function Profile() {
 }
 
 export function Notifications() {
+  const { s, colors } = useTheme();
   const consulta = useDados<Aviso[]>(usuarioLogado() ? '/avisos' : null);
   const [novidades, definirNovidades] = useState(usuarioLogado()?.novidades || false); const [erro, definirErro] = useState('');
   async function mudarPreferencia(valor: boolean) {
@@ -95,7 +97,7 @@ export function Notifications() {
     catch (problema) { definirErro(mensagemErro(problema)); }
   }
   async function marcarLido(id: number) { try { await requisitar(`/avisos/${id}`, 'PATCH'); consulta.atualizar(); } catch (problema) { definirErro(mensagemErro(problema)); } }
-  return <Screen title="Avisos e preferências" heading="Acompanhe o que mudou.">
+  return <Screen variant="form" title="Avisos e preferências" heading="Acompanhe o que mudou.">
     {!usuarioLogado() ? <PedirLogin/> : <><EstadoConexao {...consulta}/>
       <View style={s.row}><Switch accessibilityLabel="Preferência de novidades" value={novidades} onValueChange={mudarPreferencia} trackColor={{ false: colors.line, true: colors.primary }}/><Copy>Receber novidades</Copy></View>
       <Copy muted>A preferência é salva. Esta versão não envia e-mails ou notificações push.</Copy>

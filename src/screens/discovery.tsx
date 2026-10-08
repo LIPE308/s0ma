@@ -1,26 +1,35 @@
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlatList, Text, View } from 'react-native';
-import { Button, Card, Choices, Copy, Dialog, Field, Heading, Notice, Progress, Screen, Tag, s } from '../components/ui';
+import { Button, Card, Choices, Copy, Dialog, Field, Heading, Logo, Notice, Progress, Screen, Tag, useTheme } from '../components/ui';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EstadoConexao } from '../components/conexao';
 import { useDados, type Campanha, type Necessidade, type Atualizacao } from '../servicos/api';
 import { formatarDinheiro } from '../data/formatacao';
 
-export function CartaoNecessidade({ pedido, aoAbrir }: { pedido: Necessidade; aoAbrir: () => void }) {
+export function CartaoNecessidade({ pedido, aoAbrir, destaque = false }: { pedido: Necessidade; aoAbrir: () => void; destaque?: boolean }) {
   const livre = pedido.meta - pedido.recebido - Number(pedido.reservado);
-  return <Card title={pedido.nome} subtitle={`${pedido.campanha} · ${pedido.regiao}`} icon={pedido.tipo === 'tarefa' ? 'time-outline' : pedido.tipo === 'dinheiro' ? 'wallet-outline' : 'cube-outline'} onPress={aoAbrir}>
-    <Progress done={pedido.recebido} total={pedido.meta}/>
-    <Copy>{pedido.tipo === 'dinheiro' ? `${formatarDinheiro(pedido.recebido / 100)} de ${formatarDinheiro(pedido.meta / 100)} líquidos de teste` : `${pedido.recebido}/${pedido.meta} realizados · ${Math.max(0, livre)} ${pedido.tipo === 'tarefa' ? 'vagas' : 'unidades'} livres`}</Copy>
+  const restante = Math.max(0, livre);
+  const restanteMeta = Math.max(0, pedido.meta - pedido.recebido);
+  const titulo = !destaque ? pedido.nome : pedido.tipo === 'dinheiro' ? pedido.nome : restanteMeta > 0 ? `Faltam ${restanteMeta} ${pedido.tipo === 'tarefa' ? 'participações' : pedido.nome.toLocaleLowerCase()}` : pedido.nome;
+  return <Card variant={destaque ? 'feature' : 'row'} title={titulo} subtitle={`${pedido.campanha} · ${pedido.regiao}`} icon={pedido.tipo === 'tarefa' ? 'time-outline' : pedido.tipo === 'dinheiro' ? 'wallet-outline' : 'cube-outline'} onPress={destaque ? undefined : aoAbrir}>
+    <Progress done={pedido.recebido} total={pedido.meta} inverse={destaque}/>
+    <Copy inverse={destaque}>{pedido.tipo === 'dinheiro' ? `${formatarDinheiro(pedido.recebido / 100)} de ${formatarDinheiro(pedido.meta / 100)} líquidos de teste` : `${pedido.recebido}/${pedido.meta} realizados · ${restante} ${pedido.tipo === 'tarefa' ? 'vagas' : 'unidades'} livres`}</Copy>
+    {destaque ? <Button inverse title="Quero ajudar" onPress={aoAbrir}/> : null}
   </Card>;
 }
 
 export function Home() {
   const roteador = useRouter(); const pedidos = useDados<Necessidade[]>('/necessidades'); const campanhas = useDados<Campanha[]>('/campanhas');
   const campanha = campanhas.dados?.find(item => item.id === 'familia') || campanhas.dados?.[0];
-  return <Screen title="soma" heading="O que você pode resolver?" subtitle="Encontre uma necessidade ao seu alcance." back={false} action={<Button title="Região" secondary onPress={() => roteador.push({ pathname: '/explorar', params: { regiao: 'abrir' } })}/>}>
+  const destaque = pedidos.dados?.find(item => item.campanha_estado === 'ativa' && (item.meta > item.recebido + Number(item.reservado) || item.tipo === 'dinheiro' && item.tipo_meta === 'aberta'));
+  const abrirPedido = (pedido: Necessidade) => roteador.push({ pathname: '/necessidade', params: { id: pedido.id } });
+  return <Screen title="soma" heading="Toda ajuda encontra um caminho." subtitle="Encontre uma necessidade ao seu alcance." back={false} action={<Button title="Região" secondary onPress={() => roteador.push({ pathname: '/explorar', params: { regiao: 'abrir' } })}/>}>
     <Choices options={['Dinheiro', 'Objetos', 'Seu tempo', 'Ações']} selected="" onSelect={tipo => roteador.push({ pathname: '/explorar', params: { tipo: tipo === 'Dinheiro' ? 'R$' : tipo === 'Seu tempo' ? 'Tempo' : tipo } })}/>
     <Heading>Precisam de ajuda agora</Heading><EstadoConexao {...pedidos}/>
-    {pedidos.dados?.slice(0, 3).map(pedido => <CartaoNecessidade key={pedido.id} pedido={pedido} aoAbrir={() => roteador.push({ pathname: '/necessidade', params: { id: pedido.id } })}/>)}
+    {destaque ? <CartaoNecessidade pedido={destaque} destaque aoAbrir={() => abrirPedido(destaque)}/> : null}
+    <Heading>Também precisam de você</Heading>
+    {pedidos.dados?.filter(pedido => pedido.id !== destaque?.id).slice(0, 3).map(pedido => <CartaoNecessidade key={pedido.id} pedido={pedido} aoAbrir={() => abrirPedido(pedido)}/>)}
     {pedidos.dados?.length === 0 ? <Notice>Nenhum pedido disponível por enquanto.</Notice> : null}
     <Heading>Campanha da sua região</Heading><EstadoConexao {...campanhas}/>
     {campanha ? <Card title={campanha.titulo} subtitle={campanha.regiao} icon="people-outline" onPress={() => roteador.push({ pathname: '/campanha', params: { id: campanha.id } })}/> : null}
@@ -29,6 +38,8 @@ export function Home() {
 }
 
 export function Explore() {
+  const { s } = useTheme();
+  const insets = useSafeAreaInsets();
   const roteador = useRouter(); const parametros = useLocalSearchParams<{ tipo?: string; regiao?: string }>();
   const pedidos = useDados<Necessidade[]>('/necessidades'); const campanhas = useDados<Campanha[]>('/campanhas');
   const [busca, definirBusca] = useState(''); const [secao, definirSecao] = useState(parametros.tipo === 'Ações' ? 'Ações' : 'Necessidades');
@@ -40,8 +51,8 @@ export function Explore() {
   const lista = (pedidos.dados || []).filter(pedido => (tipo === 'Todos' || pedido.tipo === tipoBanco) && (regiao === 'Todas as regiões' || pedido.regiao === regiao) && `${pedido.nome} ${pedido.campanha}`.toLocaleLowerCase().includes(termo));
   const listaCampanhas = (campanhas.dados || []).filter(campanha => (regiao === 'Todas as regiões' || campanha.regiao === regiao) && `${campanha.titulo} ${campanha.descricao} ${campanha.evento}`.toLocaleLowerCase().includes(termo) && (secao !== 'Ações' || !!campanha.evento));
   const regioes = ['Todas as regiões', ...new Set((campanhas.dados || []).map(campanha => campanha.regiao))];
-  return <View style={s.screen}><FlatList data={secao === 'Necessidades' ? lista : []} keyExtractor={pedido => pedido.id} contentContainerStyle={s.content} ItemSeparatorComponent={() => <View style={{ height: 16 }}/>}
-    ListHeaderComponent={<View style={{ gap: 18, marginBottom: 18 }}><Text style={s.demoText}>PROJETO ACADÊMICO · SOMA</Text><Text style={s.heading}>Explorar</Text>
+  return <View style={s.screen}><FlatList keyboardShouldPersistTaps="handled" data={secao === 'Necessidades' ? lista : []} keyExtractor={pedido => pedido.id} contentContainerStyle={[s.content, { paddingTop: Math.max(24, insets.top + 12), paddingBottom: Math.max(32, insets.bottom + 20) }]} ItemSeparatorComponent={() => <View style={{ height: 4 }}/>}
+    ListHeaderComponent={<View style={{ gap: 18, marginBottom: 18 }}><Text style={s.demoText}>PROJETO ACADÊMICO · SOMA</Text><Logo/><Text accessibilityRole="header" style={s.heading}>Explorar</Text>
       <Field label="Buscar campanhas ou necessidades" value={busca} onChangeText={definirBusca} placeholder="O que você procura?"/>
       <Choices options={['Campanhas', 'Necessidades', 'Ações']} selected={secao} onSelect={definirSecao}/><Button secondary title={`Região: ${regiao}`} onPress={() => { definirRegiaoEscolhida(regiao); definirJanela(true); }}/>
       <EstadoConexao {...(secao === 'Necessidades' ? pedidos : campanhas)}/>
@@ -55,9 +66,9 @@ export function Explore() {
 export function Campaign() {
   const roteador = useRouter(); const { id } = useLocalSearchParams<{ id?: string }>(); const consulta = useDados<Campanha>(`/campanhas/${id || 'familia'}`); const campanha = consulta.dados;
   const [responsavelVisivel, definirResponsavelVisivel] = useState(false);
-  return <Screen title="Campanha" heading={campanha?.titulo} subtitle={campanha ? `${campanha.categoria} · ${campanha.regiao}` : ''}>
+  return <Screen variant="detail" title="Campanha" heading={campanha?.titulo} subtitle={campanha ? `${campanha.categoria} · ${campanha.regiao}` : ''}>
     <EstadoConexao {...consulta}/>{campanha ? <>
-      <Tag>{campanha.estado.toLocaleUpperCase()}</Tag><Copy>{campanha.descricao}</Copy><Copy muted>{campanha.responsavel} · responsável</Copy><Heading>O que está faltando</Heading>
+      <Tag>{campanha.estado.toLocaleUpperCase()}</Tag><Card title="A história desta causa" icon="people-outline"><Copy>{campanha.descricao}</Copy><Copy muted>{campanha.responsavel} · responsável</Copy></Card><Heading>O que está faltando</Heading>
       {campanha.necessidades.map(pedido => <CartaoNecessidade key={pedido.id} pedido={pedido} aoAbrir={() => roteador.push({ pathname: '/necessidade', params: { id: pedido.id } })}/>)}
       {campanha.evento ? <Card title={campanha.evento} icon="calendar-outline" onPress={() => roteador.push({ pathname: '/acao', params: { id: campanha.id } })}/> : null}
       <Button secondary title="Atualizações" onPress={() => roteador.push({ pathname: '/atualizacoes', params: { campanha: campanha.id } })}/>
@@ -72,9 +83,13 @@ export function Campaign() {
 export function NeedDetails() {
   const roteador = useRouter(); const { id } = useLocalSearchParams<{ id?: string }>(); const consulta = useDados<Necessidade>(`/necessidades/${id || 'cobertores'}`); const pedido = consulta.dados;
   const disponivel = pedido && pedido.campanha_estado === 'ativa' && (pedido.tipo === 'dinheiro' && pedido.tipo_meta === 'aberta' || pedido.meta > pedido.recebido + Number(pedido.reservado));
-  return <Screen title="Necessidade" heading={pedido?.nome} subtitle={pedido?.campanha}><EstadoConexao {...consulta}/>{pedido ? <>
+  return <Screen variant="detail" title="Necessidade" heading={pedido?.nome} subtitle={pedido?.campanha}><EstadoConexao {...consulta}/>{pedido ? <>
     <Tag>{disponivel ? 'DISPONÍVEL' : 'INDISPONÍVEL'} · {pedido.prioridade.toLocaleUpperCase()}</Tag><Copy>{pedido.descricao}</Copy>
-    <CartaoNecessidade pedido={pedido} aoAbrir={() => roteador.push({ pathname: '/campanha', params: { id: pedido.campanha_id } })}/>
+    <Card variant="feature" title="Cada contribuição aproxima a meta" icon={pedido.tipo === 'tarefa' ? 'time-outline' : pedido.tipo === 'dinheiro' ? 'wallet-outline' : 'cube-outline'}>
+      <Progress done={pedido.recebido} total={pedido.meta} inverse/>
+      <Copy inverse>{pedido.tipo === 'dinheiro' ? `${formatarDinheiro(pedido.recebido / 100)} de ${formatarDinheiro(pedido.meta / 100)} líquidos de teste` : `${pedido.recebido} de ${pedido.meta} realizados · ${Math.max(0, pedido.meta - pedido.recebido - Number(pedido.reservado))} ${pedido.tipo === 'tarefa' ? 'vagas' : 'unidades'} livres`}</Copy>
+      <Button inverse title="Conhecer a campanha" onPress={() => roteador.push({ pathname: '/campanha', params: { id: pedido.campanha_id } })}/>
+    </Card>
     <Heading>Instruções da ajuda</Heading><Copy>{pedido.instrucoes}{'\n'}{pedido.regiao}{'\n'}Prazo: {pedido.prazo}</Copy>
     <Copy muted>Reservado não significa recebido. O responsável confirma a realização.</Copy>
     <Button title={pedido.tipo === 'dinheiro' ? 'Fazer doação de teste' : pedido.tipo === 'tarefa' ? 'Participar da tarefa' : 'Contribuir com este objeto'} disabled={!disponivel} onPress={() => roteador.push({ pathname: pedido.tipo === 'dinheiro' ? '/doacao' : pedido.tipo === 'tarefa' ? '/voluntariado' : '/contribuir', params: { id: pedido.id } })}/>
@@ -88,5 +103,5 @@ export function Updates() {
 
 export function Impact() {
   const { id } = useLocalSearchParams<{ id?: string }>(); const consulta = useDados<Campanha>(`/campanhas/${id || 'familia'}`);
-  return <Screen title="Resultado e impacto" heading="Veja o que já foi realizado." subtitle={consulta.dados?.titulo}><EstadoConexao {...consulta}/>{consulta.dados?.necessidades.map(pedido => <Card key={pedido.id} title={pedido.nome} subtitle={pedido.tipo === 'dinheiro' ? `${formatarDinheiro(pedido.recebido / 100)} líquidos de teste` : `${pedido.recebido} de ${pedido.meta} realizados`} icon="checkmark-circle-outline"><Progress done={pedido.recebido} total={pedido.meta}/></Card>)}<Copy muted>Os dados mostram as confirmações registradas. Não representam uma verificação independente da causa.</Copy></Screen>;
+  return <Screen variant="detail" title="Resultado e impacto" heading="Veja o que já foi realizado." subtitle={consulta.dados?.titulo}><EstadoConexao {...consulta}/>{consulta.dados?.necessidades.map(pedido => <Card key={pedido.id} title={pedido.nome} subtitle={pedido.tipo === 'dinheiro' ? `${formatarDinheiro(pedido.recebido / 100)} líquidos de teste` : `${pedido.recebido} de ${pedido.meta} realizados`} icon="checkmark-circle-outline"><Progress done={pedido.recebido} total={pedido.meta}/></Card>)}<Copy muted>Os dados mostram as confirmações registradas. Não representam uma verificação independente da causa.</Copy></Screen>;
 }

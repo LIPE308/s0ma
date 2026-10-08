@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Switch, View } from 'react-native';
-import { Button, Card, Choices, Copy, Dialog, Field, Heading, Notice, Screen, Tag, colors, s } from '../components/ui';
+import { Button, Card, Choices, Copy, Dialog, Field, Heading, Notice, Screen, Tag, useTheme } from '../components/ui';
 import { EstadoConexao, PedirLogin } from '../components/conexao';
 import { requisitar, useDados, usuarioLogado, mensagemErro, type Necessidade, type Campanha, type Ajuda, type Atividade } from '../servicos/api';
 import { formatarDinheiro } from '../data/formatacao';
@@ -10,7 +10,7 @@ export function ObjectContribution() {
   const roteador = useRouter(); const { id } = useLocalSearchParams<{ id?: string }>(); const consulta = useDados<Necessidade>(`/necessidades/${id || 'cobertores'}`); const pedido = consulta.dados;
   const [quantidade, definirQuantidade] = useState('1'); const [entrega, definirEntrega] = useState('Ponto de coleta'); const [horario, definirHorario] = useState(''); const [observacao, definirObservacao] = useState(''); const [erro, definirErro] = useState('');
   const livre = pedido ? pedido.meta - pedido.recebido - Number(pedido.reservado) : 0;
-  return <Screen title="Contribuir com objeto" heading="Sua ajuda faz diferença." subtitle={pedido?.nome}>
+  return <Screen variant="form" title="Contribuir com objeto" heading="Sua ajuda faz diferença." subtitle={pedido?.nome}>
     {!usuarioLogado() ? <PedirLogin/> : <><EstadoConexao {...consulta}/>{pedido ? <>
       <Field label="Quantidade *" numeric value={quantidade} onChangeText={definirQuantidade}/><Copy muted>{livre} unidades livres</Copy>
       <Heading>Como pretende entregar?</Heading><Choices options={['Ponto de coleta', 'Combinar entrega']} selected={entrega} onSelect={definirEntrega}/><Notice>{pedido.instrucoes}</Notice>
@@ -23,19 +23,20 @@ export function ObjectContribution() {
 export function Volunteer() {
   const roteador = useRouter(); const { id } = useLocalSearchParams<{ id?: string }>(); const consulta = useDados<Necessidade>(`/necessidades/${id || 'organizar'}`);
   const [observacao, definirObservacao] = useState('');
-  return <Screen title="Voluntariado" heading={consulta.dados?.nome || 'Voluntariado'}>
+  return <Screen variant="form" title="Voluntariado" heading={consulta.dados?.nome || 'Voluntariado'}>
     {!usuarioLogado() ? <PedirLogin/> : <><EstadoConexao {...consulta}/>{consulta.dados ? <><Copy>{consulta.dados.descricao}</Copy><Notice>{consulta.dados.instrucoes}</Notice><Copy muted>{consulta.dados.meta - consulta.dados.recebido - Number(consulta.dados.reservado)} vagas livres</Copy><Field label="Observação (opcional)" multiline value={observacao} onChangeText={definirObservacao}/><Button title="Revisar minha participação" onPress={() => roteador.push({ pathname: '/revisar-ajuda', params: { id: consulta.dados!.id, modo: 'tarefa', observacao, quantidade: '1' } })}/></> : null}</>}
   </Screen>;
 }
 
 export function Action() {
   const roteador = useRouter(); const { id } = useLocalSearchParams<{ id?: string }>(); const consulta = useDados<Campanha>(`/campanhas/${id || 'familia'}`); const campanha = consulta.dados;
-  return <Screen title="Ação da campanha" heading="Uma ação para somar." subtitle={campanha?.titulo}><EstadoConexao {...consulta}/>{campanha ? <>
+  return <Screen variant="detail" title="Ação da campanha" heading="Uma ação para somar." subtitle={campanha?.titulo}><EstadoConexao {...consulta}/>{campanha ? <>
     {campanha.evento ? <><Card title={campanha.evento} subtitle={campanha.regiao} icon="calendar-outline"/><Copy>{campanha.instrucoes}</Copy><Copy muted>Participação gratuita.</Copy><Button title="Participar da ação" onPress={() => roteador.push({ pathname: '/revisar-ajuda', params: { campanha_id: campanha.id, modo: 'acao', quantidade: '1' } })}/></> : <Notice>Esta campanha não tem ação cadastrada.</Notice>}
   </> : null}</Screen>;
 }
 
 export function ReviewHelp() {
+  const { s, colors } = useTheme();
   const roteador = useRouter(); const parametros = useLocalSearchParams<{ id?: string; campanha_id?: string; modo?: string; quantidade?: string; entrega?: string; horario?: string; observacao?: string }>();
   const [aceito, definirAceito] = useState(false); const [erro, definirErro] = useState(''); const [ocupado, definirOcupado] = useState(false);
   async function registrar() {
@@ -43,7 +44,7 @@ export function ReviewHelp() {
     try { const ajuda = await requisitar<{ id: number }>('/ajudas', 'POST', { necessidade_id: parametros.id, campanha_id: parametros.campanha_id, tipo: parametros.modo || 'objeto', quantidade: Number(parametros.quantidade || 1), entrega: parametros.entrega || '', horario: parametros.horario || '', observacao: parametros.observacao || '' }); roteador.replace({ pathname: '/ajuda', params: { id: String(ajuda.id) } }); }
     catch (problema) { definirErro(mensagemErro(problema)); } finally { definirOcupado(false); }
   }
-  return <Screen title="Revisar compromisso" heading="Confira a sua ajuda.">
+  return <Screen variant="form" title="Revisar compromisso" heading="Confira a sua ajuda.">
     {!usuarioLogado() ? <PedirLogin/> : <><Card title={parametros.modo === 'acao' ? 'Participação na ação' : `${parametros.quantidade || 1} unidade(s) · ${parametros.modo || 'objeto'}`} subtitle={parametros.entrega || parametros.horario}><Copy>{parametros.observacao}</Copy></Card>
       <Button secondary title="Editar minha ajuda" onPress={() => roteador.back()}/><View style={s.row}><Switch accessibilityLabel="Li as instruções da ajuda" value={aceito} onValueChange={definirAceito} trackColor={{ false: colors.line, true: colors.primary }}/><View style={{ flex: 1 }}><Copy>Li as instruções da ajuda</Copy></View></View>
       <Notice>Registrar reserva os itens ou vagas. O responsável confirma a realização depois.</Notice>{erro ? <Notice error>{erro}</Notice> : null}<Button title={ocupado ? 'Registrando...' : 'Registrar ajuda'} disabled={!aceito || ocupado} onPress={registrar}/>
@@ -72,7 +73,7 @@ export function HelpDetails() {
     definirOcupado(true);
     try { await requisitar(`/ajudas/${id}/cancelar`, 'PATCH'); definirJanela(false); consulta.atualizar(); } catch (problema) { definirErro(mensagemErro(problema)); } finally { definirOcupado(false); }
   }
-  return <Screen title="Minha ajuda" heading={ajuda ? `${ajuda.quantidade} · ${ajuda.necessidade}` : 'Minha ajuda'} subtitle={ajuda?.campanha}>
+  return <Screen variant="detail" title="Minha ajuda" heading={ajuda ? `${ajuda.quantidade} · ${ajuda.necessidade}` : 'Minha ajuda'} subtitle={ajuda?.campanha}>
     {!usuarioLogado() ? <PedirLogin/> : <><EstadoConexao {...consulta}/>{ajuda ? <>
       <Tag>{ajuda.estado.toLocaleUpperCase()}</Tag><Copy>Recebido: {ajuda.recebido} de {ajuda.quantidade}</Copy><Heading>Instruções</Heading><Copy>{ajuda.instrucoes}{'\n'}{ajuda.entrega}{'\n'}{ajuda.horario}</Copy>
       {ajuda.necessidade_id ? <Button secondary title="Ver necessidade" onPress={() => roteador.push({ pathname: '/necessidade', params: { id: ajuda.necessidade_id } })}/> : null}

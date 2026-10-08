@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Switch, View } from 'react-native';
-import { Button, Card, Choices, Copy, Field, Heading, Notice, Screen, colors, s } from '../components/ui';
+import { Button, Card, Choices, Copy, Field, Heading, Notice, Screen, useTheme } from '../components/ui';
 import { PedirLogin } from '../components/conexao';
 import { categorias, converterValor, formatarDinheiro } from '../data/formatacao';
 import { requisitar, usuarioLogado, mensagemErro, type Campanha } from '../servicos/api';
@@ -20,7 +20,7 @@ export function Story() {
   const roteador = useRouter(); const parametros = useLocalSearchParams<ParametrosRascunho>();
   const [titulo, definirTitulo] = useState(parametros.titulo || ''); const [descricao, definirDescricao] = useState(parametros.descricao || ''); const [categoria, definirCategoria] = useState(parametros.categoria || 'Família'); const [erro, definirErro] = useState('');
   useEffect(() => { definirTitulo(parametros.titulo || ''); definirDescricao(parametros.descricao || ''); definirCategoria(parametros.categoria || 'Família'); }, [parametros.titulo, parametros.descricao, parametros.categoria]);
-  return <Screen title={parametros.campanha_id ? 'Editar campanha' : 'Criar campanha'} step="PASSO 1 DE 4" heading="Qual situação precisa de ajuda?" back={false}>
+  return <Screen variant="form" title={parametros.campanha_id ? 'Editar campanha' : 'Criar campanha'} step="PASSO 1 DE 4" heading="Qual situação precisa de ajuda?" back={false}>
     {!usuarioLogado() ? <PedirLogin/> : <>
       <Field label="Título da campanha *" value={titulo} onChangeText={definirTitulo}/><Field label="Descrição e beneficiários *" multiline value={descricao} onChangeText={definirDescricao}/>
       <Heading>Categoria solidária</Heading><Choices options={categorias} selected={categoria} onSelect={definirCategoria}/>
@@ -32,7 +32,7 @@ export function Story() {
 
 export function Requests() {
   const roteador = useRouter(); const parametros = useLocalSearchParams<ParametrosRascunho>(); const pedidos = lerPedidos(parametros.pedidos);
-  return <Screen title="Criar campanha" step="PASSO 2 DE 4" heading="Do que precisa?" subtitle="Cada pedido vira uma necessidade.">
+  return <Screen variant="form" title="Criar campanha" step="PASSO 2 DE 4" heading="Do que precisa?" subtitle="Cada pedido vira uma necessidade.">
     {pedidos.map(pedido => <Card key={pedido.id} title={pedido.nome} subtitle={`${pedido.tipo} · meta ${pedido.tipo === 'dinheiro' ? formatarDinheiro(converterValor(pedido.meta)) : pedido.meta}`} onPress={() => roteador.push({ pathname: '/editar-necessidade', params: { ...parametros, editar: pedido.id } })}/>)}
     {!pedidos.length ? <Notice>Adicione pelo menos uma necessidade para continuar.</Notice> : null}
     <Button secondary title="Adicionar necessidade" onPress={() => roteador.push({ pathname: '/editar-necessidade', params: { ...parametros, editar: '' } })}/>
@@ -53,7 +53,7 @@ export function EditRequest() {
     const novaLista = original ? pedidos.map(anterior => anterior.id === original.id ? pedido : anterior) : [...pedidos, pedido];
     roteador.replace({ pathname: '/pedidos', params: { ...parametros, pedidos: JSON.stringify(novaLista), editar: '' } });
   }
-  return <Screen title="Necessidade" heading="Um pedido bem definido.">
+  return <Screen variant="form" title="Necessidade" heading="Um pedido bem definido.">
     <Field label="Nome *" value={nome} onChangeText={definirNome}/>
     <Choices options={['Dinheiro', 'Objeto', 'Tarefa']} selected={tipo === 'dinheiro' ? 'Dinheiro' : tipo === 'tarefa' ? 'Tarefa' : 'Objeto'} onSelect={valor => definirTipo(valor === 'Dinheiro' ? 'dinheiro' : valor === 'Tarefa' ? 'tarefa' : 'objeto')}/>
     <Field label={tipo === 'dinheiro' ? 'Meta líquida em reais *' : tipo === 'tarefa' ? 'Número de vagas *' : 'Quantidade de unidades *'} numeric value={meta} onChangeText={definirMeta}/>
@@ -65,11 +65,12 @@ export function EditRequest() {
 }
 
 export function Organization() {
+  const { s, colors } = useTheme();
   const roteador = useRouter(); const parametros = useLocalSearchParams<ParametrosRascunho>(); const pedidos = lerPedidos(parametros.pedidos);
   const [regiao, definirRegiao] = useState(parametros.regiao || ''); const [prazo, definirPrazo] = useState(parametros.prazo || ''); const [instrucoes, definirInstrucoes] = useState(parametros.instrucoes || '');
   const [temEvento, definirTemEvento] = useState(!!parametros.evento); const [evento, definirEvento] = useState(parametros.evento || ''); const [erro, definirErro] = useState('');
   const temObjeto = pedidos.some(pedido => pedido.tipo === 'objeto');
-  return <Screen title="Criar campanha" step="PASSO 3 DE 4" heading="Onde e até quando?">
+  return <Screen variant="form" title="Criar campanha" step="PASSO 3 DE 4" heading="Onde e até quando?">
     <Field label="Cidade e bairro *" value={regiao} onChangeText={definirRegiao}/><Field label="Prazo da campanha *" value={prazo} onChangeText={definirPrazo}/>
     <Card title={usuarioLogado()?.nome || 'Entre na sua conta'} subtitle="Responsável pela campanha" icon="person-outline"/>
     {temObjeto ? <Field label="Coleta e entrega *" multiline value={instrucoes} onChangeText={definirInstrucoes}/> : null}
@@ -89,7 +90,7 @@ export function CampaignReview() {
       roteador.replace({ pathname: '/gerenciar', params: { id: campanha.id } });
     } catch (problema) { definirErro(mensagemErro(problema)); } finally { definirOcupado(false); }
   }
-  return <Screen title="Revisão da campanha" step="PASSO 4 DE 4" heading="Uma causa bem explicada.">
+  return <Screen variant="form" title="Revisão da campanha" step="PASSO 4 DE 4" heading="Uma causa bem explicada.">
     {parametros.titulo ? <><Card title={parametros.titulo} subtitle={`${parametros.categoria} · ${parametros.regiao}`}><Copy>{parametros.descricao}</Copy>{pedidos.map(pedido => <Copy key={pedido.id}>• {pedido.nome} · {pedido.tipo}</Copy>)}</Card>
       <Copy muted>Nesta versão básica, salvar publica a campanha. Não há análise automática de IA.</Copy>
       {erro ? <Notice error>{erro}</Notice> : null}<Button title={ocupado ? 'Salvando...' : 'Salvar campanha'} disabled={ocupado || !pedidos.length} onPress={salvarCampanha}/>
