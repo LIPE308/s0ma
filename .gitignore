@@ -42,3 +42,7 @@ app-example
 # generated native folders
 /ios
 /android
+
+# Configuração local do MySQL e arquivos temporários de execução.
+backend/.env
+backend/.mysql/

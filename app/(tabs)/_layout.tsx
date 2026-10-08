@@ -1,97 +1,16 @@
-import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
-import { Platform, StyleSheet, Text, View } from "react-native";
-import InputBusca from "../components/inputBusca";
+// A05, slide 17: Tabs com Ionicons, adaptadas às cinco abas do Pulso.
+import { Tabs } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../src/components/ui';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
-  return (
-    <Tabs
-      screenOptions={{
-        headerShown: true,
-        headerTitleAlign: "left",
-        headerTitle: (props) => (
-          <View style={styles.headerContainer}>
-            <Text style={styles.headerTitleText}>{props.children}</Text>
-            <View style={styles.inputContainer}>
-              <InputBusca placeholder="Buscar..." />
-            </View>
-          </View>
-        ),
-        headerStyle: {
-          backgroundColor: "rgb(93, 0, 7)",
-          height: Platform.OS === "ios" ? 100 : 75,
-          elevation: 0,
-          shadowOpacity: 0,
-          borderBottomWidth: 1,
-          borderBottomColor: "rgb(37, 6, 6)",
-        },
-        tabBarActiveTintColor: "#007AFF",
-        tabBarInactiveTintColor: "#8E8E93",
-        tabBarStyle: {
-          backgroundColor: "rgb(9, 9, 94)",
-          borderTopWidth: 1,
-          borderTopColor: "#F0F0F0",
-          height: Platform.OS === "ios" ? 88 : 64,
-          paddingBottom: Platform.OS === "ios" ? 30 : 80,
-          paddingTop: 10,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: "500",
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Projeto integrador!",
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "link" : "eye"}
-              size={24}
-              color={color}
-            />
-          ),
-        }}
-      />
-
-      {/* Rota de Busca dentro das abas (oculta do menu inferior com href: null) */}
-      <Tabs.Screen
-        name="rotas/busca/[query]"
-        options={{
-          title: "Busca",
-          href: null,
-        }}
-      />
-
-      {/* Rota de Produtos dentro das abas (oculta do menu inferior com href: null) */}
-      <Tabs.Screen
-        name="rotas/produtos/[id]"
-        options={{
-          title: "Produto",
-          href: null,
-        }}
-      />
-    </Tabs>
-  );
+  const { colors, fontsReady } = useTheme(); const insets = useSafeAreaInsets();
+  return <Tabs screenOptions={{ headerShown: false, tabBarActiveTintColor: colors.primary, tabBarInactiveTintColor: colors.muted, tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.line, height: 66 + Math.max(8, insets.bottom), paddingTop: 10, paddingBottom: Math.max(8, insets.bottom) }, tabBarLabelStyle: { fontSize: 11, fontFamily: fontsReady ? 'Manrope-SemiBold' : undefined } }}>
+    <Tabs.Screen name="index" options={{ title: 'Início', tabBarIcon: ({ color }) => <Ionicons name="home-outline" color={color} size={23}/> }}/>
+    <Tabs.Screen name="explorar" options={{ title: 'Explorar', tabBarIcon: ({ color }) => <Ionicons name="search-outline" color={color} size={23}/> }}/>
+    <Tabs.Screen name="criar" options={{ title: 'Criar', tabBarIcon: ({ color }) => <Ionicons name="add-circle-outline" color={color} size={23}/> }}/>
+    <Tabs.Screen name="atividade" options={{ title: 'Atividade', tabBarIcon: ({ color }) => <Ionicons name="heart-outline" color={color} size={23}/> }}/>
+    <Tabs.Screen name="perfil" options={{ title: 'Perfil', tabBarIcon: ({ color }) => <Ionicons name="person-outline" color={color} size={23}/> }}/>
+  </Tabs>;
 }
-
-const styles = StyleSheet.create({
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    width: "100%",
-    paddingRight: 16,
-    gap: 12,
-  },
-  headerTitleText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
-    flexShrink: 1,
-  },
-  inputContainer: {
-    flex: 1,
-  },
-});

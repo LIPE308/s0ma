@@ -9,7 +9,15 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "servidor": "node backend/servidor.js",
+    "banco:iniciar": "docker compose up -d --wait banco",
+    "banco:local": "node backend/mysql-local.js iniciar",
+    "banco:local:estado": "node backend/mysql-local.js estado",
+    "banco:local:parar": "node backend/mysql-local.js parar",
+    "testar:backend:local": "node backend/mysql-local.js testar",
+    "compilar:web": "expo export --platform web --max-workers 2",
+    "testar:backend": "node --test backend/testes.test.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -28,6 +36,7 @@
     "expo-symbols": "~1.0.8",
     "expo-system-ui": "~6.0.9",
     "expo-web-browser": "~15.0.10",
+    "mysql2": "^3.24.5",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
