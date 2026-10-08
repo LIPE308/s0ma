@@ -12,6 +12,10 @@
     "lint": "expo lint",
     "servidor": "node backend/servidor.js",
     "banco:iniciar": "docker compose up -d --wait banco",
+    "banco:local": "node backend/mysql-local.js iniciar",
+    "banco:local:estado": "node backend/mysql-local.js estado",
+    "banco:local:parar": "node backend/mysql-local.js parar",
+    "testar:backend:local": "node backend/mysql-local.js testar",
     "compilar:web": "expo export --platform web --max-workers 2",
     "testar:backend": "node --test backend/testes.test.js"
   },

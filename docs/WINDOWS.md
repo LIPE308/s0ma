@@ -1,6 +1,31 @@
 # Executar no Windows com MySQL
 
-No log enviado, `npm ci` e `npm run compilar:web` terminaram com sucesso. O Docker Engine não estava disponível e o MySQL recusou o usuário/senha usados pelo servidor. Os avisos `npm warn deprecated` e o relatório do `npm audit` não interromperam a instalação; corrigir a conexão é o que permite iniciar o aplicativo.
+O front e a API precisam de um servidor MySQL funcionando. Escolha uma das três opções abaixo. O Workbench é somente um cliente; ele não substitui o servidor.
+
+## MySQL próprio do projeto: sem Docker
+
+Em Windows x64, com Node.js 24.19 ou superior, execute na pasta do projeto:
+
+```bat
+npm ci
+npm run banco:local
+npm run compilar:web
+npm run servidor
+```
+
+Abra `http://localhost:3001`. A primeira execução baixa aproximadamente 248 MB do servidor oficial **MySQL Community 8.4.8 LTS**, verifica o SHA-256, extrai e inicializa dentro de `backend/.mysql`. Requer internet na primeira instalação; não instala serviço do Windows. O MySQL fica em segundo plano, restrito a `127.0.0.1:3307`, e a API usa o usuário `soma`, com permissão somente no banco `soma`.
+
+As senhas do administrador local e do usuário `soma` são geradas aleatoriamente. Ficam nos arquivos ignorados `backend/.mysql/configuracao.json` e `backend/.env`; não devem ser compartilhadas ou commitadas. O script recusa usar uma porta ocupada por outro MySQL e preserva um `.env` que configure outro banco. Não substitua esse `.env` pelo exemplo da porta 3306.
+
+```bat
+npm run banco:local:estado
+npm run testar:backend:local
+npm run banco:local:parar
+```
+
+O teste cria e remove apenas seu banco temporário. O comando de parada preserva `backend/.mysql/dados`. Após reiniciar o computador, rode `npm run banco:local` e `npm run servidor` novamente. Não exclua a pasta de dados ou a configuração se quiser conservar os cadastros. Logs do banco: `backend/.mysql/mysql.log`.
+
+O pacote e a versão são fixados em `backend/mysql-local.js`, com SHA-256. Documentação oficial: [instalação com ZIP no Windows](https://dev.mysql.com/doc/refman/8.4/en/windows-installation.html) e [arquivo oficial usado](https://cdn.mysql.com/archives/mysql-8.4/mysql-8.4.8-winx64.zip). Este modo serve ao desenvolvimento e à apresentação local; para hospedar o projeto, configure seu próprio servidor MySQL.
 
 ## Opção 1: usar o MySQL já instalado
 

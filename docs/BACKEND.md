@@ -4,6 +4,8 @@ O fluxo é simples: a tela chama `fetch`, o Node recebe uma requisição HTTP, e
 
 ## Executar
 
+No Windows x64, também é possível executar `npm run banco:local`, que inicia um MySQL 8.4.8 próprio do projeto na porta 3307 e configura `backend/.env`. Depois, execute `npm run compilar:web` e `npm run servidor`. Veja os comandos de parada, logs e persistência no [guia do Windows](WINDOWS.md). A API e o esquema são os mesmos em todas as opções.
+
 Na pasta do projeto, com Node.js 24 e Docker Compose:
 
 ```bash
@@ -92,6 +94,8 @@ Nos pagamentos acadêmicos, a taxa Soma é 4% e a tarifa fictícia é R$ 3. O l�
 Esses cálculos e estados persistem no MySQL, mas **não movimentam dinheiro**. Não há gateway financeiro, envio de e-mail, recuperação de senha, IA ou automatização de excedentes/prazos nesta versão básica.
 
 ## Testar
+
+Para o MySQL próprio do Windows: `npm run banco:local` e `npm run testar:backend:local`. A suíte foi executada contra MySQL 8.4.8 real: **8 testes passaram**, incluindo reservas concorrentes, rollback, permissões, financeiro simulado e persistência após reiniciar a API.
 
 ```bash
 npm run banco:iniciar

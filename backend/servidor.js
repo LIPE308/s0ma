@@ -410,6 +410,7 @@ iniciar().catch(problema => {
     console.error('Não foi possível conectar ao MySQL. Confira o serviço, MYSQL_HOST e MYSQL_PORTA.');
     console.error('Com Docker: abra o Docker Desktop, espere o Engine iniciar e execute npm run banco:iniciar.');
     console.error('Com MySQL instalado: inicie o serviço MySQL do Windows. Veja docs/WINDOWS.md.');
+    console.error('No Windows sem Docker: npm run banco:local configura e inicia o MySQL próprio do projeto.');
   } else if (problema.code === 'ER_BAD_DB_ERROR') {
     console.error('O banco configurado não existe. Execute backend/criar-banco.sql no MySQL e confira MYSQL_BANCO em backend/.env.');
   } else {

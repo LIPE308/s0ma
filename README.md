@@ -10,9 +10,18 @@ O SOMA recebido usa o backend local de campanhas em `backend/` e `src/servicos/a
 
 ## Executar na web
 
-**No Windows, se já tem MySQL instalado ou recebeu erro do Docker/usuário/senha, siga o [passo a passo do Windows](docs/WINDOWS.md).** Ele permite usar o MySQL local pelo Workbench, sem Docker.
+**No Windows x64, o projeto pode iniciar seu próprio MySQL, sem Docker ou instalação de serviço:**
 
-Tenha Node.js 24.19 ou superior e Docker com Compose instalado e aberto. Execute na pasta do projeto:
+```bash
+npm ci
+npm run banco:local
+npm run compilar:web
+npm run servidor
+```
+
+O primeiro comando do banco baixa o MySQL oficial, verifica o SHA-256 e cria `soma` na porta **3307**. Gera senhas aleatórias e configura `backend/.env`. Os dados ficam em `backend/.mysql/dados`; essa pasta e as credenciais são ignoradas pelo Git. Reiniciar preserva os registros. Use `npm run banco:local:estado` para conferir e `npm run banco:local:parar` para encerrar. Após reiniciar o computador, execute `npm run banco:local` e `npm run servidor` novamente. Um `.env` de outro banco é preservado; consulte o [guia do Windows](docs/WINDOWS.md).
+
+**Com Docker**, tenha Node.js 24.19 ou superior e Docker com Compose instalado e aberto. Execute na pasta do projeto:
 
 ```bash
 npm ci
@@ -68,5 +77,7 @@ npx tsc --noEmit
 npm run lint
 npm run testar:backend
 ```
+
+Se escolheu o MySQL próprio no Windows, use **`npm run testar:backend:local`**. Esse comando lê as credenciais locais sem exibi-las e executa a mesma suíte em um banco temporário.
 
 Os testes de backend precisam do MySQL ligado. Criam e removem um banco separado chamado `soma_teste_...`, com as credenciais locais do Compose; não alteram o banco `soma`. Verificam cadastro, permissões, reservas concorrentes, confirmação parcial, financeiro simulado e persistência após reiniciar o Node. A execução web foi validada; Android/iOS não foram validados.
