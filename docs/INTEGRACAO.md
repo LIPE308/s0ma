@@ -58,7 +58,7 @@ Validação executada em 08/10/2026, no Windows, com Node 25.6 e MySQL 8.4 pelo 
 | Contribuições no navegador | Login, reserva/cancelamento de objeto, criação/confirmação de pagamento simulado e navegação administrativa passaram |
 | Fidelidade da interface | Capturas do login original do ZIP e integrado idênticas byte a byte nas larguras 390 e 1280 pixels |
 | Fidelidade dos arquivos | 65 arquivos de `app/`, `src/`, `backend/` e `assets/` idênticos byte a byte ao ZIP |
-| `git diff --check` | Passou |
+| Revisão do diff | Sem erros no código. `git diff --check` sinalizou apenas dois espaços de quebra de linha Markdown no README original preservado; a verificação com `core.whitespace=-blank-at-eol` passou |
 
 Os testes existentes abrangem validação, sessões, permissões, SQL parametrizado, criação/edição, rollback, reserva concorrente da última unidade, recebimento parcial, cancelamento, ações, publicações, avisos, limites financeiros simulados, repasse, reembolso, moderação e persistência após reiniciar o Node.
 
