@@ -1,0 +1,19 @@
+services:
+  banco:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: soma
+      MYSQL_USER: soma
+      MYSQL_PASSWORD: soma_local_123
+      MYSQL_ROOT_PASSWORD: raiz_local_123
+    ports:
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - dados_mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+volumes:
+  dados_mysql:
