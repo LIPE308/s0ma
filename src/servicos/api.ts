@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { usePathname } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import { Platform } from 'react-native';
 
 export type Usuario = { id: number; nome: string; email: string; telefone: string; regiao: string; novidades: boolean; administrador: boolean };
-export type Necessidade = { id: string; campanha_id: string; nome: string; tipo: 'objeto' | 'tarefa' | 'dinheiro'; meta: number; recebido: number; reservado: number; tipo_meta: string; prioridade: string; prazo: string; descricao: string; campanha: string; regiao: string; instrucoes: string; campanha_estado: string };
+export type Necessidade = { id: string; campanha_id: string; responsavel_id?: number; nome: string; tipo: 'objeto' | 'tarefa' | 'dinheiro'; meta: number; recebido: number; reservado: number; tipo_meta: string; prioridade: string; prazo: string; descricao: string; campanha: string; regiao: string; instrucoes: string; campanha_estado: string };
 export type Campanha = { id: string; usuario_id: number; titulo: string; descricao: string; categoria: string; regiao: string; prazo: string; instrucoes: string; evento: string; estado: string; motivo: string; responsavel: string; necessidades: Necessidade[] };
 export type Ajuda = { id: number; usuario_id: number; campanha_id: string; necessidade_id: string; tipo: string; quantidade: number; recebido: number; necessidade: string; campanha: string; pessoa: string; estado: string; entrega: string; horario: string; instrucoes: string; observacao: string };
 export type Pagamento = { id: number; necessidade_id: string; campanha: string; necessidade: string; valor: number; taxa_soma: number; taxa_provedor: number; valor_liquido: number; meio: string; estado: string };
@@ -55,21 +55,22 @@ export async function requisitar<T>(caminho: string, metodo = 'GET', dados?: unk
   return resultado as T;
 }
 
-// useEffect + fetch: carrega novamente ao navegar ou solicitar atualização.
+// Reconsulta ao voltar à tela; abas fora de foco não fazem requisições em segundo plano.
 export function useDados<T>(caminho: string | null) {
-  const pagina = usePathname();
+  const emFoco = useIsFocused();
   const [dados, definirDados] = useState<T | null>(null);
   const [erro, definirErro] = useState('');
   const [carregando, definirCarregando] = useState(true);
   const [versao, definirVersao] = useState(0);
   useEffect(() => {
+    if (!emFoco) return;
     let ativo = true;
     definirDados(null); definirErro('');
     if (!caminho) { definirCarregando(false); return; }
     definirCarregando(true);
     requisitar<T>(caminho).then(resultado => { if (ativo) definirDados(resultado); }).catch(problema => { if (ativo) definirErro(problema.message); }).finally(() => { if (ativo) definirCarregando(false); });
     return () => { ativo = false; };
-  }, [caminho, pagina, versao]);
+  }, [caminho, emFoco, versao]);
   return { dados, erro, carregando, atualizar: () => definirVersao(anterior => anterior + 1) };
 }
 

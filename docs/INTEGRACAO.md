@@ -2,6 +2,8 @@
 
 Este relatório registra a migração inicial, anterior ao redesign. As comparações de arquivos e capturas abaixo se referem àquele momento. A evolução visual aprovada posteriormente está documentada em [REDESIGN.md](REDESIGN.md).
 
+A versão atual da equipe está na branch `mudancas-jf`. A branch indicada abaixo registra apenas o destino da integração original.
+
 ## Origem e destino
 
 - Fonte: `soma-pulso-windows.zip`, recebido em 08/10/2026.

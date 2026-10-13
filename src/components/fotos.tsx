@@ -1,46 +1,56 @@
-import { ImageBackground, Text, View, useWindowDimensions } from 'react-native';
+import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
+import { StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
 import { Button, useTheme } from './ui';
-
-// Fotos editoriais licenciadas pelo Unsplash. Nunca representam beneficiários de campanhas.
-export const imagensIlustrativas = {
+import { useReducedMotion } from '../design/motion';
+import { radius } from '../design/theme';
+const imagens = {
   familia: require('../../assets/photos/familia-unsplash-v2.jpg'),
   voluntariado: require('../../assets/photos/voluntariado-unsplash.jpg'),
   educacao: require('../../assets/photos/educacao-unsplash.jpg'),
   protecaoAnimal: require('../../assets/photos/protecao-animal-unsplash.jpg'),
+  comunidade: require('../../assets/photos/comunidade-unsplash.jpg'),
 };
 
-export function fotoDaCategoria(categoria: string) {
-  const tema = categoria.toLocaleLowerCase();
-  if (tema.includes('fam')) return imagensIlustrativas.familia;
-  if (tema.includes('educ')) return imagensIlustrativas.educacao;
-  if (tema.includes('animal')) return imagensIlustrativas.protecaoAnimal;
-  return imagensIlustrativas.voluntariado;
-}
+// Uma foto editorial por campanha de exemplo. Novas campanhas não herdam fotos de outras causas.
+const fotosDeCampanhas: Record<string, { source: number; descricao: string }> = {
+  familia: { source: imagens.familia, descricao: 'Família reunida ao entardecer' },
+  biblioteca: { source: imagens.educacao, descricao: 'Crianças entre livros em uma atividade de educação' },
+  abrigo: { source: imagens.protecaoAnimal, descricao: 'Uma cuidadora com cães em um abrigo' },
+};
 
-export function FotoDeAcolhimento({ aoEncontrar }: { aoEncontrar: () => void }) {
-  const { s, colors } = useTheme();
-  const { width } = useWindowDimensions();
-  const compacto = width < 680;
-  return <View style={{ flexDirection: compacto ? 'column' : 'row', borderRadius: 24, overflow: 'hidden', marginBottom: 8, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface }}>
-    <ImageBackground source={imagensIlustrativas.familia} imageStyle={{ borderRadius: compacto ? 0 : 23 }} style={{ width: compacto ? '100%' : 300, flexShrink: 0, height: compacto ? 160 : 224, justifyContent: 'flex-start' }} accessibilityRole="image" accessibilityLabel="Família reunida ao pôr do sol; fotografia ilustrativa, sem relação com uma campanha específica">
-      <Text style={{ alignSelf: 'flex-end', color: '#fff', backgroundColor: 'rgba(24,25,31,0.7)', fontSize: 10, lineHeight: 15, paddingHorizontal: 9, paddingVertical: 5, margin: 12, borderRadius: 12 }}>Foto ilustrativa</Text>
-    </ImageBackground>
-    <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 18, paddingVertical: 16, gap: 8 }}>
-      <Text accessibilityRole="header" style={[s.featureTitle, { color: colors.ink, fontSize: 25, lineHeight: 30 }]}>Toda ajuda conta.</Text>
-      <Text style={{ color: colors.muted, fontSize: 14, lineHeight: 20 }}>Pessoas ajudam pessoas. Encontre uma causa e faça parte dessa mudança.</Text>
-      <Button inverse title="Encontrar uma causa" onPress={aoEncontrar}/>
+function FotoEditorial({ source, descricao, height, style, position = 'center' }: { source: number; descricao: string; height: number; style?: StyleProp<ViewStyle>; position?: 'top' | 'center' }) {
+  const { colors, fontsReady } = useTheme(); const reduced = useReducedMotion();
+  return <View style={[{ height, backgroundColor: colors.soft, overflow: 'hidden' }, style]}>
+    <Image source={source} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition={position} cachePolicy="memory-disk" transition={reduced ? 0 : 160} accessibilityLabel={descricao + '; foto ilustrativa, sem relação com os participantes desta campanha'}/>
+    <View pointerEvents="none" style={{ alignSelf: 'flex-end', margin: 12, paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill, backgroundColor: colors.photoScrim }}>
+      <Text style={{ color: colors.onPhoto, fontSize: 10, lineHeight: 15, fontFamily: fontsReady ? 'Manrope-SemiBold' : undefined }}>Foto ilustrativa</Text>
     </View>
   </View>;
 }
 
-export function FotoDeCampanha({ categoria }: { categoria: string }) {
-  return <ImageBackground source={fotoDaCategoria(categoria)} imageStyle={{ borderTopLeftRadius: 19, borderTopRightRadius: 19 }} style={{ height: 146, justifyContent: 'flex-end' }} accessibilityRole="image" accessibilityLabel={`Foto ilustrativa de ${categoria.toLocaleLowerCase()}, sem relação com os participantes desta campanha`}>
-    <Text style={{ alignSelf: 'flex-start', color: '#fff', backgroundColor: 'rgba(24,25,31,0.7)', fontSize: 10, paddingHorizontal: 9, paddingVertical: 5, margin: 10, borderRadius: 12 }}>Foto ilustrativa</Text>
-  </ImageBackground>;
+export function FotoDeAcolhimento({ aoEncontrar }: { aoEncontrar: () => void }) {
+  const { s, colors, fontsReady } = useTheme(); const { width } = useWindowDimensions(); const compacto = width < 680;
+  return <View style={{ flexDirection: compacto ? 'column' : 'row', borderRadius: radius.hero, overflow: 'hidden', borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface }}>
+    <FotoEditorial source={imagens.comunidade} descricao="Pessoas colaborando na distribuição de doações" position="top" height={compacto ? 154 : 250} style={{ width: compacto ? '100%' : 300, flexShrink: 0 }}/>
+    <View style={{ flex: 1, justifyContent: 'center', padding: 18, gap: 10 }}>
+      <Text style={{ color: colors.gentleInk, fontSize: 10, letterSpacing: 1, fontFamily: fontsReady ? 'Manrope-SemiBold' : undefined }}>PESSOAS AJUDANDO PESSOAS</Text>
+      <Text accessibilityRole="header" style={[s.featureTitle, { color: colors.ink, fontSize: 25, lineHeight: 31 }]}>Toda ajuda conta.</Text>
+      <Text style={[s.cardSubtitle, { lineHeight: 21 }]}>Pequenos gestos podem transformar grandes histórias. Encontre uma causa e faça parte dessa mudança.</Text>
+      <Button title="Encontrar uma causa" onPress={aoEncontrar}/>
+    </View>
+  </View>;
+}
+
+export function FotoDeCampanha({ campanhaId, categoria, height = 180 }: { campanhaId: string; categoria: string; height?: number }) {
+  const { colors, fontsReady } = useTheme(); const foto = fotosDeCampanhas[campanhaId];
+  if (foto) return <FotoEditorial source={foto.source} descricao={foto.descricao} height={height} style={{ borderTopLeftRadius: radius.card, borderTopRightRadius: radius.card }}/>;
+  return <View style={{ height: 120, padding: 20, justifyContent: 'center', alignItems: 'flex-start', gap: 10, borderTopLeftRadius: radius.card, borderTopRightRadius: radius.card, backgroundColor: colors.gentle }}>
+    <Ionicons name="people-outline" size={32} color={colors.gentleInk}/>
+    <Text style={{ color: colors.gentleInk, fontSize: 15, fontFamily: fontsReady ? 'Manrope-SemiBold' : undefined }}>{categoria} · uma causa da comunidade</Text>
+  </View>;
 }
 
 export function FotoDeVoluntariado() {
-  return <ImageBackground source={imagensIlustrativas.voluntariado} imageStyle={{ borderRadius: 20 }} style={{ height: 172, borderRadius: 20, overflow: 'hidden', justifyContent: 'flex-end' }} accessibilityRole="image" accessibilityLabel="Voluntários organizando doações; fotografia ilustrativa, sem relação com esta campanha">
-    <Text style={{ alignSelf: 'flex-start', color: '#fff', backgroundColor: 'rgba(24,25,31,0.7)', fontSize: 11, paddingHorizontal: 10, paddingVertical: 6, margin: 10, borderRadius: 12 }}>Voluntariado · foto ilustrativa</Text>
-  </ImageBackground>;
+  return <FotoEditorial source={imagens.voluntariado} descricao="Voluntários organizando alimentos para doação" height={176} style={{ borderRadius: radius.card }}/>;
 }

@@ -1,6 +1,6 @@
 # SOMA — Enlace e azul royal
 
-O usuário aprovou o conceito Enlace com azul royal após comparar três marcas e duas rodadas de paletas. O contexto é o SOMA solidário: campanhas, objetos, contribuições financeiras simuladas, tarefas e voluntariado. O aplicativo mantém 35 rotas, cinco abas, permissões, contratos da API e regras de negócio. `backend/` e `src/servicos/api.ts` permanecem sem alterações neste redesign.
+O usuário aprovou o conceito Enlace com azul royal após comparar três marcas e duas rodadas de paletas. O contexto é o SOMA solidário: campanhas, objetos, contribuições financeiras simuladas, tarefas e voluntariado. O aplicativo mantém 35 rotas, cinco abas, permissões, contratos da API e esquema MySQL. A revisão JF melhora as consultas após as ações e o cache/MIME das imagens no servidor; os detalhes estão em [REPAGINACAO-JF.md](REPAGINACAO-JF.md).
 
 ## Identidade e aplicações
 
@@ -10,26 +10,28 @@ O símbolo reúne dois módulos complementares: necessidade e contribuição se 
 | --- | --- | --- |
 | Azul principal / destaque | #1748F5 | #1748F5 |
 | Ação sobre superfície | #1748F5 | #97B5FF |
-| Texto principal | #101F48 | #F7F9FF |
-| Fundo | #F7F9FF | #0B1530 |
-| Superfície | #FFFFFF | #142242 |
-| Texto secundário | #52617D | #B8C6E4 |
-| Apoio / seleção suave | #DCE7FF | #22365F |
-| Divisor | #D6DFEF | #344769 |
+| Texto principal | #272B38 | #F7F4EE |
+| Fundo | #FAF7F1 | #171923 |
+| Superfície | #FFFEFB | #222532 |
+| Texto secundário | #656775 | #C1BEBA |
+| Apoio neutro | #F3E9DB | #34313A |
+| Apoio comunitário | #E8EFE7 | #283A30 |
+| Terracota / categoria | #A7442A | #F1A184 |
+| Divisor | #E9E0D5 | #41414A |
 
-O azul intenso ocupa os destaques principais e o ícone. Branco sobre royal tem contraste 6,40:1; no tema escuro, as ações sobre superfícies usam azul claro com texto profundo. Erros têm mensagem, ícone e cor próprios. Contraste de paleta não equivale a certificação integral de acessibilidade.
+O azul intenso concentra as ações e a marca; as histórias e fotografias vêm antes das metas numéricas. Branco sobre royal tem contraste 6,40:1; no tema escuro, as ações sobre superfícies usam azul claro com texto profundo. Erros têm mensagem, ícone e cor próprios. Contraste de paleta não equivale a certificação integral de acessibilidade.
 
-Sora 600 nos títulos e assinatura; Manrope 400/600 em leitura e controles. Três TTF locais somam aproximadamente 236 kB e estão acompanhados das licenças SIL OFL. Fonte do sistema como alternativa em caso de falha. Não há serviço externo de fontes em execução nem biblioteca de runtime adicionada.
+Sora 600 nos títulos e assinatura; Manrope 400/600 em leitura e controles. Três TTF locais somam aproximadamente 236 kB e estão acompanhados das licenças SIL OFL. Fonte do sistema como alternativa em caso de falha. Não há serviço externo de fontes. A persistência nativa da aparência utiliza [AsyncStorage 2.2.0, compatível com Expo SDK 54](https://docs.expo.dev/versions/v54.0.0/sdk/async-storage/).
 
 Vetores e imagens: `assets/brand/`. Os assets originais da base continuam em `assets/images/`. Configuração Expo atualizada para ícone, favicon, adaptive icon e splash. Para regenerar os PNGs/vetores, execute `python scripts/gerar-marca.py` com Pillow instalado; Python/Pillow são ferramentas de exportação, não dependências do aplicativo.
 
 ## Composição das telas
 
-- Início: título editorial, uma necessidade em destaque azul e demais necessidades em listas compactas. O destaque vem dos dados da API. A quantidade faltante considera o recebido; disponibilidade desconta reservas, preservando a diferença entre reservado e realizado.
-- Explorar: marca, busca, categorias, filtros e listas com divisores. Busca e filtro de região existentes preservados.
-- Entrada: área de marca azul e formulário separado, com cadastro, visita e informação acadêmica existentes.
+- Início: capa fotográfica com CTA, atalhos para doação, voluntariado, eventos e criação, histórias de campanhas e necessidades em cartões claros. Os dados vêm da API; disponibilidade desconta reservas, preservando a diferença entre reservado e realizado.
+- Explorar: campanhas, necessidades, voluntariado e eventos em listas virtualizadas, com busca, região, categoria e recuperação de busca vazia.
+- Entrada: marca em superfície suave e formulário separado. O login devolve a pessoa ao fluxo de ajuda que estava usando.
 - Criação/contribuição: formulários agrupados em superfície de leitura, campos com foco visível, etapas textuais e quatro segmentos de progresso na criação.
-- Campanha/necessidade: história, estado, meta, disponibilidade, instruções e ação com hierarquia distinta. Sem indicadores de impacto inventados.
+- Campanha/necessidade: fotografia, história, formas de ajudar, organizador e transparência. Metas e disponibilidade ficam no contexto da necessidade. Sem indicadores de impacto inventados.
 - Gestão/atividade/administração: agrupamentos por assunto e listas para reduzir a repetição de cartões.
 - Saldo: valor disponível em destaque, estados financeiros alinhados e rótulos de simulação mantidos.
 - Todas as rotas: tipografia, botões, avisos, modais, navegação e temas compartilhados. Áreas seguras e comportamento de teclado considerados nos formulários.
@@ -41,6 +43,8 @@ Preferência de movimento reduzido lida no sistema e acompanhada durante a sess�
 Splash nativa estática com o símbolo real. Carrega apenas as fontes locais indispensáveis; erro ou limite de 3 s libera a interface com a fonte do sistema. Após a interface ficar pronta, a construção dos dois módulos dura 1,8 s e ocorre uma vez por inicialização. A camada não captura toques e desaparece ao navegar, sem aguardar API ou banco. Não repete ao trocar abas.
 
 Conteúdo entra com deslocamento de 8 pontos em 220 ms. Pressão dos botões usa escala 0,98 em 120 ms; resposta depende da preferência do sistema. Navegação nativa respeita avançar/voltar, com transição desativada em movimento reduzido. Progresso e estados incluem informação textual; controles têm rótulos acessíveis e alvos de pelo menos 44 pontos. Reutiliza Animated, Expo Font, Splash Screen e Ionicons já instalados.
+
+Na revisão JF, a entrada acontece também ao voltar a uma tela. Abas usam fade de 180 ms; cartões e filtros compartilham a resposta de pressão dos botões. Modais e avisos usam entrada curta com escala de 0,98; a troca de tema usa fade de 180 ms. Todos esses movimentos são desativados em redução de movimento. Não foi introduzida uma biblioteca de animação ou navegação.
 
 ## Pesquisa que orientou a direção
 

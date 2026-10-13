@@ -16,15 +16,20 @@ As 35 rotas foram adaptadas dos arquivos de referência e dos cinco slides envia
 | Componentes, props e children | A05, 23–28 |
 | useState e atualização de arrays | A05, 31–33 |
 
-A integração usa fetch e useEffect para consultar o servidor e exibir carregamento/erro. Não adicionamos bibliotecas de formulário, estilos ou estado. O backend acrescenta o driver `mysql2`, conforme a nova solicitação. Os documentos anexados orientam o produto; recursos de IA, recuperação por e-mail e pagamentos reais descritos nas referências não fazem parte desta implementação básica.
+A integração usa fetch e useEffect para consultar o servidor e exibir carregamento/erro. As consultas acompanham o foco da tela e são atualizadas depois das ações. Não adicionamos bibliotecas de formulário, estilos ou estado. A escolha de aparência usa AsyncStorage 2.2.0 no nativo e localStorage na web; a seleção pode acompanhar o sistema. O backend usa o driver `mysql2`. Recursos de IA, recuperação por e-mail e pagamentos reais não fazem parte desta implementação acadêmica.
 
 ## Estrutura
 
 - `app/`: rotas e cinco abas.
 - `src/components/`: componentes visuais e mensagens de conexão.
+- `src/components/campanhas.tsx` e `fotos.tsx`: cartões editoriais compartilhados e fotos locais identificadas como ilustrativas.
+- `src/design/`: marca, tokens de tema, preferência persistida e animações com redução de movimento.
 - `src/screens/`: telas por fluxo, com formulários em useState.
 - `src/servicos/api.ts`: fetch, sessão e carregamento das consultas.
 - `src/data/formatacao.ts`: categorias e formatação de valores.
+- `src/data/eventos.ts`: nome, data, horário e local do evento no campo textual existente da API, com leitura compatível dos eventos antigos.
+- `src/servicos/navegacao.ts`: retorno ao fluxo escolhido depois do login, limitado às rotas do aplicativo.
+- `public/index.html`: fundo claro/escuro aplicado antes do bundle web, evitando primeira pintura no tema errado.
 - `backend/`: API e esquema do MySQL.
 - `examples/`: exemplos anteriores, fora do roteamento.
 

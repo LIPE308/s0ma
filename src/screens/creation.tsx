@@ -5,6 +5,7 @@ import { Button, Card, Choices, Copy, Field, Heading, Notice, Screen, useTheme }
 import { PedirLogin } from '../components/conexao';
 import { categorias, converterValor, formatarDinheiro } from '../data/formatacao';
 import { requisitar, usuarioLogado, mensagemErro, type Campanha } from '../servicos/api';
+import { dataDeEventoValida, formatarEvento, lerEvento } from '../data/eventos';
 
 export type PedidoRascunho = { id: string; nome: string; tipo: string; meta: string; tipo_meta: string; prioridade: string; prazo: string; descricao: string };
 export type ParametrosRascunho = { campanha_id?: string; titulo?: string; descricao?: string; categoria?: string; pedidos?: string; regiao?: string; prazo?: string; instrucoes?: string; evento?: string; editar?: string };
@@ -69,14 +70,24 @@ export function Organization() {
   const roteador = useRouter(); const parametros = useLocalSearchParams<ParametrosRascunho>(); const pedidos = lerPedidos(parametros.pedidos);
   const [regiao, definirRegiao] = useState(parametros.regiao || ''); const [prazo, definirPrazo] = useState(parametros.prazo || ''); const [instrucoes, definirInstrucoes] = useState(parametros.instrucoes || '');
   const [temEvento, definirTemEvento] = useState(!!parametros.evento); const [evento, definirEvento] = useState(parametros.evento || ''); const [erro, definirErro] = useState('');
+  const originalEvento = lerEvento(parametros.evento || '');
+  const [legado, definirLegado] = useState(!!parametros.evento && !originalEvento);
+  const [nomeEvento, definirNomeEvento] = useState(originalEvento?.nome || ''); const [dataEvento, definirDataEvento] = useState(originalEvento?.data || '');
+  const [horaEvento, definirHoraEvento] = useState(originalEvento?.horario || ''); const [localEvento, definirLocalEvento] = useState(originalEvento?.local || '');
   const temObjeto = pedidos.some(pedido => pedido.tipo === 'objeto');
   return <Screen variant="form" title="Criar campanha" step="PASSO 3 DE 4" heading="Onde e até quando?">
     <Field label="Cidade e bairro *" value={regiao} onChangeText={definirRegiao}/><Field label="Prazo da campanha *" value={prazo} onChangeText={definirPrazo}/>
     <Card title={usuarioLogado()?.nome || 'Entre na sua conta'} subtitle="Responsável pela campanha" icon="person-outline"/>
     {temObjeto ? <Field label="Coleta e entrega *" multiline value={instrucoes} onChangeText={definirInstrucoes}/> : null}
-    <View style={s.row}><Switch accessibilityLabel="Incluir ação opcional" value={temEvento} onValueChange={definirTemEvento} trackColor={{ false: colors.line, true: colors.primary }}/><Copy>Incluir uma ação gratuita</Copy></View>
-    {temEvento ? <Field label="Nome, data, horário e local da ação *" multiline value={evento} onChangeText={definirEvento}/> : null}
-    {erro ? <Notice error>{erro}</Notice> : null}<Button title="Continuar: revisão" onPress={() => { if (!regiao.trim() || !prazo.trim() || (temObjeto && !instrucoes.trim()) || (temEvento && !evento.trim())) { definirErro('Preencha os campos de organização.'); return; } roteador.push({ pathname: '/revisao', params: { ...parametros, regiao, prazo, instrucoes, evento: temEvento ? evento : '' } }); }}/>
+    <View style={s.row}><Switch accessibilityLabel="Incluir evento gratuito" value={temEvento} onValueChange={definirTemEvento} trackColor={{ false: colors.line, true: colors.primary }}/><Copy>Incluir um evento gratuito</Copy></View>
+    {temEvento ? legado ? <><Field label="Nome, data, horário e local da ação *" multiline value={evento} onChangeText={definirEvento}/><Button secondary title="Organizar data e local em campos" onPress={() => { definirNomeEvento(evento); definirLegado(false); }}/></> : <><Field label="Nome do evento *" value={nomeEvento} onChangeText={definirNomeEvento}/><Field label="Data do evento *" value={dataEvento} onChangeText={definirDataEvento} placeholder="25/10/2026"/><Field label="Horário do evento *" value={horaEvento} onChangeText={definirHoraEvento} placeholder="09:00"/><Field label="Local do evento *" value={localEvento} onChangeText={definirLocalEvento} placeholder="Nome do espaço e endereço"/></> : null}
+    {erro ? <Notice error>{erro}</Notice> : null}<Button title="Continuar: revisão" onPress={() => {
+      if (!regiao.trim() || !prazo.trim() || (temObjeto && !instrucoes.trim())) { definirErro('Preencha os campos de organização.'); return; }
+      if (temEvento && !legado && (!nomeEvento.trim() || !localEvento.trim() || !dataDeEventoValida(dataEvento.trim()) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(horaEvento.trim()))) { definirErro('Informe nome, local, uma data válida (DD/MM/AAAA) e horário (HH:MM) para o evento.'); return; }
+      if (temEvento && legado && !evento.trim()) { definirErro('Informe os detalhes do encontro.'); return; }
+      const eventoFinal = temEvento ? legado ? evento : formatarEvento({ nome: nomeEvento, data: dataEvento, horario: horaEvento, local: localEvento }) : '';
+      roteador.push({ pathname: '/revisao', params: { ...parametros, regiao, prazo, instrucoes, evento: eventoFinal } });
+    }}/>
   </Screen>;
 }
 
@@ -91,7 +102,7 @@ export function CampaignReview() {
     } catch (problema) { definirErro(mensagemErro(problema)); } finally { definirOcupado(false); }
   }
   return <Screen variant="form" title="Revisão da campanha" step="PASSO 4 DE 4" heading="Uma causa bem explicada.">
-    {parametros.titulo ? <><Card title={parametros.titulo} subtitle={`${parametros.categoria} · ${parametros.regiao}`}><Copy>{parametros.descricao}</Copy>{pedidos.map(pedido => <Copy key={pedido.id}>• {pedido.nome} · {pedido.tipo}</Copy>)}</Card>
+    {!usuarioLogado() ? <PedirLogin/> : parametros.titulo ? <><Card title={parametros.titulo} subtitle={`${parametros.categoria} · ${parametros.regiao}`}><Copy>{parametros.descricao}</Copy>{pedidos.map(pedido => <Copy key={pedido.id}>• {pedido.nome} · {pedido.tipo}</Copy>)}{parametros.evento ? <Copy>{parametros.evento}</Copy> : null}</Card>
       <Copy muted>Nesta versão básica, salvar publica a campanha. Não há análise automática de IA.</Copy>
       {erro ? <Notice error>{erro}</Notice> : null}<Button title={ocupado ? 'Salvando...' : 'Salvar campanha'} disabled={ocupado || !pedidos.length} onPress={salvarCampanha}/>
       <Button secondary title="Editar a história" onPress={() => roteador.push({ pathname: '/criar', params: parametros })}/></> : <><Notice>Comece preenchendo sua campanha.</Notice><Button title="Criar campanha" onPress={() => roteador.push('/criar')}/></>}

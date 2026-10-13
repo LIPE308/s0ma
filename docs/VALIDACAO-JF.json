@@ -1,0 +1,649 @@
+{
+  "ok": true,
+  "data": "2026-10-13T14:43:49.108Z",
+  "banco": "MySQL temporário separado de soma",
+  "fluxos": [
+    "Atalhos da home, inclusive aba já montada",
+    "Pesquisa e filtros reais",
+    "Fotografias locais carregadas com MIME e cache",
+    "Cadastro e validação de campos",
+    "Criação em quatro etapas com três tipos de necessidade",
+    "Data inválida rejeitada e evento com data/horário/local persistido",
+    "Publicação de atualização",
+    "Perfil salvo e campanhas próprias consultadas",
+    "Detalhes de voluntariado públicos",
+    "Login preserva oportunidade selecionada",
+    "Participação real, confirmação, histórico e cancelamento",
+    "Inscrição em evento gravada no MySQL e exibida na atividade",
+    "Objeto: validação de quantidade, reserva e status",
+    "Pagamento de teste com status persistido, sem cobrança real",
+    "Atualização de consulta funciona",
+    "Campanha, evento, sessão e status persistem ao reiniciar API"
+  ],
+  "temas": [
+    "Claro/Escuro imediato",
+    "Recarregamento preserva preferência",
+    "Sistema reage ao dispositivo",
+    "Escolha manual prevalece sobre sistema",
+    "Fundo correto antes do bundle"
+  ],
+  "animacoes": {
+    "pressao": true,
+    "entradaAba": true,
+    "trocaTema": true,
+    "reducaoMovimento": true
+  },
+  "rotas": [
+    {
+      "papel": "visitante",
+      "rota": "/acao"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/acesso"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/administracao"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/ajuda"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/analise"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/atualizacoes"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/avisos"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/campanha"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/confirmar"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/contribuir"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/criar-conta"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/denunciar"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/doacao"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/editar-necessidade"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/entrar"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/excedente"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/gerenciar"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/necessidade"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/operacao"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/organizacao"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/pagamento"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/pedidos"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/publicar"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/repasse"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/resultado"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/revisao"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/revisar-ajuda"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/saldo"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/solicitar-repasse"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/voluntariado"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/atividade"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/criar"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/explorar"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/"
+    },
+    {
+      "papel": "visitante",
+      "rota": "/perfil"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/acao"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/acesso"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/administracao"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/ajuda"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/analise"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/atualizacoes"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/avisos"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/campanha"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/confirmar"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/contribuir"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/criar-conta"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/denunciar"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/doacao"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/editar-necessidade"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/entrar"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/excedente"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/gerenciar"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/necessidade"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/operacao"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/organizacao"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/pagamento"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/pedidos"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/publicar"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/repasse"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/resultado"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/revisao"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/revisar-ajuda"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/saldo"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/solicitar-repasse"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/voluntariado"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/atividade"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/criar"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/explorar"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/"
+    },
+    {
+      "papel": "administrador",
+      "rota": "/perfil"
+    }
+  ],
+  "layouts": [
+    {
+      "tema": "claro",
+      "largura": 320,
+      "rota": "/"
+    },
+    {
+      "tema": "claro",
+      "largura": 320,
+      "rota": "/explorar"
+    },
+    {
+      "tema": "claro",
+      "largura": 320,
+      "rota": "/campanha?id=familia"
+    },
+    {
+      "tema": "claro",
+      "largura": 320,
+      "rota": "/entrar"
+    },
+    {
+      "tema": "claro",
+      "largura": 320,
+      "rota": "/criar"
+    },
+    {
+      "tema": "claro",
+      "largura": 320,
+      "rota": "/perfil"
+    },
+    {
+      "tema": "claro",
+      "largura": 320,
+      "rota": "/voluntariado?id=organizar"
+    },
+    {
+      "tema": "claro",
+      "largura": 320,
+      "rota": "/acao?id=familia"
+    },
+    {
+      "tema": "claro",
+      "largura": 390,
+      "rota": "/"
+    },
+    {
+      "tema": "claro",
+      "largura": 390,
+      "rota": "/explorar"
+    },
+    {
+      "tema": "claro",
+      "largura": 390,
+      "rota": "/campanha?id=familia"
+    },
+    {
+      "tema": "claro",
+      "largura": 390,
+      "rota": "/entrar"
+    },
+    {
+      "tema": "claro",
+      "largura": 390,
+      "rota": "/criar"
+    },
+    {
+      "tema": "claro",
+      "largura": 390,
+      "rota": "/perfil"
+    },
+    {
+      "tema": "claro",
+      "largura": 390,
+      "rota": "/voluntariado?id=organizar"
+    },
+    {
+      "tema": "claro",
+      "largura": 390,
+      "rota": "/acao?id=familia"
+    },
+    {
+      "tema": "claro",
+      "largura": 768,
+      "rota": "/"
+    },
+    {
+      "tema": "claro",
+      "largura": 768,
+      "rota": "/explorar"
+    },
+    {
+      "tema": "claro",
+      "largura": 768,
+      "rota": "/campanha?id=familia"
+    },
+    {
+      "tema": "claro",
+      "largura": 768,
+      "rota": "/entrar"
+    },
+    {
+      "tema": "claro",
+      "largura": 768,
+      "rota": "/criar"
+    },
+    {
+      "tema": "claro",
+      "largura": 768,
+      "rota": "/perfil"
+    },
+    {
+      "tema": "claro",
+      "largura": 768,
+      "rota": "/voluntariado?id=organizar"
+    },
+    {
+      "tema": "claro",
+      "largura": 768,
+      "rota": "/acao?id=familia"
+    },
+    {
+      "tema": "claro",
+      "largura": 1280,
+      "rota": "/"
+    },
+    {
+      "tema": "claro",
+      "largura": 1280,
+      "rota": "/explorar"
+    },
+    {
+      "tema": "claro",
+      "largura": 1280,
+      "rota": "/campanha?id=familia"
+    },
+    {
+      "tema": "claro",
+      "largura": 1280,
+      "rota": "/entrar"
+    },
+    {
+      "tema": "claro",
+      "largura": 1280,
+      "rota": "/criar"
+    },
+    {
+      "tema": "claro",
+      "largura": 1280,
+      "rota": "/perfil"
+    },
+    {
+      "tema": "claro",
+      "largura": 1280,
+      "rota": "/voluntariado?id=organizar"
+    },
+    {
+      "tema": "claro",
+      "largura": 1280,
+      "rota": "/acao?id=familia"
+    },
+    {
+      "tema": "escuro",
+      "largura": 320,
+      "rota": "/"
+    },
+    {
+      "tema": "escuro",
+      "largura": 320,
+      "rota": "/explorar"
+    },
+    {
+      "tema": "escuro",
+      "largura": 320,
+      "rota": "/campanha?id=familia"
+    },
+    {
+      "tema": "escuro",
+      "largura": 320,
+      "rota": "/entrar"
+    },
+    {
+      "tema": "escuro",
+      "largura": 320,
+      "rota": "/criar"
+    },
+    {
+      "tema": "escuro",
+      "largura": 320,
+      "rota": "/perfil"
+    },
+    {
+      "tema": "escuro",
+      "largura": 320,
+      "rota": "/voluntariado?id=organizar"
+    },
+    {
+      "tema": "escuro",
+      "largura": 320,
+      "rota": "/acao?id=familia"
+    },
+    {
+      "tema": "escuro",
+      "largura": 390,
+      "rota": "/"
+    },
+    {
+      "tema": "escuro",
+      "largura": 390,
+      "rota": "/explorar"
+    },
+    {
+      "tema": "escuro",
+      "largura": 390,
+      "rota": "/campanha?id=familia"
+    },
+    {
+      "tema": "escuro",
+      "largura": 390,
+      "rota": "/entrar"
+    },
+    {
+      "tema": "escuro",
+      "largura": 390,
+      "rota": "/criar"
+    },
+    {
+      "tema": "escuro",
+      "largura": 390,
+      "rota": "/perfil"
+    },
+    {
+      "tema": "escuro",
+      "largura": 390,
+      "rota": "/voluntariado?id=organizar"
+    },
+    {
+      "tema": "escuro",
+      "largura": 390,
+      "rota": "/acao?id=familia"
+    },
+    {
+      "tema": "escuro",
+      "largura": 768,
+      "rota": "/"
+    },
+    {
+      "tema": "escuro",
+      "largura": 768,
+      "rota": "/explorar"
+    },
+    {
+      "tema": "escuro",
+      "largura": 768,
+      "rota": "/campanha?id=familia"
+    },
+    {
+      "tema": "escuro",
+      "largura": 768,
+      "rota": "/entrar"
+    },
+    {
+      "tema": "escuro",
+      "largura": 768,
+      "rota": "/criar"
+    },
+    {
+      "tema": "escuro",
+      "largura": 768,
+      "rota": "/perfil"
+    },
+    {
+      "tema": "escuro",
+      "largura": 768,
+      "rota": "/voluntariado?id=organizar"
+    },
+    {
+      "tema": "escuro",
+      "largura": 768,
+      "rota": "/acao?id=familia"
+    },
+    {
+      "tema": "escuro",
+      "largura": 1280,
+      "rota": "/"
+    },
+    {
+      "tema": "escuro",
+      "largura": 1280,
+      "rota": "/explorar"
+    },
+    {
+      "tema": "escuro",
+      "largura": 1280,
+      "rota": "/campanha?id=familia"
+    },
+    {
+      "tema": "escuro",
+      "largura": 1280,
+      "rota": "/entrar"
+    },
+    {
+      "tema": "escuro",
+      "largura": 1280,
+      "rota": "/criar"
+    },
+    {
+      "tema": "escuro",
+      "largura": 1280,
+      "rota": "/perfil"
+    },
+    {
+      "tema": "escuro",
+      "largura": 1280,
+      "rota": "/voluntariado?id=organizar"
+    },
+    {
+      "tema": "escuro",
+      "largura": 1280,
+      "rota": "/acao?id=familia"
+    }
+  ],
+  "capturas": [
+    "docs/images/jf-inicio-claro-mobile.png",
+    "docs/images/jf-perfil-mobile.png",
+    "docs/images/jf-evento-mobile.png",
+    "docs/images/jf-inicio-claro-desktop.png",
+    "docs/images/jf-explorar-desktop.png",
+    "docs/images/jf-inicio-escuro-mobile.png"
+  ],
+  "errosJavaScript": 0
+}

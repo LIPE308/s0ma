@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>%WEB_TITLE% — Toda ajuda conta</title>
+    <style id="expo-reset">
+      /* Only startup background values mirror palette.bg; React owns all app tokens. */
+      html { background: #FAF7F1; color-scheme: light; }
+      @media (prefers-color-scheme: dark) { html:not([data-soma-theme="claro"]) { background: #171923; color-scheme: dark; } }
+      html[data-soma-theme="escuro"] { background: #171923; color-scheme: dark; }
+      html, body { height: 100%; margin: 0; }
+      body { overflow: hidden; background: inherit; }
+      #root { display: flex; height: 100%; flex: 1; }
+    </style>
+    <script>
+      // Set the persisted appearance before the bundle or first app frame is painted.
+      (function () {
+        var preference = 'sistema';
+        try { preference = localStorage.getItem('soma_tema') || preference; } catch (error) {}
+        var dark = preference === 'escuro' || (preference !== 'claro' && matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.dataset.somaTheme = dark ? 'escuro' : 'claro';
+      })();
+    </script>
+  </head>
+  <body>
+    <noscript>Ative o JavaScript para explorar as causas no SOMA.</noscript>
+    <div id="root"></div>
+  </body>
+</html>
