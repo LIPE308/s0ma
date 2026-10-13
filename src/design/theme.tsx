@@ -2,8 +2,8 @@ import { createContext, useContext, type ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
 
 export const palette = {
-  light: { bg: '#F7F9FF', surface: '#FFFFFF', ink: '#101F48', muted: '#52617D', primary: '#1748F5', soft: '#DCE7FF', accent: '#1748F5', line: '#D6DFEF', hero: '#1748F5', onHero: '#FFFFFF', onPrimary: '#FFFFFF', error: '#A72D34', errorBg: '#FFF0F1', success: '#175E49', successBg: '#E5F4ED', overlay: 'rgba(16,31,72,0.6)' },
-  dark: { bg: '#0B1530', surface: '#142242', ink: '#F7F9FF', muted: '#B8C6E4', primary: '#97B5FF', soft: '#22365F', accent: '#1748F5', line: '#344769', hero: '#1748F5', onHero: '#FFFFFF', onPrimary: '#101F48', error: '#FFBBC0', errorBg: '#44232E', success: '#A5E5CA', successBg: '#173E38', overlay: 'rgba(0,8,26,0.75)' },
+  light: { bg: '#FAF7F1', surface: '#FFFEFB', ink: '#272B38', muted: '#656775', primary: '#1748F5', soft: '#F3E9DB', accent: '#C45B3C', line: '#E9E0D5', hero: '#1748F5', onHero: '#FFFFFF', onPrimary: '#FFFFFF', error: '#A72D34', errorBg: '#FFF0F1', success: '#175E49', successBg: '#E5F4ED', overlay: 'rgba(39,43,56,0.62)' },
+  dark: { bg: '#171923', surface: '#222532', ink: '#F7F4EE', muted: '#C1BEBA', primary: '#97B5FF', soft: '#34313A', accent: '#F1A184', line: '#41414A', hero: '#1748F5', onHero: '#FFFFFF', onPrimary: '#101F48', error: '#FFBBC0', errorBg: '#44232E', success: '#A5E5CA', successBg: '#173E38', overlay: 'rgba(0,0,0,0.76)' },
 };
 export type Colors = typeof palette.light;
 const FontContext = createContext(false);

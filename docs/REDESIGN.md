@@ -62,6 +62,28 @@ Login/navegação, busca e filtro de região, reserva/cancelamento, pagamento/st
 
 Uma checagem adicional do build final confirmou que reservas não reduzem a quantidade ainda faltante na meta, mas reduzem as unidades livres para contribuir. Os estados sem pedidos e com erro de conexão também foram conferidos em 320 pixels, sem destaque inventado, transbordamento ou erro JavaScript.
 
+## Humanização visual — 13/10/2026
+
+A home agora combina a assinatura Enlace com uma imagem editorial e o destaque “Toda ajuda conta”, acompanhado de contexto e acesso direto à busca. As campanhas têm cartões com hierarquia editorial, resumo da causa, categoria e um convite para ajudar. A foto acompanha a categoria de cada campanha disponível: família, educação, proteção animal ou ação comunitária. Voluntariado e eventos mostram ações de apoio. As fotografias ficam no pacote local do aplicativo; não dependem de baixar imagens ao abrir cada tela. Cada foto tem rótulo e texto acessível que esclarecem seu uso ilustrativo e que não retrata os participantes daquela campanha. Títulos, regiões, necessidades, instruções, eventos e demais informações continuam vindo dos registros existentes; nenhuma campanha ou métrica foi criada.
+
+O azul royal da marca permanece nos sinais e nas ações principais. Fundos, superfícies, divisores e tons de apoio foram aquecidos com papel creme, tinta grafite e apoio terracota, mantendo uma versão escura coerente.
+
+Fotos ilustrativas usadas, marcadas como gratuitas para uso sob a licença Unsplash nas páginas consultadas:
+
+- Família reunida ao entardecer — Tá Focando. [Foto e licença](https://unsplash.com/photos/a-family-standing-in-a-field-at-sunset-LOuffSFpWQI).
+- Voluntários organizando doações — Joel Muniz, “Community Power”. [Foto e licença](https://unsplash.com/photos/volunteers-sorting-canned-food-donations-3k3l2brxmwQ).
+- Crianças e livros — Annie Spratt. [Foto e licença](https://unsplash.com/photos/a-group-of-children-standing-in-front-of-a-bookshelf-Pw0vMMWnSWU).
+- Cuidadora e cães — Anil Reddy; o retrato é de uma voluntária na Índia, não de participante do SOMA. [Foto e licença](https://unsplash.com/photos/woman-sitting-with-dogs-in-a-shelter-rG-NkySqeYI).
+- A [licença Unsplash](https://unsplash.com/license) permite usar, copiar e adaptar gratuitamente as imagens, inclusive em projetos comerciais; o crédito não é obrigatório, mas foi registrado aqui para transparência.
+
+Capturas da validação local feitas em 13/10/2026, com a home em 390 e 1.280 pixels e uma campanha real de desenvolvimento. As fotografias seguem identificadas como ilustrativas.
+
+![Home humanizada em celular](images/inicio-humanizada.png)
+
+![Home humanizada em desktop](images/inicio-humanizada-desktop.png)
+
+![Detalhe humanizado da campanha de abrigo](images/detalhe-abrigo-humanizado.png)
+
 Capturas de exemplo com dados controlados, na largura de 390 pixels:
 
 ![Início no tema claro](images/inicio-claro.png)

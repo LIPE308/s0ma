@@ -1,11 +1,26 @@
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { FlatList, Text, View } from 'react-native';
+import { FlatList, Pressable, Text, View } from 'react-native';
 import { Button, Card, Choices, Copy, Dialog, Field, Heading, Logo, Notice, Progress, Screen, Tag, useTheme } from '../components/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EstadoConexao } from '../components/conexao';
 import { useDados, type Campanha, type Necessidade, type Atualizacao } from '../servicos/api';
 import { formatarDinheiro } from '../data/formatacao';
+import { FotoDeAcolhimento, FotoDeCampanha } from '../components/fotos';
+
+function CartaoCampanha({ campanha, evento = false, aoAbrir }: { campanha: Campanha; evento?: boolean; aoAbrir: () => void }) {
+  const { s, colors } = useTheme();
+  const titulo = evento ? campanha.evento : campanha.titulo;
+  return <Pressable accessibilityRole="button" accessibilityLabel={`${titulo}, ${campanha.regiao}`} accessibilityHint="Abrir detalhes e conhecer como participar" onPress={aoAbrir} style={({ pressed }) => [{ overflow: 'hidden', borderRadius: 20, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }, pressed && s.pressed]}>
+    <FotoDeCampanha categoria={campanha.categoria}/>
+    <View style={{ padding: 18, gap: 7 }}>
+      <Text style={{ fontSize: 11, lineHeight: 16, fontFamily: 'Manrope-SemiBold', letterSpacing: .35, color: colors.accent }}>{campanha.categoria.toLocaleUpperCase()}</Text>
+      <Text accessibilityRole="header" numberOfLines={2} style={s.cardTitle}>{titulo}</Text>
+      {!evento ? <Text numberOfLines={2} style={s.cardSubtitle}>{campanha.descricao}</Text> : null}
+      <Text style={{ fontSize: 13, lineHeight: 18, fontFamily: 'Manrope-SemiBold', color: colors.primary }}>{campanha.regiao} · {evento ? 'Conheça o encontro' : 'Saiba como ajudar'} ›</Text>
+    </View>
+  </Pressable>;
+}
 
 export function CartaoNecessidade({ pedido, aoAbrir, destaque = false }: { pedido: Necessidade; aoAbrir: () => void; destaque?: boolean }) {
   const livre = pedido.meta - pedido.recebido - Number(pedido.reservado);
@@ -24,7 +39,8 @@ export function Home() {
   const campanha = campanhas.dados?.find(item => item.id === 'familia') || campanhas.dados?.[0];
   const destaque = pedidos.dados?.find(item => item.campanha_estado === 'ativa' && (item.meta > item.recebido + Number(item.reservado) || item.tipo === 'dinheiro' && item.tipo_meta === 'aberta'));
   const abrirPedido = (pedido: Necessidade) => roteador.push({ pathname: '/necessidade', params: { id: pedido.id } });
-  return <Screen title="soma" heading="Toda ajuda encontra um caminho." subtitle="Encontre uma necessidade ao seu alcance." back={false} action={<Button title="Região" secondary onPress={() => roteador.push({ pathname: '/explorar', params: { regiao: 'abrir' } })}/>}>
+  return <Screen title="soma" back={false} action={<Button title="Região" secondary onPress={() => roteador.push({ pathname: '/explorar', params: { regiao: 'abrir' } })}/>}>
+    <FotoDeAcolhimento aoEncontrar={() => roteador.push('/explorar')}/>
     <Choices options={['Dinheiro', 'Objetos', 'Seu tempo', 'Ações']} selected="" onSelect={tipo => roteador.push({ pathname: '/explorar', params: { tipo: tipo === 'Dinheiro' ? 'R$' : tipo === 'Seu tempo' ? 'Tempo' : tipo } })}/>
     <Heading>Precisam de ajuda agora</Heading><EstadoConexao {...pedidos}/>
     {destaque ? <CartaoNecessidade pedido={destaque} destaque aoAbrir={() => abrirPedido(destaque)}/> : null}
@@ -32,7 +48,7 @@ export function Home() {
     {pedidos.dados?.filter(pedido => pedido.id !== destaque?.id).slice(0, 3).map(pedido => <CartaoNecessidade key={pedido.id} pedido={pedido} aoAbrir={() => abrirPedido(pedido)}/>)}
     {pedidos.dados?.length === 0 ? <Notice>Nenhum pedido disponível por enquanto.</Notice> : null}
     <Heading>Campanha da sua região</Heading><EstadoConexao {...campanhas}/>
-    {campanha ? <Card title={campanha.titulo} subtitle={campanha.regiao} icon="people-outline" onPress={() => roteador.push({ pathname: '/campanha', params: { id: campanha.id } })}/> : null}
+    {campanha ? <CartaoCampanha campanha={campanha} aoAbrir={() => roteador.push({ pathname: '/campanha', params: { id: campanha.id } })}/> : null}
     <Button secondary title="Conhecer todas as campanhas" onPress={() => roteador.push('/explorar')}/>
   </Screen>;
 }
@@ -59,7 +75,7 @@ export function Explore() {
       {secao === 'Necessidades' ? <><Choices options={['Todos', 'Objetos', 'Tempo', 'R$']} selected={tipo} onSelect={definirTipo}/><Copy muted>{lista.length} resultados</Copy></> : null}
     </View>}
     renderItem={({ item }) => <CartaoNecessidade pedido={item} aoAbrir={() => roteador.push({ pathname: '/necessidade', params: { id: item.id } })}/>}
-    ListEmptyComponent={secao !== 'Necessidades' ? <View style={{ gap: 16 }}>{listaCampanhas.map(campanha => <Card key={campanha.id} title={secao === 'Ações' ? campanha.evento : campanha.titulo} subtitle={campanha.regiao} icon={secao === 'Ações' ? 'calendar-outline' : 'people-outline'} onPress={() => roteador.push({ pathname: secao === 'Ações' ? '/acao' : '/campanha', params: { id: campanha.id } })}/>)}{!listaCampanhas.length && !campanhas.carregando ? <Notice>Nenhum resultado. Tente outra busca ou região.</Notice> : null}</View> : !pedidos.carregando && !pedidos.erro ? <Notice>Nenhuma necessidade encontrada. Tente outro termo ou filtro.</Notice> : null}
+    ListEmptyComponent={secao !== 'Necessidades' ? <View style={{ gap: 16 }}>{listaCampanhas.map(campanha => <CartaoCampanha key={campanha.id} campanha={campanha} evento={secao === 'Ações'} aoAbrir={() => roteador.push({ pathname: secao === 'Ações' ? '/acao' : '/campanha', params: { id: campanha.id } })}/>)}{!listaCampanhas.length && !campanhas.carregando ? <Notice>Nenhum resultado. Tente outra busca ou região.</Notice> : null}</View> : !pedidos.carregando && !pedidos.erro ? <Notice>Nenhuma necessidade encontrada. Tente outro termo ou filtro.</Notice> : null}
   /><Dialog visible={janela} title="Escolha sua região" onClose={() => definirJanela(false)}><Choices options={regioes} selected={regiaoEscolhida} onSelect={definirRegiaoEscolhida}/><Button title="Aplicar região" onPress={() => { definirRegiao(regiaoEscolhida); definirJanela(false); }}/></Dialog></View>;
 }
 
@@ -68,7 +84,7 @@ export function Campaign() {
   const [responsavelVisivel, definirResponsavelVisivel] = useState(false);
   return <Screen variant="detail" title="Campanha" heading={campanha?.titulo} subtitle={campanha ? `${campanha.categoria} · ${campanha.regiao}` : ''}>
     <EstadoConexao {...consulta}/>{campanha ? <>
-      <Tag>{campanha.estado.toLocaleUpperCase()}</Tag><Card title="A história desta causa" icon="people-outline"><Copy>{campanha.descricao}</Copy><Copy muted>{campanha.responsavel} · responsável</Copy></Card><Heading>O que está faltando</Heading>
+      <FotoDeCampanha categoria={campanha.categoria}/><Tag>{campanha.estado.toLocaleUpperCase()}</Tag><Card title="A história desta causa" icon="people-outline"><Copy>{campanha.descricao}</Copy><Copy muted>{campanha.responsavel} · responsável</Copy></Card><Heading>O que está faltando</Heading>
       {campanha.necessidades.map(pedido => <CartaoNecessidade key={pedido.id} pedido={pedido} aoAbrir={() => roteador.push({ pathname: '/necessidade', params: { id: pedido.id } })}/>)}
       {campanha.evento ? <Card title={campanha.evento} icon="calendar-outline" onPress={() => roteador.push({ pathname: '/acao', params: { id: campanha.id } })}/> : null}
       <Button secondary title="Atualizações" onPress={() => roteador.push({ pathname: '/atualizacoes', params: { campanha: campanha.id } })}/>

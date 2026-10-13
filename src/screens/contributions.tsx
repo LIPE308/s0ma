@@ -5,6 +5,7 @@ import { Button, Card, Choices, Copy, Dialog, Field, Heading, Notice, Screen, Ta
 import { EstadoConexao, PedirLogin } from '../components/conexao';
 import { requisitar, useDados, usuarioLogado, mensagemErro, type Necessidade, type Campanha, type Ajuda, type Atividade } from '../servicos/api';
 import { formatarDinheiro } from '../data/formatacao';
+import { FotoDeVoluntariado } from '../components/fotos';
 
 export function ObjectContribution() {
   const roteador = useRouter(); const { id } = useLocalSearchParams<{ id?: string }>(); const consulta = useDados<Necessidade>(`/necessidades/${id || 'cobertores'}`); const pedido = consulta.dados;
@@ -24,14 +25,14 @@ export function Volunteer() {
   const roteador = useRouter(); const { id } = useLocalSearchParams<{ id?: string }>(); const consulta = useDados<Necessidade>(`/necessidades/${id || 'organizar'}`);
   const [observacao, definirObservacao] = useState('');
   return <Screen variant="form" title="Voluntariado" heading={consulta.dados?.nome || 'Voluntariado'}>
-    {!usuarioLogado() ? <PedirLogin/> : <><EstadoConexao {...consulta}/>{consulta.dados ? <><Copy>{consulta.dados.descricao}</Copy><Notice>{consulta.dados.instrucoes}</Notice><Copy muted>{consulta.dados.meta - consulta.dados.recebido - Number(consulta.dados.reservado)} vagas livres</Copy><Field label="Observação (opcional)" multiline value={observacao} onChangeText={definirObservacao}/><Button title="Revisar minha participação" onPress={() => roteador.push({ pathname: '/revisar-ajuda', params: { id: consulta.dados!.id, modo: 'tarefa', observacao, quantidade: '1' } })}/></> : null}</>}
+    {!usuarioLogado() ? <PedirLogin/> : <><EstadoConexao {...consulta}/>{consulta.dados ? <><FotoDeVoluntariado/><Copy>{consulta.dados.descricao}</Copy><Notice>{consulta.dados.instrucoes}</Notice><Copy muted>{consulta.dados.meta - consulta.dados.recebido - Number(consulta.dados.reservado)} vagas livres</Copy><Field label="Observação (opcional)" multiline value={observacao} onChangeText={definirObservacao}/><Button title="Revisar minha participação" onPress={() => roteador.push({ pathname: '/revisar-ajuda', params: { id: consulta.dados!.id, modo: 'tarefa', observacao, quantidade: '1' } })}/></> : null}</>}
   </Screen>;
 }
 
 export function Action() {
   const roteador = useRouter(); const { id } = useLocalSearchParams<{ id?: string }>(); const consulta = useDados<Campanha>(`/campanhas/${id || 'familia'}`); const campanha = consulta.dados;
   return <Screen variant="detail" title="Ação da campanha" heading="Uma ação para somar." subtitle={campanha?.titulo}><EstadoConexao {...consulta}/>{campanha ? <>
-    {campanha.evento ? <><Card title={campanha.evento} subtitle={campanha.regiao} icon="calendar-outline"/><Copy>{campanha.instrucoes}</Copy><Copy muted>Participação gratuita.</Copy><Button title="Participar da ação" onPress={() => roteador.push({ pathname: '/revisar-ajuda', params: { campanha_id: campanha.id, modo: 'acao', quantidade: '1' } })}/></> : <Notice>Esta campanha não tem ação cadastrada.</Notice>}
+    {campanha.evento ? <><FotoDeVoluntariado/><Card title={campanha.evento} subtitle={campanha.regiao} icon="calendar-outline"/><Copy>{campanha.instrucoes}</Copy><Copy muted>Participação gratuita.</Copy><Button title="Participar da ação" onPress={() => roteador.push({ pathname: '/revisar-ajuda', params: { campanha_id: campanha.id, modo: 'acao', quantidade: '1' } })}/></> : <Notice>Esta campanha não tem ação cadastrada.</Notice>}
   </> : null}</Screen>;
 }
 
