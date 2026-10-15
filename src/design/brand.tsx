@@ -19,13 +19,12 @@ export function BrandMark({ size = 40, color, construction }: { size?: number; c
         // Two rounded columns meet at (50, 81) after opposing 45-degree rotations.
         const heartLeft = group ? 50 + 31 * Math.SQRT1_2 - 40 : 50 - 31 * Math.SQRT1_2;
         const heartTop = 50 + 31 * Math.SQRT1_2 - 64;
-        const letter = group * 2 + index;
-        return <Animated.View key={index} style={{ position: 'absolute', left: shape(left, heartLeft), top: shape(top, heartTop + (cap ? 0 : 40)), width: shape(width, 40), height: shape(height, cap ? 40 : 24), backgroundColor: fill, borderTopLeftRadius: shape(group === 0 && index === 0 ? 4 : 0, cap ? 20 : 0), borderTopRightRadius: shape(0, cap ? 20 : 0), borderBottomRightRadius: shape(group === 1 && index === 0 ? 4 : 0, 0), ...(unfold ? { opacity: unfold.interpolate({ inputRange: [0, .35, .8, 1], outputRange: [1, 1, 0, 0] }), transform: [{ translateX: unfold.interpolate({ inputRange: [0, 1], outputRange: [0, (wordCenters[letter] - left - width / 2) * unit] }) }, { translateY: unfold.interpolate({ inputRange: [0, 1], outputRange: [0, (50 - top - height / 2) * unit] }) }, { scale: unfold.interpolate({ inputRange: [0, 1], outputRange: [1, .6] }) }] } : {}) }}/>;
+        return <Animated.View key={index} style={{ position: 'absolute', left: shape(left, heartLeft), top: shape(top, heartTop + (cap ? 0 : 40)), width: shape(width, 40), height: shape(height, cap ? 40 : 24), backgroundColor: fill, borderTopLeftRadius: shape(group === 0 && index === 0 ? 4 : 0, cap ? 20 : 0), borderTopRightRadius: shape(0, cap ? 20 : 0), borderBottomRightRadius: shape(group === 1 && index === 0 ? 4 : 0, 0), ...(unfold ? { opacity: unfold.interpolate({ inputRange: [0, .35, .8, 1], outputRange: [1, 1, 0, 0] }), transform: [{ translateX: unfold.interpolate({ inputRange: [0, 1], outputRange: [0, (group ? 40 : -40) * unit] }) }] } : {}) }}/>;
       })}
     </Animated.View>)}
     {unfold ? 'SOMA'.split('').map((letter, index) => {
-      const [left, top, width, height] = rectangles[index];
-      return <Animated.Text key={letter} testID={'brand-letter-' + letter} style={{ position: 'absolute', left: (wordCenters[index] - 20) * unit, top: 15 * unit, width: 40 * unit, lineHeight: 70 * unit, fontSize: 36 * unit, fontFamily: fontsReady ? 'Sora-SemiBold' : undefined, fontWeight: fontsReady ? '400' : '700', color: fill, textAlign: 'center', includeFontPadding: false, opacity: unfold.interpolate({ inputRange: [0, .25, .8, 1], outputRange: [0, 0, 1, 1] }), transform: [{ translateX: unfold.interpolate({ inputRange: [0, 1], outputRange: [(left + width / 2 - wordCenters[index]) * unit, 0] }) }, { translateY: unfold.interpolate({ inputRange: [0, 1], outputRange: [(top + height / 2 - 50) * unit, 0] }) }, { scale: unfold.interpolate({ inputRange: [0, 1], outputRange: [.45, 1] }) }] }}>{letter}</Animated.Text>;
+      const originX = index < 2 ? 42 : 58;
+      return <Animated.Text key={letter} testID={'brand-letter-' + letter} style={{ position: 'absolute', left: (wordCenters[index] - 20) * unit, top: 15 * unit, width: 40 * unit, lineHeight: 70 * unit, fontSize: 36 * unit, fontFamily: fontsReady ? 'Sora-SemiBold' : undefined, fontWeight: fontsReady ? '400' : '700', color: fill, textAlign: 'center', includeFontPadding: false, opacity: unfold.interpolate({ inputRange: [0, .25, .8, 1], outputRange: [0, 0, 1, 1] }), transform: [{ translateX: unfold.interpolate({ inputRange: [0, 1], outputRange: [(originX - wordCenters[index]) * unit, 0] }) }, { scale: unfold.interpolate({ inputRange: [0, 1], outputRange: [.45, 1] }) }] }}>{letter}</Animated.Text>;
     }) : null}
   </View>;
 }
@@ -39,7 +38,6 @@ export function BrandIntroduction() {
   const reduced = useReducedMotion(); const path = usePathname(); const initialPath = useRef(path); const played = useRef(false);
   const build = useRef(new Animated.Value(0)).current; const opacity = useRef(new Animated.Value(1)).current;
   const [visible, setVisible] = useState(false); const { colors, fontsReady } = useDesign();
-  const unfold = build.interpolate({ inputRange: [0, 2, 3, 4, 5], outputRange: [0, 0, 1, 0, 0] });
   useEffect(() => {
     if (reduced || path !== initialPath.current) { setVisible(false); return; }
     if (played.current) return;
@@ -65,8 +63,7 @@ export function BrandIntroduction() {
   }, [reduced, path, build, opacity]);
   if (!visible || reduced) return null;
   return <Animated.View testID="brand-introduction" pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[StyleSheet.absoluteFill, { opacity, backgroundColor: colors.hero, alignItems: 'center', justifyContent: 'center', gap: 14 }]}>
-    <Animated.View style={{ width: 280, height: 160, alignItems: 'center', transform: [{ translateY: unfold.interpolate({ inputRange: [0, 1], outputRange: [0, 60] }) }] }}><BrandMark size={160} color={colors.onHero} construction={build}/></Animated.View>
-    <Animated.Text style={{ fontFamily: fontsReady ? 'Sora-SemiBold' : undefined, fontSize: 46, fontWeight: fontsReady ? '400' : '700', letterSpacing: -2, color: colors.onHero, opacity: unfold.interpolate({ inputRange: [0, .3, .6, 1], outputRange: [1, 1, 0, 0] }) }}>soma</Animated.Text>
-    <Animated.Text style={{ color: colors.onHero, fontSize: 14, fontFamily: fontsReady ? 'Manrope-Regular' : undefined, transform: [{ translateY: unfold.interpolate({ inputRange: [0, 1], outputRange: [0, -60] }) }] }}>Toda ajuda conta.</Animated.Text>
+    <View style={{ width: 280, height: 160, alignItems: 'center' }}><BrandMark size={160} color={colors.onHero} construction={build}/></View>
+    <Text style={{ color: colors.onHero, fontSize: 14, fontFamily: fontsReady ? 'Manrope-Regular' : undefined }}>Toda ajuda conta.</Text>
   </Animated.View>;
 }
