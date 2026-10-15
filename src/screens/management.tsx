@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Button, Card, Choices, Copy, Dialog, Field, Heading, Notice, Screen, Tag } from '../components/ui';
+import { Button, Card, Choices, Copy, Dialog, EmptyState, Field, Heading, Notice, Screen, Tag } from '../components/ui';
 import { EstadoConexao, PedirLogin } from '../components/conexao';
 import { useDados, requisitar, usuarioLogado, mensagemErro, type Campanha, type Ajuda } from '../servicos/api';
 import { parametrosDaCampanha } from './creation';
+import { formatarDinheiro } from '../data/formatacao';
 
 export function Manage() {
-  const roteador = useRouter(); const { id } = useLocalSearchParams<{ id?: string }>(); const consulta = useDados<Campanha>(`/campanhas/${id || 'biblioteca'}`); const campanha = consulta.dados; const pessoa = usuarioLogado();
+  const roteador = useRouter(); const { id, salvo } = useLocalSearchParams<{ id?: string; salvo?: string }>(); const consulta = useDados<Campanha>(`/campanhas/${id || 'biblioteca'}`); const campanha = consulta.dados; const pessoa = usuarioLogado();
   const [janela, definirJanela] = useState(false); const [motivo, definirMotivo] = useState(''); const [erro, definirErro] = useState(''); const [ocupado, definirOcupado] = useState(false);
   const permitido = pessoa && campanha && (campanha.usuario_id === pessoa.id || pessoa.administrador);
   async function encerrar() {
@@ -14,11 +15,13 @@ export function Manage() {
     try { if (!motivo.trim()) throw new Error('Informe o motivo.'); await requisitar(`/campanhas/${campanha!.id}/encerrar`, 'PATCH', { motivo }); definirJanela(false); consulta.atualizar(); }
     catch (problema) { definirErro(mensagemErro(problema)); } finally { definirOcupado(false); }
   }
-  return <Screen variant="ledger" title="Gerenciar campanha" heading={campanha?.titulo} subtitle="Painel do responsável"><EstadoConexao {...consulta}/>
+  return <Screen variant="ledger" title="Gerenciar campanha" heading={campanha?.titulo} subtitle="Painel do responsável" onBack={salvo ? () => roteador.dismissTo('/') : undefined}><EstadoConexao {...consulta}/>
     {!pessoa ? <PedirLogin/> : campanha && !permitido ? <Notice>Você não é responsável por esta campanha.</Notice> : campanha ? <>
+      {salvo === 'criada' || salvo === 'atualizada' ? <Notice success>{salvo === 'criada' ? 'Campanha publicada! Agora você pode acompanhar as ajudas por aqui.' : 'Alterações salvas na campanha.'}</Notice> : null}
       <Tag>{campanha.estado.toLocaleUpperCase()}</Tag>
+      <Button secondary title="Ver página da campanha" onPress={() => roteador.push({ pathname: '/campanha', params: { id: campanha.id } })}/>
       <Heading>Necessidades da campanha</Heading>
-      {campanha.necessidades.map(pedido => <Card variant="row" key={pedido.id} title={pedido.nome} subtitle={`${pedido.recebido} recebidos · ${pedido.reservado} reservados`}/>)}
+      {campanha.necessidades.map(pedido => <Card variant="row" key={pedido.id} title={pedido.nome} subtitle={pedido.tipo === 'dinheiro' ? `${formatarDinheiro(pedido.recebido / 100)} recebidos · meta ${formatarDinheiro(pedido.meta / 100)}` : `${pedido.recebido} ${pedido.tipo === 'tarefa' ? 'participações confirmadas' : 'unidades recebidas'} · ${pedido.reservado} ${pedido.tipo === 'tarefa' ? 'vagas reservadas' : 'unidades reservadas'}`}/>)}
       <Heading>Organize a próxima etapa</Heading>
       <Card title="Confirmar ajudas" icon="checkmark-circle-outline" onPress={() => roteador.push({ pathname: '/confirmar', params: { campanha: campanha.id } })}/>
       <Card title="Publicar atualização" icon="document-text-outline" onPress={() => roteador.push({ pathname: '/publicar', params: { campanha: campanha.id } })}/>
@@ -36,6 +39,7 @@ export function ConfirmHelp() {
   const { campanha } = useLocalSearchParams<{ campanha?: string }>(); const consulta = useDados<Ajuda[]>(usuarioLogado() ? `/campanhas/${campanha || 'biblioteca'}/ajudas` : null);
   const [selecionada, definirSelecionada] = useState<number | null>(null); const [quantidade, definirQuantidade] = useState(''); const [estado, definirEstado] = useState('Entregue'); const [restante, definirRestante] = useState('Manter pendente'); const [mensagem, definirMensagem] = useState(''); const [ocupado, definirOcupado] = useState(false);
   const ajuda = consulta.dados?.find(item => item.id === selecionada);
+  const pendentes = consulta.dados?.filter(item => ['reservado', 'em_andamento'].includes(item.estado));
   async function confirmar() {
     if (!ajuda) return;
     definirOcupado(true);
@@ -44,8 +48,8 @@ export function ConfirmHelp() {
   }
   return <Screen title="Confirmar ajuda" heading="Registre o recebimento.">
     {!usuarioLogado() ? <PedirLogin/> : <><EstadoConexao {...consulta}/>
-      {consulta.dados?.filter(item => ['reservado', 'em_andamento'].includes(item.estado)).map(item => <Card key={item.id} title={`${item.quantidade} · ${item.necessidade}`} subtitle={`${item.pessoa} · já recebido: ${item.recebido}`} onPress={() => { definirSelecionada(item.id); definirQuantidade(String(item.quantidade)); definirMensagem(''); }}/>)}
-      {ajuda ? <><Field label="Total recebido até agora *" numeric value={quantidade} onChangeText={definirQuantidade}/><Choices options={['Em andamento', 'Entregue']} selected={estado} onSelect={definirEstado}/><Heading>Se houver quantidade restante</Heading><Choices options={['Manter pendente', 'Cancelar restante']} selected={restante} onSelect={definirRestante}/><Button title="Confirmar recebimento" disabled={ocupado} onPress={confirmar}/></> : <Copy muted>Selecione uma ajuda pendente. Só o responsável confirma a ajuda de outra pessoa.</Copy>}
+      {pendentes?.map(item => <Card key={item.id} title={`${item.quantidade} · ${item.necessidade}`} subtitle={`${item.pessoa} · já recebido: ${item.recebido}`} onPress={() => { definirSelecionada(item.id); definirQuantidade(String(item.quantidade)); definirEstado('Entregue'); definirRestante('Manter pendente'); definirMensagem(''); }}/>)}
+      {ajuda ? <><Field label="Total recebido até agora *" numeric value={quantidade} onChangeText={definirQuantidade}/><Choices label="Situação da ajuda" options={['Em andamento', 'Entregue']} selected={estado} onSelect={definirEstado}/><Heading>Se houver quantidade restante</Heading><Choices options={['Manter pendente', 'Cancelar restante']} selected={restante} onSelect={definirRestante}/><Button title={ocupado ? 'Salvando...' : 'Confirmar recebimento'} disabled={ocupado} onPress={confirmar}/></> : pendentes?.length === 0 ? <EmptyState title="Nenhuma ajuda pendente.">Quando alguém reservar itens ou vagas, a participação aparecerá aqui para você confirmar.</EmptyState> : pendentes?.length ? <Copy muted>Selecione uma ajuda pendente. Só o responsável confirma a ajuda de outra pessoa.</Copy> : null}
       {mensagem ? <Notice>{mensagem}</Notice> : null}
     </>}
   </Screen>;

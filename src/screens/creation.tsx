@@ -33,7 +33,7 @@ export function Story() {
 
 export function Requests() {
   const roteador = useRouter(); const parametros = useLocalSearchParams<ParametrosRascunho>(); const pedidos = lerPedidos(parametros.pedidos);
-  return <Screen variant="form" title="Criar campanha" step="PASSO 2 DE 4" heading="Do que precisa?" subtitle="Cada pedido vira uma necessidade.">
+  return <Screen variant="form" title={parametros.campanha_id ? 'Editar campanha' : 'Criar campanha'} step="PASSO 2 DE 4" heading="Do que precisa?" subtitle="Adicione os itens, valores ou tarefas de que a campanha precisa." onBack={() => roteador.replace({ pathname: '/criar', params: parametros })}>
     {pedidos.map(pedido => <Card key={pedido.id} title={pedido.nome} subtitle={`${pedido.tipo} · meta ${pedido.tipo === 'dinheiro' ? formatarDinheiro(converterValor(pedido.meta)) : pedido.meta}`} onPress={() => roteador.push({ pathname: '/editar-necessidade', params: { ...parametros, editar: pedido.id } })}/>)}
     {!pedidos.length ? <Notice>Adicione pelo menos uma necessidade para continuar.</Notice> : null}
     <Button secondary title="Adicionar necessidade" onPress={() => roteador.push({ pathname: '/editar-necessidade', params: { ...parametros, editar: '' } })}/>
@@ -54,13 +54,13 @@ export function EditRequest() {
     const novaLista = original ? pedidos.map(anterior => anterior.id === original.id ? pedido : anterior) : [...pedidos, pedido];
     roteador.replace({ pathname: '/pedidos', params: { ...parametros, pedidos: JSON.stringify(novaLista), editar: '' } });
   }
-  return <Screen variant="form" title="Necessidade" heading="Um pedido bem definido.">
-    <Field label="Nome *" value={nome} onChangeText={definirNome}/>
-    <Choices options={['Dinheiro', 'Objeto', 'Tarefa']} selected={tipo === 'dinheiro' ? 'Dinheiro' : tipo === 'tarefa' ? 'Tarefa' : 'Objeto'} onSelect={valor => definirTipo(valor === 'Dinheiro' ? 'dinheiro' : valor === 'Tarefa' ? 'tarefa' : 'objeto')}/>
+  return <Screen variant="form" title={original ? 'Editar necessidade' : 'Adicionar necessidade'} heading="Do que a campanha precisa?" subtitle="Os campos com * são obrigatórios." onBack={() => roteador.replace({ pathname: '/pedidos', params: parametros })}>
+    <Field label="Nome da necessidade *" value={nome} onChangeText={definirNome} placeholder="Ex.: cobertores, livros ou organizar doações"/>
+    <Choices label="Tipo de ajuda" options={['Dinheiro', 'Objeto', 'Tarefa']} selected={tipo === 'dinheiro' ? 'Dinheiro' : tipo === 'tarefa' ? 'Tarefa' : 'Objeto'} onSelect={valor => definirTipo(valor === 'Dinheiro' ? 'dinheiro' : valor === 'Tarefa' ? 'tarefa' : 'objeto')}/>
     <Field label={tipo === 'dinheiro' ? 'Meta líquida em reais *' : tipo === 'tarefa' ? 'Número de vagas *' : 'Quantidade de unidades *'} numeric value={meta} onChangeText={definirMeta}/>
-    {tipo === 'dinheiro' ? <Choices options={['Fechada', 'Aberta']} selected={tipoMeta === 'fechada' ? 'Fechada' : 'Aberta'} onSelect={valor => definirTipoMeta(valor === 'Fechada' ? 'fechada' : 'aberta')}/> : null}
-    <Choices options={['Normal', 'Alta']} selected={prioridade} onSelect={definirPrioridade}/>
-    <Field label="Prazo *" value={prazo} onChangeText={definirPrazo} placeholder="30/10/2026"/><Field label="Instruções *" multiline value={descricao} onChangeText={definirDescricao}/>
+    {tipo === 'dinheiro' ? <><Copy muted>É o valor que a campanha precisa receber após as taxas da simulação.</Copy><Choices label="Limite de arrecadação" hint="Fechada: aceita doações até atingir a meta. Aberta: permite continuar recebendo depois da meta." options={['Fechada', 'Aberta']} selected={tipoMeta === 'fechada' ? 'Fechada' : 'Aberta'} onSelect={valor => definirTipoMeta(valor === 'Fechada' ? 'fechada' : 'aberta')}/></> : null}
+    <Choices label="Prioridade da necessidade" hint="Normal: sem urgência especial. Alta: precisa de ajuda com mais urgência." options={['Normal', 'Alta']} selected={prioridade} onSelect={definirPrioridade}/>
+    <Field label="Prazo para receber ajuda *" value={prazo} onChangeText={definirPrazo} placeholder="DD/MM/AAAA"/><Field label="Instruções para quem vai ajudar *" multiline value={descricao} onChangeText={definirDescricao} placeholder="Explique o que doar ou fazer e como combinar a ajuda."/>
     {erro ? <Notice error>{erro}</Notice> : null}<Button title="Salvar necessidade no rascunho" onPress={salvar}/>
   </Screen>;
 }
@@ -75,8 +75,8 @@ export function Organization() {
   const [nomeEvento, definirNomeEvento] = useState(originalEvento?.nome || ''); const [dataEvento, definirDataEvento] = useState(originalEvento?.data || '');
   const [horaEvento, definirHoraEvento] = useState(originalEvento?.horario || ''); const [localEvento, definirLocalEvento] = useState(originalEvento?.local || '');
   const temObjeto = pedidos.some(pedido => pedido.tipo === 'objeto');
-  return <Screen variant="form" title="Criar campanha" step="PASSO 3 DE 4" heading="Onde e até quando?">
-    <Field label="Cidade e bairro *" value={regiao} onChangeText={definirRegiao}/><Field label="Prazo da campanha *" value={prazo} onChangeText={definirPrazo}/>
+  return <Screen variant="form" title={parametros.campanha_id ? 'Editar campanha' : 'Criar campanha'} step="PASSO 3 DE 4" heading="Onde e até quando?">
+    <Field label="Cidade e bairro *" value={regiao} onChangeText={definirRegiao}/><Field label="Prazo da campanha *" value={prazo} onChangeText={definirPrazo} placeholder="DD/MM/AAAA"/>
     <Card title={usuarioLogado()?.nome || 'Entre na sua conta'} subtitle="Responsável pela campanha" icon="person-outline"/>
     {temObjeto ? <Field label="Coleta e entrega *" multiline value={instrucoes} onChangeText={definirInstrucoes}/> : null}
     <View style={s.row}><Switch accessibilityLabel="Incluir evento gratuito" value={temEvento} onValueChange={definirTemEvento} trackColor={{ false: colors.line, true: colors.primary }}/><Copy>Incluir um evento gratuito</Copy></View>
@@ -97,14 +97,14 @@ export function CampaignReview() {
   async function salvarCampanha() {
     definirOcupado(true); definirErro('');
     try {
-      const campanha = await requisitar<Campanha>(parametros.campanha_id ? `/campanhas/${parametros.campanha_id}` : '/campanhas', parametros.campanha_id ? 'PUT' : 'POST', { titulo: parametros.titulo, descricao: parametros.descricao, categoria: parametros.categoria, regiao: parametros.regiao, prazo: parametros.prazo, instrucoes: parametros.instrucoes || '', evento: parametros.evento || '', necessidades: pedidos.map(pedido => ({ ...pedido, id: pedido.id.startsWith('rascunho-') ? undefined : pedido.id, meta: pedido.tipo === 'dinheiro' ? Math.round(converterValor(pedido.meta) * 100) : Number(pedido.meta) })) });
-      roteador.replace({ pathname: '/gerenciar', params: { id: campanha.id } });
+      const campanha = await requisitar<Campanha>(parametros.campanha_id ? `/campanhas/${parametros.campanha_id}` : '/campanhas', parametros.campanha_id ? 'PUT' : 'POST', { titulo: parametros.titulo, descricao: parametros.descricao, categoria: parametros.categoria, regiao: parametros.regiao, prazo: parametros.prazo, instrucoes: parametros.instrucoes || '', evento: parametros.evento || '', necessidades: pedidos.map(pedido => ({ ...pedido, id: pedido.id.startsWith('rascunho-') ? undefined : pedido.id, meta: pedido.tipo === 'dinheiro' ? Math.round(converterValor(pedido.meta) * 100) : converterValor(pedido.meta) })) });
+      roteador.replace({ pathname: '/gerenciar', params: { id: campanha.id, salvo: parametros.campanha_id ? 'atualizada' : 'criada' } });
     } catch (problema) { definirErro(mensagemErro(problema)); } finally { definirOcupado(false); }
   }
   return <Screen variant="form" title="Revisão da campanha" step="PASSO 4 DE 4" heading="Uma causa bem explicada.">
     {!usuarioLogado() ? <PedirLogin/> : parametros.titulo ? <><Card title={parametros.titulo} subtitle={`${parametros.categoria} · ${parametros.regiao}`}><Copy>{parametros.descricao}</Copy>{pedidos.map(pedido => <Copy key={pedido.id}>• {pedido.nome} · {pedido.tipo}</Copy>)}{parametros.evento ? <Copy>{parametros.evento}</Copy> : null}</Card>
-      <Copy muted>Nesta versão básica, salvar publica a campanha. Não há análise automática de IA.</Copy>
-      {erro ? <Notice error>{erro}</Notice> : null}<Button title={ocupado ? 'Salvando...' : 'Salvar campanha'} disabled={ocupado || !pedidos.length} onPress={salvarCampanha}/>
+      <Copy muted>{parametros.campanha_id ? 'Ao salvar, as alterações ficam disponíveis na campanha.' : 'Ao publicar, sua campanha fica disponível para receber ajuda.'}</Copy>
+      {erro ? <Notice error>{erro}</Notice> : null}<Button title={ocupado ? 'Salvando...' : parametros.campanha_id ? 'Salvar alterações' : 'Publicar campanha'} disabled={ocupado || !pedidos.length} onPress={salvarCampanha}/>
       <Button secondary title="Editar a história" onPress={() => roteador.push({ pathname: '/criar', params: parametros })}/></> : <><Notice>Comece preenchendo sua campanha.</Notice><Button title="Criar campanha" onPress={() => roteador.push('/criar')}/></>}
   </Screen>;
 }

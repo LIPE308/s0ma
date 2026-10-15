@@ -16,7 +16,7 @@ export function Donation() {
   }
   return <Screen variant="form" title="Doação financeira" heading="Quanto você quer somar?" subtitle={consulta.dados?.nome}><EstadoConexao {...consulta}/>
     {!usuarioLogado() ? <PedirLogin/> : consulta.dados ? <><Tag>SIMULAÇÃO ACADÊMICA</Tag>
-      <Field label="Valor em reais *" numeric value={valor} onChangeText={definirValor}/><Choices options={['20,00', '50,00', '100,00']} selected={valor} onSelect={definirValor}/><Choices options={['Pix', 'Crédito', 'Débito']} selected={meio} onSelect={definirMeio}/>
+      <Field label="Valor em reais *" numeric value={valor} onChangeText={definirValor}/><Choices label="Valores sugeridos em reais" options={['20,00', '50,00', '100,00']} selected={valor} onSelect={definirValor}/><Choices label="Forma de pagamento (simulação)" options={['Pix', 'Crédito', 'Débito']} selected={meio} onSelect={definirMeio}/>
       <Card title="Resumo do teste" icon="wallet-outline"><Line label="Valor" value={formatarDinheiro(Number.isFinite(centavos) ? centavos / 100 : 0)}/><Line label="Taxa Soma · 4%" value={formatarDinheiro(Number.isFinite(taxa) ? taxa / 100 : 0)}/><Line label="Tarifa fictícia" value="R$ 3,00"/><Line label="Líquido" value={formatarDinheiro(Number.isFinite(centavos) ? Math.max(0, centavos - taxa - 300) / 100 : 0)}/></Card>
       <Notice>O pedido será salvo no MySQL. Não há cobrança nem provedor de pagamento conectado.</Notice>{erro ? <Notice error>{erro}</Notice> : null}<Button title="Criar pagamento de teste" disabled={ocupado || consulta.dados.campanha_estado !== 'ativa' || consulta.dados.tipo !== 'dinheiro' || consulta.dados.responsavel_id === usuarioLogado()?.id} onPress={continuar}/>
     </> : null}

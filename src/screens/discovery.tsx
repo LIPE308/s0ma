@@ -116,7 +116,7 @@ export function NeedDetails() {
   const disponivel = pedido && pedido.campanha_estado === 'ativa' && (pedido.tipo === 'dinheiro' && pedido.tipo_meta === 'aberta' || pedido.meta > pedido.recebido + Number(pedido.reservado));
   const propria = pedido?.responsavel_id === usuarioLogado()?.id && !!usuarioLogado();
   return <Screen variant="detail" title="Necessidade" heading={pedido?.nome} subtitle={pedido?.campanha}><EstadoConexao {...consulta}/>{pedido ? <>
-    <Tag>{(disponivel ? 'DISPONÍVEL' : 'INDISPONÍVEL') + ' · ' + pedido.prioridade.toLocaleUpperCase()}</Tag><Copy>{pedido.descricao}</Copy>
+    <Tag>{(disponivel ? 'DISPONÍVEL' : 'INDISPONÍVEL') + ' · PRIORIDADE ' + pedido.prioridade.toLocaleUpperCase()}</Tag><Copy>{pedido.descricao}</Copy>
     <Card title="Cada gesto aproxima a causa" icon={pedido.tipo === 'tarefa' ? 'people-outline' : 'heart-outline'}>
       <Progress done={pedido.recebido} total={pedido.meta}/>
       <Copy muted>{pedido.tipo === 'dinheiro' ? formatarDinheiro(pedido.recebido / 100) + ' de ' + formatarDinheiro(pedido.meta / 100) + ' líquidos de teste' : pedido.recebido + ' de ' + pedido.meta + ' confirmados · ' + Math.max(0, pedido.meta - pedido.recebido - Number(pedido.reservado)) + (pedido.tipo === 'tarefa' ? ' vagas livres' : ' unidades livres')}</Copy>
