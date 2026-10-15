@@ -51,4 +51,4 @@ export function DesignProvider({ fontsReady, children }: { fontsReady: boolean; 
 export function useDesign() { return useContext(DesignContext); }
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, section: 48 };
 export const radius = { control: 16, card: 22, hero: 28, pill: 99 };
-export const motion = { press: 120, content: 220, theme: 180, tab: 180, introduction: 3400 };
+export const motion = { press: 120, content: 220, theme: 180, tab: 180, introduction: 5600 };
