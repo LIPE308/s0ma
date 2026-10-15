@@ -40,7 +40,7 @@ Vetores e imagens: `assets/brand/`. Os assets originais da base continuam em `as
 
 Preferência de movimento reduzido lida no sistema e acompanhada durante a sessão. O padrão inicial é estático até conhecer a preferência. Sem introdução ou deslocamento quando ela está ativa; diálogos sem animação.
 
-Splash nativa estática com o símbolo real. Carrega apenas as fontes locais indispensáveis; erro ou limite de 3 s libera a interface com a fonte do sistema. Após a interface ficar pronta, a construção dos dois módulos dura 1,8 s e ocorre uma vez por inicialização. A camada não captura toques e desaparece ao navegar, sem aguardar API ou banco. Não repete ao trocar abas.
+Splash nativa estática com o símbolo real. Carrega apenas as fontes locais indispensáveis; erro ou limite de 3 s libera a interface com a fonte do sistema. Após a interface ficar pronta, a introdução dura 1,8 s e ocorre uma vez por inicialização: a marca original aparece por 250 ms, os dois L deslizam em sentidos opostos por 850 ms até se unirem em um sinal de mais, o sinal permanece por 400 ms e a camada desaparece em 300 ms. A camada não captura toques e desaparece ao navegar, sem aguardar API ou banco. Não repete ao trocar abas.
 
 Conteúdo entra com deslocamento de 8 pontos em 220 ms. Pressão dos botões usa escala 0,98 em 120 ms; resposta depende da preferência do sistema. Navegação nativa respeita avançar/voltar, com transição desativada em movimento reduzido. Progresso e estados incluem informação textual; controles têm rótulos acessíveis e alvos de pelo menos 44 pontos. Reutiliza Animated, Expo Font, Splash Screen e Ionicons já instalados.
 

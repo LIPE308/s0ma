@@ -9,7 +9,8 @@ export function BrandMark({ size = 40, color, construction }: { size?: number; c
   const { colors, dark } = useDesign(); const unit = size / 100; const fill = color || colors.hero;
   const rectangles = [[20, 20, 44, 18], [20, 38, 18, 26], [36, 62, 44, 18], [62, 36, 18, 26]];
   return <View accessible={false} style={{ width: size, height: size, backgroundColor: dark && !color ? '#FFFEFB' : undefined, borderRadius: size * .2 }}>
-    {[0, 1].map(group => <Animated.View key={group} style={[StyleSheet.absoluteFill, construction ? { opacity: construction, transform: [{ translateX: construction.interpolate({ inputRange: [0, 1], outputRange: [group ? 16 : -16, 0] }) }, { translateY: construction.interpolate({ inputRange: [0, 1], outputRange: [group ? 10 : -10, 0] }) }] } : undefined]}>
+    {/* Moving each L by 21 units joins their corners into a centered, equal-armed plus. */}
+    {[0, 1].map(group => <Animated.View key={group} style={[StyleSheet.absoluteFill, construction ? { transform: [{ translateX: construction.interpolate({ inputRange: [0, 1], outputRange: [0, (group ? -21 : 21) * unit] }) }, { translateY: construction.interpolate({ inputRange: [0, 1], outputRange: [0, (group ? -21 : 21) * unit] }) }] } : undefined]}>
       {rectangles.slice(group * 2, group * 2 + 2).map(([left, top, width, height], index) => <View key={index} style={{ position: 'absolute', left: left * unit, top: top * unit, width: width * unit, height: height * unit, backgroundColor: fill, borderTopLeftRadius: group === 0 && index === 0 ? 4 * unit : 0, borderBottomRightRadius: group === 1 && index === 0 ? 4 * unit : 0 }}/>) }
     </Animated.View>)}
   </View>;
@@ -29,7 +30,8 @@ export function BrandIntroduction() {
     if (played.current) return;
     played.current = true; setVisible(true);
     const animation = Animated.sequence([
-      Animated.timing(build, { toValue: 1, duration: 1100, easing: Easing.bezier(.22, 1, .36, 1), useNativeDriver: nativeDriver }),
+      Animated.delay(250),
+      Animated.timing(build, { toValue: 1, duration: 850, easing: Easing.bezier(.22, 1, .36, 1), useNativeDriver: nativeDriver }),
       Animated.delay(400),
       Animated.timing(opacity, { toValue: 0, duration: motion.introduction - 1500, useNativeDriver: nativeDriver }),
     ]);
