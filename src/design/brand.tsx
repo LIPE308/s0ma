@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'expo-router';
-import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
+import { Animated, AppState, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import { motion, useDesign } from './theme';
 import { nativeDriver, useReducedMotion } from './motion';
+import { useBrandAudio } from './brand-audio';
 
 // The same 100-unit geometry is used by the exported SVG and Expo icons.
 export function BrandMark({ size = 40, color, construction }: { size?: number; color?: string; construction?: Animated.Value }) {
@@ -35,13 +36,20 @@ export function BrandSignature({ inverse = false, size = 40 }: { inverse?: boole
 }
 
 export function BrandIntroduction() {
-  const reduced = useReducedMotion(); const path = usePathname(); const initialPath = useRef(path); const played = useRef(false);
+  const reduced = useReducedMotion(); const path = usePathname(); const initialPath = useRef(path); const lastRun = useRef(-1); const replayRequest = useRef(0);
   const build = useRef(new Animated.Value(0)).current; const opacity = useRef(new Animated.Value(1)).current;
   const [visible, setVisible] = useState(false); const { colors, fontsReady } = useDesign();
+  const [replay, setReplay] = useState(0);
+  const audio = useBrandAudio(); const { play, stop, prepare } = audio;
+  const invalidateReplay = useCallback(() => { replayRequest.current++; }, []);
   useEffect(() => {
-    if (reduced || path !== initialPath.current) { setVisible(false); return; }
-    if (played.current) return;
-    played.current = true; setVisible(true);
+    if (reduced || path !== initialPath.current) { setVisible(false); stop(); return; }
+    if (lastRun.current === replay) return;
+    lastRun.current = replay; build.setValue(0); opacity.setValue(1); setVisible(true);
+    let sounded = false;
+    const cue = build.addListener(({ value }) => {
+      if (!sounded && value >= 2.995) { sounded = true; play(); }
+    });
     // Shape dimensions and corner radii require the JS driver; only four pieces are animated.
     const morph = (toValue: number, duration: number) => Animated.timing(build, { toValue, duration, easing: Easing.bezier(.4, 0, .2, 1), useNativeDriver: false });
     const animation = Animated.sequence([
@@ -51,19 +59,30 @@ export function BrandIntroduction() {
       morph(2, 600),
       Animated.delay(200),
       morph(3, 900),
-      Animated.delay(650),
+      Animated.delay(1900),
       morph(4, 800),
       Animated.delay(150),
       morph(5, 650),
       Animated.delay(250),
-      Animated.timing(opacity, { toValue: 0, duration: motion.introduction - 5250, useNativeDriver: nativeDriver }),
+      Animated.timing(opacity, { toValue: 0, duration: motion.introduction - 6500, useNativeDriver: nativeDriver }),
     ]);
-    animation.start(() => setVisible(false));
-    return () => animation.stop();
-  }, [reduced, path, build, opacity]);
+    const activity = AppState.addEventListener('change', state => {
+      if (state !== 'active') { invalidateReplay(); animation.stop(); stop(); setVisible(false); }
+    });
+    animation.start(() => { stop(); setVisible(false); });
+    return () => { invalidateReplay(); build.removeListener(cue); activity.remove(); animation.stop(); stop(); };
+  }, [reduced, path, build, opacity, replay, play, stop, invalidateReplay]);
   if (!visible || reduced) return null;
-  return <Animated.View testID="brand-introduction" pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[StyleSheet.absoluteFill, { opacity, backgroundColor: colors.hero, alignItems: 'center', justifyContent: 'center', gap: 14 }]}>
-    <View style={{ width: 280, height: 160, alignItems: 'center' }}><BrandMark size={160} color={colors.onHero} construction={build}/></View>
-    <Text style={{ color: colors.onHero, fontSize: 14, fontFamily: fontsReady ? 'Manrope-Regular' : undefined }}>Toda ajuda conta.</Text>
+  return <Animated.View testID="brand-introduction" pointerEvents="box-none" style={[StyleSheet.absoluteFill, { opacity, backgroundColor: colors.hero, alignItems: 'center', justifyContent: 'center' }]}>
+    <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ alignItems: 'center', gap: 14 }}>
+      <View style={{ width: 280, height: 160, alignItems: 'center' }}><BrandMark size={160} color={colors.onHero} construction={build}/></View>
+      <Text style={{ color: colors.onHero, fontSize: 14, fontFamily: fontsReady ? 'Manrope-Regular' : undefined }}>Toda ajuda conta.</Text>
+    </View>
+    <Pressable testID="brand-audio-replay" accessibilityRole="button" accessibilityLabel="Ouvir abertura com som" accessibilityHint={audio.blocked ? 'Toque para reproduzir a abertura com a voz SOMA.' : 'Reproduz novamente a abertura com som.'} disabled={!audio.ready} onPress={async () => {
+      const request = ++replayRequest.current; stop();
+      if (await prepare() && request === replayRequest.current) setReplay(value => value + 1);
+    }} style={{ position: 'absolute', bottom: 32, minHeight: 44, paddingHorizontal: 18, justifyContent: 'center', borderRadius: 99, borderWidth: 1, borderColor: colors.onHero, opacity: audio.ready ? 1 : .6 }}>
+      <Text style={{ color: colors.onHero, fontSize: 13, fontFamily: fontsReady ? 'Manrope-SemiBold' : undefined }}>{audio.failed ? 'Som indisponível' : audio.ready ? 'Ouvir abertura' : 'Carregando som…'}</Text>
+    </Pressable>
   </Animated.View>;
 }

@@ -103,7 +103,7 @@ function servirFront(caminho, resposta) {
     arquivo = join(pasta, 'index.html');
   }
   if (!existsSync(arquivo)) { responder(resposta, 404, { mensagem: 'API funcionando. Compile o front com npm run compilar:web ou use o Expo.' }); return; }
-  const tipos = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.ttf': 'font/ttf', '.woff2': 'font/woff2', '.ico': 'image/x-icon', '.json': 'application/json' };
+  const tipos = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.wav': 'audio/wav', '.ttf': 'font/ttf', '.woff2': 'font/woff2', '.ico': 'image/x-icon', '.json': 'application/json' };
   const versionado = /\.[a-f0-9]{32}\./.test(arquivo);
   resposta.writeHead(200, { 'Content-Type': tipos[extname(arquivo)] || 'application/octet-stream', 'Cache-Control': versionado ? 'public, max-age=31536000, immutable' : 'no-store' });
   resposta.end(readFileSync(arquivo));
