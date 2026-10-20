@@ -8,15 +8,16 @@ const arquivoConfiguracao = join(__dirname, '.env');
 if (existsSync(arquivoConfiguracao)) process.loadEnvFile(arquivoConfiguracao);
 const { banco, consultar, transacao, inicializarBanco } = require('./banco');
 const { erro, texto, inteiro, opcao, gerarSenha, conferirSenha, resumirToken, usuarioPublico, lerCorpo } = require('./auxiliares');
+const { umaVez } = require('./operacoes');
 
 const categorias = ['Família', 'Saúde', 'Educação', 'Comunidade', 'Instituições', 'Proteção animal', 'Meio ambiente', 'Cultura'];
 const consultaCampanhas = 'SELECT c.*, u.nome AS responsavel FROM campanhas c JOIN usuarios u ON u.id = c.usuario_id';
 const consultaNecessidades = `SELECT n.*, c.titulo AS campanha, c.regiao, c.instrucoes, c.estado AS campanha_estado, c.usuario_id AS responsavel_id,
   COALESCE((SELECT SUM(a.quantidade - a.recebido) FROM ajudas a WHERE a.necessidade_id = n.id AND a.estado IN ('reservado','em_andamento')), 0) AS reservado
   FROM necessidades n JOIN campanhas c ON c.id = n.campanha_id`;
-const consultaAjudas = `SELECT a.*, u.nome AS pessoa, c.titulo AS campanha, c.usuario_id AS responsavel_id, c.instrucoes,
+const consultaAjudas = `SELECT a.*, u.nome AS pessoa, c.titulo AS campanha, c.usuario_id AS responsavel_id, c.instrucoes, organizador.telefone AS telefone_responsavel,
   COALESCE(n.nome, 'Participação na ação') AS necessidade FROM ajudas a JOIN usuarios u ON u.id = a.usuario_id
-  JOIN campanhas c ON c.id = a.campanha_id LEFT JOIN necessidades n ON n.id = a.necessidade_id`;
+  JOIN campanhas c ON c.id = a.campanha_id JOIN usuarios organizador ON organizador.id=c.usuario_id LEFT JOIN necessidades n ON n.id = a.necessidade_id`;
 
 function responder(resposta, codigo, dados) {
   resposta.writeHead(codigo, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
@@ -46,6 +47,24 @@ async function obterCampanha(id, consulta = consultar, bloquear = false) {
 function conferirVisibilidade(campanha, usuario) {
   if (!['ativa', 'encerrada'].includes(campanha.estado) && (!usuario || (usuario.id !== campanha.usuario_id && !usuario.administrador))) erro('Campanha não disponível.', 404);
 }
+function campanhaPublica(campanha, usuario) {
+  const gerente = usuario && (usuario.administrador || usuario.id === campanha.usuario_id);
+  return { ...campanha, instrucoes: gerente ? campanha.instrucoes : '', motivo: gerente ? campanha.motivo : '', estado_antes_moderacao: gerente ? campanha.estado_antes_moderacao : undefined };
+}
+function pedidoPublico(pedido, usuario) {
+  const gerente = usuario && (usuario.administrador || usuario.id === pedido.responsavel_id);
+  return { ...pedido, instrucoes: gerente ? pedido.instrucoes : '', reservado: Number(pedido.reservado) };
+}
+function validarData(valor, nome, obrigatorio = true) {
+  const data = texto(valor || '', nome, 30, obrigatorio);
+  if (!data && !obrigatorio) return data;
+  const partes = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(data);
+  if (!partes) erro(`Informe ${nome} no formato DD/MM/AAAA.`);
+  const [, dia, mes, ano] = partes.map(Number);
+  const calendario = new Date(Date.UTC(ano, mes - 1, dia));
+  if (calendario.getUTCFullYear() !== ano || calendario.getUTCMonth() !== mes - 1 || calendario.getUTCDate() !== dia) erro(`Informe uma data válida para ${nome}.`);
+  return data;
+}
 async function obterNecessidade(id, consulta = consultar) {
   const [necessidade] = await consulta(`${consultaNecessidades} WHERE n.id = ?`, [id]);
   if (!necessidade) erro('Necessidade não encontrada.', 404);
@@ -65,7 +84,7 @@ function validarPedido(pedido) {
     meta: inteiro(pedido.meta, 'a meta'),
     tipo_meta: opcao(pedido.tipo_meta || 'fechada', ['fechada', 'aberta'], 'meta'),
     prioridade: opcao(pedido.prioridade || 'Normal', ['Normal', 'Alta'], 'prioridade'),
-    prazo: texto(pedido.prazo || '', 'o prazo', 30, false),
+    prazo: validarData(pedido.prazo, 'o prazo', false),
     descricao: texto(pedido.descricao || '', 'as instruções', 2000, false),
   };
 }
@@ -116,7 +135,7 @@ async function atender(requisicao, resposta) {
     if (origem && !origemPermitida) erro('Origem não permitida.', 403);
     if (origemPermitida) { resposta.setHeader('Access-Control-Allow-Origin', origem); resposta.setHeader('Vary', 'Origin'); }
     resposta.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-    resposta.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    resposta.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Idempotency-Key');
     if (requisicao.method === 'OPTIONS') { resposta.writeHead(204); resposta.end(); return; }
     const endereco = new URL(requisicao.url, 'http://localhost');
     const caminho = decodeURIComponent(endereco.pathname);
@@ -169,25 +188,30 @@ async function atender(requisicao, resposta) {
     // 2. Campanhas e pedidos.
     } else if (caminho === '/api/campanhas' && metodo === 'GET') {
       if (endereco.searchParams.get('minhas') === '1') { exigirLogin(usuario); resultado = await consultar(`${consultaCampanhas} WHERE c.usuario_id=? ORDER BY c.criada_em DESC`, [usuario.id]); }
-      else resultado = await consultar(`${consultaCampanhas} WHERE c.estado IN ('ativa','encerrada') ORDER BY c.criada_em DESC`);
-    } else if ((caminho === '/api/campanhas' && metodo === 'POST') || ((partes = caminho.match(/^\/api\/campanhas\/([^/]+)$/)) && metodo === 'PUT')) {
+      else resultado = (await consultar(`${consultaCampanhas} WHERE c.estado IN ('ativa','encerrada') ORDER BY c.criada_em DESC`)).map(c => campanhaPublica(c, usuario));
+    } else if ((caminho === '/api/campanhas' && metodo === 'POST') || ((partes = caminho.match(/^\/api\/campanhas\/([^/]+)$/)) && metodo === 'PUT') || ((partes = caminho.match(/^\/api\/campanhas\/([^/]+)\/reabrir$/)) && metodo === 'PATCH')) {
       exigirLogin(usuario);
       const id = partes ? partes[1] : randomUUID();
+      const reabrindo = metodo === 'PATCH';
       const titulo = texto(dados.titulo, 'o título', 150);
       const descricao = texto(dados.descricao, 'a descrição', 10000);
       const categoria = opcao(dados.categoria, categorias, 'categoria');
       const regiao = texto(dados.regiao, 'a região', 150);
-      const prazo = texto(dados.prazo, 'o prazo', 30);
+      const prazo = validarData(dados.prazo, 'o prazo');
       const instrucoes = texto(dados.instrucoes || '', 'as instruções', 2000, false);
       const evento = texto(dados.evento || '', 'a ação', 1000, false);
       if (!Array.isArray(dados.necessidades) || !dados.necessidades.length || dados.necessidades.length > 30) erro('Inclua de 1 a 30 necessidades.');
       const pedidos = dados.necessidades.map(validarPedido);
       if (new Set(pedidos.map(p => p.id)).size !== pedidos.length) erro('Há pedidos duplicados.');
-      await transacao(async consulta => {
-        if (metodo === 'PUT') {
+      const salvo = await transacao(async consulta => umaVez(consulta, usuario.id, requisicao, dados, async () => {
+        if (metodo !== 'POST') {
           const campanha = await obterCampanha(id, consulta, true); exigirResponsavel(usuario, campanha);
+          if (reabrindo && campanha.estado !== 'encerrada') erro('Somente uma campanha encerrada pode ser reaberta.', 409);
+          const motivo = reabrindo ? texto(dados.motivo_reabertura, 'o motivo da reabertura', 1000) : '';
+          const anteriores = await consulta('SELECT id, recebido, meta FROM necessidades WHERE campanha_id=?', [id]);
+          if (reabrindo && !pedidos.some(p => !anteriores.some(a => a.id === p.id && a.meta === p.meta))) erro('Atualize ao menos uma meta ou inclua uma necessidade antes de reabrir.', 409);
           await consulta('UPDATE campanhas SET titulo=?,descricao=?,categoria=?,regiao=?,prazo=?,instrucoes=?,evento=? WHERE id=?', [titulo, descricao, categoria, regiao, prazo, instrucoes, evento, id]);
-          const anteriores = await consulta('SELECT id, recebido FROM necessidades WHERE campanha_id=?', [id]);
+          if (reabrindo) await consulta("UPDATE campanhas SET estado='ativa',estado_antes_moderacao=NULL,motivo=? WHERE id=?", [motivo, id]);
           for (const anterior of anteriores.filter(p => !pedidos.some(n => n.id === p.id))) {
             const [historico] = await consulta('SELECT (SELECT COUNT(*) FROM ajudas WHERE necessidade_id=?) + (SELECT COUNT(*) FROM pagamentos WHERE necessidade_id=?) AS total', [anterior.id, anterior.id]);
             if (Number(historico.total) || anterior.recebido) erro('Não remova um pedido que já tem histórico.', 409);
@@ -195,16 +219,18 @@ async function atender(requisicao, resposta) {
           }
         } else await consulta('INSERT INTO campanhas (id,usuario_id,titulo,descricao,categoria,regiao,prazo,instrucoes,evento) VALUES (?,?,?,?,?,?,?,?,?)', [id, usuario.id, titulo, descricao, categoria, regiao, prazo, instrucoes, evento]);
         for (const pedido of pedidos) await salvarPedido(consulta, id, pedido);
-      });
-      const [campanha] = await consultar(`${consultaCampanhas} WHERE c.id=?`, [id]);
-      resultado = { ...campanha, necessidades: await consultar(`${consultaNecessidades} WHERE n.campanha_id=?`, [id]) }; codigo = metodo === 'POST' ? 201 : 200;
+        return { id };
+      }));
+      const [campanha] = await consultar(`${consultaCampanhas} WHERE c.id=?`, [salvo.id]);
+      resultado = { ...campanha, necessidades: await consultar(`${consultaNecessidades} WHERE n.campanha_id=?`, [salvo.id]) }; codigo = metodo === 'POST' ? 201 : 200;
     } else if ((partes = caminho.match(/^\/api\/campanhas\/([^/]+)$/)) && metodo === 'GET') {
       const campanha = await obterCampanha(partes[1]); conferirVisibilidade(campanha, usuario);
       const [comResponsavel] = await consultar(`${consultaCampanhas} WHERE c.id=?`, [campanha.id]);
-      resultado = { ...comResponsavel, necessidades: await consultar(`${consultaNecessidades} WHERE n.campanha_id=?`, [campanha.id]) };
+      resultado = { ...campanhaPublica(comResponsavel, usuario), necessidades: (await consultar(`${consultaNecessidades} WHERE n.campanha_id=?`, [campanha.id])).map(n => pedidoPublico(n, usuario)) };
     } else if ((partes = caminho.match(/^\/api\/campanhas\/([^/]+)(?:\/encerrar)?$/)) && (metodo === 'DELETE' || metodo === 'PATCH')) {
       resultado = await transacao(async consulta => {
         const campanha = await obterCampanha(partes[1], consulta, true); exigirResponsavel(usuario, campanha);
+        if (!['ativa', 'encerrada'].includes(campanha.estado)) erro('Uma campanha oculta precisa de revisão administrativa antes de mudar de situação.', 409);
         await consulta("UPDATE campanhas SET estado='encerrada',motivo=? WHERE id=?", [texto(dados.motivo || 'Campanha encerrada pelo responsável.', 'o motivo', 1000), campanha.id]);
         return { mensagem: 'Campanha encerrada. O histórico foi preservado.' };
       });
@@ -212,9 +238,10 @@ async function atender(requisicao, resposta) {
       const lista = await consultar(`${consultaNecessidades} WHERE c.estado='ativa'`);
       const busca = (endereco.searchParams.get('busca') || '').toLocaleLowerCase();
       const tipo = endereco.searchParams.get('tipo'); const regiao = endereco.searchParams.get('regiao');
-      resultado = lista.filter(n => (!tipo || n.tipo === tipo) && (!regiao || n.regiao.includes(regiao)) && `${n.nome} ${n.campanha}`.toLocaleLowerCase().includes(busca)).map(n => ({ ...n, reservado: Number(n.reservado) }));
+      resultado = lista.filter(n => (!tipo || n.tipo === tipo) && (!regiao || n.regiao.includes(regiao)) && `${n.nome} ${n.campanha}`.toLocaleLowerCase().includes(busca)).map(n => pedidoPublico(n, usuario));
     } else if ((partes = caminho.match(/^\/api\/necessidades\/([^/]+)$/)) && metodo === 'GET') {
       resultado = await obterNecessidade(partes[1]); conferirVisibilidade(await obterCampanha(resultado.campanha_id), usuario);
+      resultado = pedidoPublico(resultado, usuario);
     } else if ((partes = caminho.match(/^\/api\/campanhas\/([^/]+)\/atualizacoes$/))) {
       const campanha = await obterCampanha(partes[1]); conferirVisibilidade(campanha, usuario);
       if (metodo === 'GET') resultado = await consultar('SELECT a.*,u.nome AS autor FROM atualizacoes a JOIN usuarios u ON u.id=a.usuario_id WHERE a.campanha_id=? ORDER BY a.id DESC', [campanha.id]);
@@ -226,8 +253,9 @@ async function atender(requisicao, resposta) {
       exigirLogin(usuario);
       const tipo = opcao(dados.tipo, ['objeto', 'tarefa', 'acao'], 'tipo de ajuda');
       const quantidade = inteiro(dados.quantidade ?? 1, 'a quantidade', 1, 10000);
-      resultado = await transacao(async consulta => {
+      resultado = await transacao(async consulta => umaVez(consulta, usuario.id, requisicao, dados, async () => {
         const pedido = tipo === 'acao' ? null : await obterNecessidade(texto(dados.necessidade_id, 'a necessidade', 36), consulta);
+        if (pedido && dados.campanha_id && dados.campanha_id !== pedido.campanha_id) erro('A necessidade não pertence à campanha selecionada.');
         const campanha = await obterCampanha(pedido ? pedido.campanha_id : texto(dados.campanha_id, 'a campanha', 36), consulta, true);
         if (campanha.estado !== 'ativa') erro('Esta campanha não está recebendo novas ajudas.', 409);
         if (campanha.usuario_id === usuario.id) erro('Use outra conta para oferecer ajuda à sua campanha.', 403);
@@ -245,7 +273,7 @@ async function atender(requisicao, resposta) {
         const insercao = await consulta('INSERT INTO ajudas (usuario_id,campanha_id,necessidade_id,tipo,quantidade,entrega,horario,observacao) VALUES (?,?,?,?,?,?,?,?)', [usuario.id, campanha.id, pedido?.id || null, tipo, quantidade, texto(dados.entrega || '', 'a entrega', 300, false), texto(dados.horario || '', 'o horário', 100, false), texto(dados.observacao || '', 'a observação', 2000, false)]);
         await avisar(consulta, campanha.usuario_id, `${usuario.nome} registrou uma ajuda em ${campanha.titulo}.`);
         return { id: insercao.insertId, mensagem: 'Ajuda registrada.' };
-      }); codigo = 201;
+      })); codigo = 201;
     } else if ((partes = caminho.match(/^\/api\/ajudas\/(\d+)(?:\/(cancelar|confirmar))?$/))) {
       exigirLogin(usuario);
       const [ajuda] = await consultar(`${consultaAjudas} WHERE a.id=?`, [partes[1]]);
@@ -284,19 +312,21 @@ async function atender(requisicao, resposta) {
     } else if (caminho === '/api/pagamentos' && metodo === 'POST') {
       exigirLogin(usuario);
       const valor = inteiro(dados.valor, 'o valor em centavos', 1000);
-      const taxaSoma = Math.round(valor * 4 / 100); const taxaProvedor = 300;
+      const taxaSoma = 0; const taxaProvedor = 0;
       const liquido = valor - taxaSoma - taxaProvedor;
       const meio = opcao(dados.meio, ['Pix', 'Crédito', 'Débito'], 'meio');
-      resultado = await transacao(async consulta => {
+      resultado = await transacao(async consulta => umaVez(consulta, usuario.id, requisicao, dados, async () => {
         const pedido = await obterNecessidade(texto(dados.necessidade_id, 'a necessidade', 36), consulta);
         const campanha = await obterCampanha(pedido.campanha_id, consulta, true);
+        if (campanha.usuario_id === usuario.id) erro('Use outra conta para contribuir com sua campanha.', 403);
+        if (dados.campanha_id && dados.campanha_id !== campanha.id) erro('A necessidade não pertence à campanha selecionada.');
         const [atual] = await consulta('SELECT * FROM necessidades WHERE id=? FOR UPDATE', [pedido.id]);
         if (campanha.estado !== 'ativa' || atual.tipo !== 'dinheiro') erro('Este pedido não recebe doações financeiras.', 409);
         const [pendentes] = await consulta("SELECT COALESCE(SUM(valor_liquido),0) AS total FROM pagamentos WHERE necessidade_id=? AND estado='pendente'", [pedido.id]);
-        if (atual.tipo_meta === 'fechada' && liquido > atual.meta - atual.recebido - Number(pendentes.total)) erro('O líquido ultrapassa o restante da meta fechada.', 409);
+        if (atual.tipo_meta === 'fechada' && liquido > atual.meta - atual.recebido - Number(pendentes.total)) erro('O valor ultrapassa o restante da meta fechada.', 409);
         const insercao = await consulta('INSERT INTO pagamentos (usuario_id,necessidade_id,valor,taxa_soma,taxa_provedor,valor_liquido,meio) VALUES (?,?,?,?,?,?,?)', [usuario.id, pedido.id, valor, taxaSoma, taxaProvedor, liquido, meio]);
         return { id: insercao.insertId, simulado: true };
-      }); codigo = 201;
+      })); codigo = 201;
     } else if ((partes = caminho.match(/^\/api\/pagamentos\/(\d+)(?:\/simular)?$/))) {
       exigirLogin(usuario);
       const [pagamento] = await consultar('SELECT p.*,n.campanha_id,n.nome AS necessidade,c.titulo AS campanha FROM pagamentos p JOIN necessidades n ON n.id=p.necessidade_id JOIN campanhas c ON c.id=n.campanha_id WHERE p.id=?', [partes[1]]);
@@ -362,23 +392,33 @@ async function atender(requisicao, resposta) {
 
     // 5. Denúncias, avisos e administração.
     } else if (caminho === '/api/denuncias' && metodo === 'POST') {
-      exigirLogin(usuario); const campanha = await obterCampanha(texto(dados.campanha_id, 'a campanha', 36));
-      const insercao = await consultar('INSERT INTO denuncias (campanha_id,usuario_id,motivo,relato) VALUES (?,?,?,?)', [campanha.id, usuario.id, texto(dados.motivo, 'o motivo', 150), texto(dados.relato, 'o relato', 5000)]);
-      resultado = { id: insercao.insertId, mensagem: 'Denúncia registrada para análise.' }; codigo = 201;
+      exigirLogin(usuario);
+      const motivo = texto(dados.motivo, 'o motivo', 150); const relato = texto(dados.relato, 'o relato', 5000);
+      resultado = await transacao(async consulta => {
+        const campanha = await obterCampanha(texto(dados.campanha_id, 'a campanha', 36), consulta, true); conferirVisibilidade(campanha, usuario);
+        const [existente] = await consulta("SELECT id FROM denuncias WHERE campanha_id=? AND usuario_id=? AND motivo=? AND relato=? AND estado='pendente'", [campanha.id, usuario.id, motivo, relato]);
+        if (existente) return { id: existente.id, mensagem: 'Esta denúncia já está aguardando análise.' };
+        const insercao = await consulta('INSERT INTO denuncias (campanha_id,usuario_id,motivo,relato) VALUES (?,?,?,?)', [campanha.id, usuario.id, motivo, relato]);
+        codigo = 201; return { id: insercao.insertId, mensagem: 'Denúncia registrada para análise.' };
+      });
     } else if (caminho === '/api/avisos' && metodo === 'GET') { exigirLogin(usuario); resultado = await consultar('SELECT * FROM avisos WHERE usuario_id=? ORDER BY id DESC', [usuario.id]);
     } else if ((partes = caminho.match(/^\/api\/avisos\/(\d+)$/)) && metodo === 'PATCH') {
       exigirLogin(usuario); const alteracao = await consultar('UPDATE avisos SET lido=1 WHERE id=? AND usuario_id=?', [partes[1], usuario.id]); if (!alteracao.affectedRows) erro('Aviso não encontrado.', 404); resultado = { mensagem: 'Aviso lido.' };
     } else if (caminho === '/api/administracao' && metodo === 'GET') {
       exigirAdministrador(usuario);
-      resultado = { campanhas: await consultar(`${consultaCampanhas} ORDER BY c.criada_em DESC`), denuncias: await consultar("SELECT d.*,c.titulo AS campanha FROM denuncias d JOIN campanhas c ON c.id=d.campanha_id WHERE d.estado='pendente' ORDER BY d.id DESC"), repasses: await consultar("SELECT r.*,c.titulo AS campanha FROM repasses r JOIN campanhas c ON c.id=r.campanha_id WHERE r.estado='solicitado' ORDER BY r.id DESC"), pagamentos: await consultar("SELECT p.*,c.titulo AS campanha FROM pagamentos p JOIN necessidades n ON n.id=p.necessidade_id JOIN campanhas c ON c.id=n.campanha_id WHERE p.estado='confirmado' ORDER BY p.id DESC") };
+      resultado = { campanhas: await consultar(`${consultaCampanhas} ORDER BY c.criada_em DESC`), denuncias: await consultar("SELECT d.*,c.titulo AS campanha FROM denuncias d JOIN campanhas c ON c.id=d.campanha_id ORDER BY d.estado='pendente' DESC,d.id DESC"), repasses: await consultar("SELECT r.*,c.titulo AS campanha FROM repasses r JOIN campanhas c ON c.id=r.campanha_id WHERE r.estado='solicitado' ORDER BY r.id DESC"), pagamentos: await consultar("SELECT p.*,c.titulo AS campanha FROM pagamentos p JOIN necessidades n ON n.id=p.necessidade_id JOIN campanhas c ON c.id=n.campanha_id WHERE p.estado='confirmado' ORDER BY p.id DESC") };
     } else if ((partes = caminho.match(/^\/api\/administracao\/campanhas\/([^/]+)$/)) && metodo === 'PATCH') {
       exigirAdministrador(usuario);
       resultado = await transacao(async consulta => {
         const campanha = await obterCampanha(partes[1], consulta, true);
-        const estado = opcao(dados.estado, ['ativa', 'suspensa', 'ajustes'], 'decisão');
+        const decisao = opcao(dados.estado, ['ativa', 'suspensa', 'ajustes'], 'decisão');
         if (campanha.usuario_id === usuario.id) erro('Não analise a própria campanha.', 403);
         const motivo = texto(dados.motivo, 'a justificativa', 1000);
-        await consulta('UPDATE campanhas SET estado=?,motivo=? WHERE id=?', [estado, motivo, campanha.id]);
+        // Old hidden records have no previous state: restore closed, never reopen by guessing.
+        const publicoAnterior = campanha.estado_antes_moderacao || (['ativa', 'rascunho'].includes(campanha.estado) ? 'ativa' : 'encerrada');
+        const estado = decisao === 'ativa' ? publicoAnterior : decisao;
+        const anterior = decisao === 'ativa' ? null : publicoAnterior;
+        await consulta('UPDATE campanhas SET estado=?,motivo=?,estado_antes_moderacao=? WHERE id=?', [estado, motivo, anterior, campanha.id]);
         await avisar(consulta, campanha.usuario_id, `Sua campanha está ${estado}: ${motivo}`);
         return { mensagem: 'Decisão registrada.', estado };
       });

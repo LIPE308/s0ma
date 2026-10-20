@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Switch, View } from 'react-native';
+import { Linking, Switch, View } from 'react-native';
 import { Button, Card, Choices, Copy, Dialog, EmptyState, Field, Heading, Line, Notice, Screen, Tag, useTheme } from '../components/ui';
 import { EstadoConexao, PedirLogin } from '../components/conexao';
-import { requisitar, useDados, usuarioLogado, mensagemErro, type Necessidade, type Campanha, type Ajuda, type Atividade } from '../servicos/api';
+import { requisitar, useDados, usuarioLogado, mensagemErro, criarChaveOperacao, type Necessidade, type Campanha, type Ajuda, type Atividade } from '../servicos/api';
 import { formatarDinheiro } from '../data/formatacao';
 import { FotoDeVoluntariado } from '../components/fotos';
 import { CartaoCampanha } from '../components/campanhas';
@@ -11,14 +11,14 @@ import { lerEvento } from '../data/eventos';
 
 export function ObjectContribution() {
   const roteador = useRouter(); const { id } = useLocalSearchParams<{ id?: string }>(); const consulta = useDados<Necessidade>(`/necessidades/${id || 'cobertores'}`); const pedido = consulta.dados;
-  const [quantidade, definirQuantidade] = useState('1'); const [entrega, definirEntrega] = useState('Ponto de coleta'); const [horario, definirHorario] = useState(''); const [observacao, definirObservacao] = useState(''); const [erro, definirErro] = useState('');
+  const [quantidade, definirQuantidade] = useState('1'); const [observacao, definirObservacao] = useState(''); const [erro, definirErro] = useState('');
   const livre = pedido ? pedido.meta - pedido.recebido - Number(pedido.reservado) : 0;
   return <Screen variant="form" title="Contribuir com objeto" heading="Sua ajuda faz diferença." subtitle={pedido?.nome}>
     {!usuarioLogado() ? <PedirLogin/> : <><EstadoConexao {...consulta}/>{pedido ? <>
       <Field label="Quantidade *" numeric value={quantidade} onChangeText={definirQuantidade}/><Copy muted>{livre} unidades livres</Copy>
-      <Heading>Como pretende entregar?</Heading><Choices options={['Ponto de coleta', 'Combinar entrega']} selected={entrega} onSelect={definirEntrega}/><Notice>{pedido.instrucoes}</Notice>
-      <Field label="Horário pretendido *" value={horario} onChangeText={definirHorario}/><Field label="Observação (opcional)" multiline value={observacao} onChangeText={definirObservacao}/>
-      {erro ? <Notice error>{erro}</Notice> : null}<Button title="Revisar minha ajuda" disabled={livre <= 0 || pedido.campanha_estado !== 'ativa' || pedido.responsavel_id === usuarioLogado()?.id} onPress={() => { const valor = Number(quantidade); if (!Number.isInteger(valor) || valor < 1 || valor > livre || !horario.trim()) { definirErro(`Escolha de 1 a ${livre} unidades e informe o horário.`); return; } roteador.push({ pathname: '/revisar-ajuda', params: { id: pedido.id, modo: 'objeto', quantidade, entrega, horario, observacao } }); }}/>
+      <Notice>Registre sua intenção de doar. Depois, combine a entrega diretamente com o responsável por telefone ou WhatsApp. Só o recebimento confirmado conta para a meta.</Notice>
+      <Field label="Observação (opcional)" multiline value={observacao} onChangeText={definirObservacao}/>
+      {erro ? <Notice error>{erro}</Notice> : null}<Button title="Revisar minha ajuda" disabled={livre <= 0 || pedido.campanha_estado !== 'ativa' || pedido.responsavel_id === usuarioLogado()?.id} onPress={() => { const valor = Number(quantidade); if (!Number.isInteger(valor) || valor < 1 || valor > livre) { definirErro(`Escolha de 1 a ${livre} unidades.`); return; } roteador.push({ pathname: '/revisar-ajuda', params: { id: pedido.id, modo: 'objeto', quantidade, entrega: 'Combinar diretamente com o responsável', observacao } }); }}/>
     </> : null}</>}
   </Screen>;
 }
@@ -56,9 +56,10 @@ export function ReviewHelp() {
   const pedido = useDados<Necessidade>(parametros.id ? `/necessidades/${parametros.id}` : null);
   const campanha = useDados<Campanha>(parametros.modo === 'acao' && parametros.campanha_id ? `/campanhas/${parametros.campanha_id}` : null);
   const contexto = parametros.modo === 'acao' ? campanha : pedido;
+  const envio = useRef(criarChaveOperacao());
   async function registrar() {
     definirOcupado(true); definirErro('');
-    try { const ajuda = await requisitar<{ id: number }>('/ajudas', 'POST', { necessidade_id: parametros.id, campanha_id: parametros.campanha_id, tipo: parametros.modo || 'objeto', quantidade: Number(parametros.quantidade || 1), entrega: parametros.entrega || '', horario: parametros.horario || '', observacao: parametros.observacao || '' }); roteador.replace({ pathname: '/ajuda', params: { id: String(ajuda.id), novo: '1' } }); }
+    try { const ajuda = await requisitar<{ id: number }>('/ajudas', 'POST', { necessidade_id: parametros.id, campanha_id: parametros.campanha_id || pedido.dados?.campanha_id, tipo: parametros.modo || 'objeto', quantidade: Number(parametros.quantidade || 1), entrega: parametros.entrega || '', horario: parametros.horario || '', observacao: parametros.observacao || '' }, envio.current); roteador.replace({ pathname: '/ajuda', params: { id: String(ajuda.id), novo: '1' } }); }
     catch (problema) { definirErro(mensagemErro(problema)); } finally { definirOcupado(false); }
   }
   return <Screen variant="form" title="Revisar compromisso" heading="Confira a sua ajuda.">
@@ -88,6 +89,8 @@ export function HelpDetails() {
   const [janela, definirJanela] = useState(false); const [erro, definirErro] = useState(''); const [ocupado, definirOcupado] = useState(false); const ajuda = consulta.dados;
   const evento = useDados<Campanha>(ajuda?.tipo === 'acao' ? `/campanhas/${ajuda.campanha_id}` : null);
   const pedido = useDados<Necessidade>(ajuda?.necessidade_id ? `/necessidades/${ajuda.necessidade_id}` : null);
+  const digitos = ajuda?.telefone_responsavel?.replace(/\D/g, '') || '';
+  const telefone = /^\d{10,11}$/.test(digitos) ? '55' + digitos : /^55\d{10,11}$/.test(digitos) ? digitos : '';
   async function cancelar() {
     definirOcupado(true);
     try { await requisitar(`/ajudas/${id}/cancelar`, 'PATCH'); definirJanela(false); consulta.atualizar(); } catch (problema) { definirErro(mensagemErro(problema)); } finally { definirOcupado(false); }
@@ -97,6 +100,8 @@ export function HelpDetails() {
       {novo === '1' && ajuda.estado !== 'cancelado' ? <Notice success>Seu compromisso foi registrado. Confira as instruções e acompanhe o status por aqui.</Notice> : null}
       <Tag>{ajuda.estado.toLocaleUpperCase()}</Tag><Copy>Realizado: {ajuda.recebido} de {ajuda.quantidade}</Copy><Heading>{ajuda.tipo === 'acao' ? 'Detalhes do encontro' : 'Instruções da participação'}</Heading><EstadoConexao {...(ajuda.tipo === 'acao' ? evento : pedido)}/><Copy>{ajuda.tipo === 'acao' ? evento.dados?.evento : pedido.dados?.descricao}{'\n'}{ajuda.tipo === 'acao' ? evento.dados?.regiao : ajuda.instrucoes}{'\n'}{ajuda.entrega}{'\n'}{ajuda.horario}</Copy>
       {ajuda.necessidade_id ? <Button secondary title="Ver necessidade" onPress={() => roteador.push({ pathname: '/necessidade', params: { id: ajuda.necessidade_id } })}/> : null}
+      {telefone ? <><Button secondary title="Combinar por WhatsApp" onPress={() => { void Linking.openURL('https://wa.me/' + telefone).catch(() => definirErro('Não foi possível abrir o WhatsApp. Tente ligar para o responsável.')); }}/><Button secondary title="Ligar para o responsável" onPress={() => { void Linking.openURL('tel:+' + telefone).catch(() => definirErro('Não foi possível abrir o telefone neste dispositivo.')); }}/></> : ajuda.tipo === 'objeto' ? <Copy muted>O responsável ainda não informou telefone no perfil. Consulte as orientações da ajuda para combinar a entrega.</Copy> : null}
+      {erro && !janela ? <Notice error>{erro}</Notice> : null}
       {['reservado', 'em_andamento'].includes(ajuda.estado) ? <Button danger title="Cancelar compromisso" onPress={() => definirJanela(true)}/> : null}
     </> : !id ? <Notice>Abra uma ajuda pela sua atividade.</Notice> : null}<Button secondary title="Minha atividade" onPress={() => roteador.replace('/atividade')}/></>}
     <Dialog visible={janela} title="Cancelar esta ajuda?" onClose={() => definirJanela(false)}><Copy>As unidades ou vagas ainda pendentes ficarão livres novamente. O que já foi recebido permanece registrado.</Copy>{erro ? <Notice error>{erro}</Notice> : null}<Button danger title="Confirmar cancelamento" disabled={ocupado} onPress={cancelar}/><Button secondary title="Manter compromisso" onPress={() => definirJanela(false)}/></Dialog>

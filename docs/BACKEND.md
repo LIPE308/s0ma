@@ -1,6 +1,6 @@
 # Backend acadêmico: Node.js + MySQL
 
-O fluxo é simples: a tela chama `fetch`, o Node recebe uma requisição HTTP, executa SQL no MySQL e responde JSON. Há quatro arquivos principais e um esquema SQL. Não usamos Express, ORM, migrações, filas ou serviços externos. `mysql2` é o driver que permite ao Node acessar o MySQL.
+O fluxo é simples: a tela chama `fetch`, o Node recebe uma requisição HTTP, executa SQL no MySQL e responde JSON. Não usamos Express, ORM, filas ou serviços externos. `mysql2` é o driver que permite ao Node acessar o MySQL. A inicialização aplica a pequena atualização aditiva descrita abaixo.
 
 ## Executar
 
@@ -15,7 +15,7 @@ npm run compilar:web
 npm run servidor
 ```
 
-Abra `http://localhost:3001` no computador em que iniciou o servidor. `GET /api/saude` verifica a conexão e devolve `banco: "MySQL"`. O servidor padrão atende apenas esse computador. As contas de exemplo e a senha estão no README.
+Abra `http://localhost:3001` no computador em que iniciou o servidor. `GET /api/saude` verifica a conexão e devolve `banco: "MySQL"`. O servidor padrão atende apenas esse computador. Cadastre sua própria conta; o README explica a autorização administrativa pelo terminal.
 
 `compose.yaml` inicia o MySQL 8.4. A API executa `backend/esquema.sql` para criar tabelas ausentes e adiciona exemplos somente quando a tabela `usuarios` está vazia. O volume Docker `dados_mysql` mantém os dados ao reiniciar o Node, o container ou o computador. `docker compose stop` pausa o banco; `npm run banco:iniciar` inicia novamente. Não remova o volume se quiser conservar os dados.
 
@@ -43,6 +43,7 @@ Execute `npm ci`, `npm run compilar:web` e `npm run servidor`. Não é necessár
 | `repasses` | Reservas de saldo e decisões de teste |
 | `denuncias` | Relatos e estado da análise |
 | `avisos` | Avisos da conta e confirmação de leitura |
+| `operacoes` | Chave por usuário, resumo da requisição e resultado para reenvios seguros |
 
 Dinheiro é um número inteiro em **centavos**: R$ 100,00 = `10000`. Quantidades de objetos e vagas são inteiros. As tabelas têm chaves estrangeiras e restrições básicas.
 
@@ -62,6 +63,7 @@ Todos os caminhos abaixo começam por `/api`. Depois do login, o front envia `Au
 | `GET /campanhas?minhas=1` | Lista as próprias campanhas |
 | `GET /campanhas/:id`, `PUT /campanhas/:id` | Detalhes ou edição pelo responsável |
 | `PATCH /campanhas/:id/encerrar` | Encerra e conserva o histórico |
+| `PATCH /campanhas/:id/reabrir` | Reabre com dados completos, motivo e meta atualizada |
 | `GET /necessidades`, `GET /necessidades/:id` | Lista ou detalha pedidos |
 | `POST /ajudas`, `GET /ajudas/:id` | Reserva ou acompanha ajuda |
 | `PATCH /ajudas/:id/cancelar` | Cancela a parte ainda pendente |
@@ -85,17 +87,17 @@ Todos os caminhos abaixo começam por `/api`. Depois do login, o front envia `Au
 
 ## Regras que são verificadas no servidor
 
-Reservar não soma ao recebido. O disponível é `meta - recebido - reservado`. A transação bloqueia a campanha e o pedido antes de reservar; uma segunda reserva enxerga a primeira. A confirmação recebe o **total acumulado**, soma apenas a diferença e não conta duas vezes ao repetir. O responsável usa outra conta para oferecer ajuda à sua própria campanha; somente ele confirma a ajuda de outra pessoa. No cancelamento parcial, o total já recebido continua salvo.
+Reservar não soma ao recebido. O disponível é `meta - recebido - reservado`. A transação bloqueia a campanha e o pedido antes de reservar; uma segunda reserva enxerga a primeira. A confirmação recebe o **total acumulado**, soma apenas a diferença e não conta duas vezes ao repetir. O responsável não oferece contribuições à própria campanha; somente ele confirma a ajuda de outra pessoa. No cancelamento parcial, o total já recebido continua salvo.
 
 Campanhas com histórico não podem perder seus pedidos. Encerrar conserva todos os registros e impede novas ajudas. Apenas o responsável ou administrador pode editar; visitantes não consultam campanhas suspensas ou em ajustes. Novas contas nunca recebem permissão de administrador pelo formulário.
 
-Nos pagamentos acadêmicos, a taxa Soma é 4% e a tarifa fictícia é R$ 3. O líquido entra na meta somente após confirmação. Pagamentos pendentes reservam o restante da meta fechada. Repasses solicitados reservam saldo; cancelar libera essa reserva. Repasses concluídos reduzem o saldo disponível, preservando a arrecadação registrada na meta. O reembolso de teste exige administrador e saldo disponível suficiente. Confirmações repetidas não duplicam valores.
+Novos pagamentos acadêmicos não têm taxas: o valor integral entra na meta somente após confirmação. Taxas de registros antigos não são recalculadas. Pagamentos pendentes reservam o restante da meta fechada. Repasses solicitados reservam saldo; cancelar libera essa reserva. Repasses concluídos reduzem o saldo disponível, preservando a arrecadação registrada na meta. O reembolso de teste exige administrador e saldo disponível suficiente. Confirmações repetidas não duplicam valores. As operações antigas continuam disponíveis por compatibilidade; o roteiro de apresentação usa apenas a contribuição simulada.
 
 Esses cálculos e estados persistem no MySQL, mas **não movimentam dinheiro**. Não há gateway financeiro, envio de e-mail, recuperação de senha, IA ou automatização de excedentes/prazos nesta versão básica.
 
 ## Testar
 
-Para o MySQL próprio do Windows: `npm run banco:local` e `npm run testar:backend:local`. A suíte foi executada contra MySQL 8.4.8 real: **8 testes passaram**, incluindo reservas concorrentes, rollback, permissões, financeiro simulado e persistência após reiniciar a API.
+Para o MySQL próprio do Windows: `npm run banco:local` e `npm run testar:backend:local`. A suíte foi executada contra MySQL 8.4.8 real: **13 testes passaram** (12 cenários e o teste pai). Inclui migração do esquema anterior, concorrência, rollback, permissões, financeiro simulado, privacidade, moderação, reabertura e persistência após reiniciar a API.
 
 ```bash
 npm run banco:iniciar
@@ -105,6 +107,18 @@ npm run testar:backend
 Os testes usam os recursos nativos `node:test`, `assert` e `fetch`. Criam um banco temporário `soma_teste_...`, iniciam um Node separado, verificam os fluxos e removem apenas esse banco no final. Por padrão, usam o administrador local do Compose. Para outro MySQL, configure `MYSQL_TESTE_USUARIO` e `MYSQL_TESTE_SENHA` com credenciais que possam criar/remover bancos de teste. Essas credenciais são usadas somente nos testes; a aplicação normal usa `soma`.
 
 ## Desenvolvimento web
+
+### Atualização compatível e reenvios
+
+`npm run servidor` cria `operacoes` e acrescenta `campanhas.estado_antes_moderacao` se ausente. A conta histórica publicada perde somente o papel administrativo, conforme a justificativa no README. Não remova volumes nem recrie o banco. Contas, senhas, campanhas, recebimentos e valores financeiros antigos são preservados. Faça backup antes de atualizar uma instalação importante.
+
+Ao ocultar uma campanha, a API guarda se ela estava ativa ou encerrada. Publicar novamente restaura essa condição. Campanhas já ocultas na versão anterior, sem esse dado, voltam conservadoramente encerradas; o responsável pode revisar as metas e reabrir. Publicar uma campanha encerrada não permite novas contribuições.
+
+`PATCH /campanhas/:id/reabrir` recebe os mesmos campos completos de edição, mais `motivo_reabertura`. Exige campanha encerrada e ao menos uma meta alterada ou uma necessidade nova. Não permite remover necessidades com histórico, trocar seu tipo nem reduzir metas abaixo do recebido mais reservado/pendente.
+
+Campanhas, ajudas e pagamentos aceitam `Idempotency-Key` (12 a 100 caracteres alfanuméricos, hífen ou sublinhado). A mesma chave do mesmo usuário com o mesmo método, caminho e JSON devolve o resultado já salvo; dados diferentes com a mesma chave recebem 409. O front reutiliza a chave durante tentativas do mesmo formulário. O registro é transacional e persistente. Clientes antigos sem a chave continuam aceitos; portanto não têm essa garantia adicional contra duplo envio. Abrir um novo formulário gera outra operação intencional. Denúncias idênticas pendentes do mesmo autor/campanha são reutilizadas.
+
+Instruções de entrega e justificativas internas não aparecem na descoberta pública. O contato do responsável e as orientações são fornecidos na ajuda somente ao doador, ao responsável e à administração. Descrições, atualizações, bairro e eventos continuam públicos: evite inserir dados sensíveis nesses campos.
 
 Na porta 3001, o Node serve a pasta `dist`, criada por `npm run compilar:web`. A saída web é `single`: as rotas são carregadas no navegador, junto com a sessão, sem pré-renderizar uma página de visitante para uma conta já conectada. Ao editar telas, compile novamente ou use Expo na porta 8081 em outro terminal. Nesse endereço, o front chama a API na porta 3001. No site compilado, chama `/api` no mesmo endereço do site.
 

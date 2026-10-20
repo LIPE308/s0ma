@@ -1,23 +1,23 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, Card, Choices, Copy, Dialog, Field, Line, Metric, Notice, Screen, Tag } from '../components/ui';
 import { EstadoConexao, PedirLogin } from '../components/conexao';
 import { converterValor, formatarDinheiro } from '../data/formatacao';
-import { useDados, requisitar, usuarioLogado, mensagemErro, type Necessidade, type Pagamento, type Repasse, type Saldo } from '../servicos/api';
+import { useDados, requisitar, usuarioLogado, mensagemErro, criarChaveOperacao, type Necessidade, type Pagamento, type Repasse, type Saldo } from '../servicos/api';
 
 export function Donation() {
   const roteador = useRouter(); const { id } = useLocalSearchParams<{ id?: string }>(); const consulta = useDados<Necessidade>(`/necessidades/${id || 'equipamento'}`);
   const [valor, definirValor] = useState('100,00'); const [meio, definirMeio] = useState('Pix'); const [erro, definirErro] = useState(''); const [ocupado, definirOcupado] = useState(false);
-  const centavos = Math.round(converterValor(valor) * 100); const taxa = Math.round(centavos * 0.04);
+  const centavos = Math.round(converterValor(valor) * 100); const envio = useRef(criarChaveOperacao());
   async function continuar() {
     definirOcupado(true);
-    try { if (!Number.isSafeInteger(centavos) || centavos < 1000) throw new Error('Informe pelo menos R$ 10,00.'); const pagamento = await requisitar<{ id: number }>('/pagamentos', 'POST', { necessidade_id: id || 'equipamento', valor: centavos, meio }); roteador.replace({ pathname: '/pagamento', params: { id: String(pagamento.id) } }); }
+    try { if (!Number.isSafeInteger(centavos) || centavos < 1000) throw new Error('Informe pelo menos R$ 10,00.'); const pagamento = await requisitar<{ id: number }>('/pagamentos', 'POST', { necessidade_id: id || 'equipamento', valor: centavos, meio }, envio.current); roteador.replace({ pathname: '/pagamento', params: { id: String(pagamento.id) } }); }
     catch (problema) { definirErro(mensagemErro(problema)); } finally { definirOcupado(false); }
   }
   return <Screen variant="form" title="Doação financeira" heading="Quanto você quer somar?" subtitle={consulta.dados?.nome}><EstadoConexao {...consulta}/>
     {!usuarioLogado() ? <PedirLogin/> : consulta.dados ? <><Tag>SIMULAÇÃO ACADÊMICA</Tag>
       <Field label="Valor em reais *" numeric value={valor} onChangeText={definirValor}/><Choices label="Valores sugeridos em reais" options={['20,00', '50,00', '100,00']} selected={valor} onSelect={definirValor}/><Choices label="Forma de pagamento (simulação)" options={['Pix', 'Crédito', 'Débito']} selected={meio} onSelect={definirMeio}/>
-      <Card title="Resumo do teste" icon="wallet-outline"><Line label="Valor" value={formatarDinheiro(Number.isFinite(centavos) ? centavos / 100 : 0)}/><Line label="Taxa Soma · 4%" value={formatarDinheiro(Number.isFinite(taxa) ? taxa / 100 : 0)}/><Line label="Tarifa fictícia" value="R$ 3,00"/><Line label="Líquido" value={formatarDinheiro(Number.isFinite(centavos) ? Math.max(0, centavos - taxa - 300) / 100 : 0)}/></Card>
+      <Card title="Resumo da simulação" icon="wallet-outline"><Line label="Valor para a meta" value={formatarDinheiro(Number.isFinite(centavos) ? centavos / 100 : 0)}/><Copy muted>Sem taxas. O valor integral será contado após a confirmação do teste.</Copy></Card>
       <Notice>O pedido será salvo no MySQL. Não há cobrança nem provedor de pagamento conectado.</Notice>{erro ? <Notice error>{erro}</Notice> : null}<Button title="Criar pagamento de teste" disabled={ocupado || consulta.dados.campanha_estado !== 'ativa' || consulta.dados.tipo !== 'dinheiro' || consulta.dados.responsavel_id === usuarioLogado()?.id} onPress={continuar}/>
     </> : null}
   </Screen>;
@@ -28,7 +28,8 @@ export function Payment() {
   const [erro, definirErro] = useState(''); const [ocupado, definirOcupado] = useState(false);
   async function simular(estado: string) { definirOcupado(true); try { await requisitar(`/pagamentos/${id}/simular`, 'PATCH', { estado }); consulta.atualizar(); } catch (problema) { definirErro(mensagemErro(problema)); } finally { definirOcupado(false); } }
   return <Screen variant="ledger" title="Pagamento" heading="Pagamento de teste." subtitle={pagamento?.campanha}>
-    {!usuarioLogado() ? <PedirLogin/> : !id ? <Notice>Selecione um pagamento na sua atividade.</Notice> : <><EstadoConexao {...consulta}/>{pagamento ? <><Tag>{pagamento.estado.toLocaleUpperCase()} · SIMULADO</Tag><Card title={formatarDinheiro(pagamento.valor / 100)} subtitle={`${pagamento.meio} · ${pagamento.necessidade}`}><Line label="Taxa Soma" value={formatarDinheiro(pagamento.taxa_soma / 100)}/><Line label="Tarifa fictícia" value={formatarDinheiro(pagamento.taxa_provedor / 100)}/><Line label="Líquido para a meta" value={formatarDinheiro(pagamento.valor_liquido / 100)}/></Card>
+    {!usuarioLogado() ? <PedirLogin/> : !id ? <Notice>Selecione um pagamento na sua atividade.</Notice> : <><EstadoConexao {...consulta}/>{pagamento ? <><Tag>{pagamento.estado.toLocaleUpperCase()} · SIMULADO</Tag><Card title={formatarDinheiro(pagamento.valor / 100)} subtitle={`${pagamento.meio} · ${pagamento.necessidade}`}>
+      {pagamento.taxa_soma || pagamento.taxa_provedor ? <Copy muted>Registro antigo de teste com taxas fictícias preservadas no histórico.</Copy> : null}<Line label="Valor simulado para a meta" value={formatarDinheiro(pagamento.valor_liquido / 100)}/></Card>
       <Notice>A confirmação de teste atualiza a meta e o saldo no MySQL. Não existe Pix, cartão ou movimentação de dinheiro real.</Notice>
       {pagamento.estado === 'pendente' ? <><Button title="Simular confirmação" disabled={ocupado} onPress={() => simular('confirmado')}/><Button secondary title="Cancelar pagamento de teste" disabled={ocupado} onPress={() => simular('cancelado')}/></> : null}
       {erro ? <Notice error>{erro}</Notice> : null}<Button secondary title="Atualizar status" onPress={consulta.atualizar}/><Button title="Minha atividade" onPress={() => roteador.replace('/atividade')}/>

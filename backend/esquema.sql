@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS campanhas (
   evento VARCHAR(1000) NOT NULL DEFAULT '',
   estado ENUM('rascunho','ativa','encerrada','suspensa','ajustes') NOT NULL DEFAULT 'ativa',
   motivo VARCHAR(1000) NOT NULL DEFAULT '',
+  estado_antes_moderacao ENUM('ativa','encerrada') DEFAULT NULL,
   criada_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 );
@@ -115,5 +116,14 @@ CREATE TABLE IF NOT EXISTS avisos (
   mensagem VARCHAR(1000) NOT NULL,
   lido BOOLEAN NOT NULL DEFAULT FALSE,
   criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);
+CREATE TABLE IF NOT EXISTS operacoes (
+  usuario_id INT NOT NULL,
+  chave VARCHAR(100) NOT NULL,
+  resumo CHAR(64) NOT NULL,
+  resposta LONGTEXT,
+  criada_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (usuario_id, chave),
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 );

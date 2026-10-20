@@ -17,7 +17,7 @@ export function Manage() {
   }
   return <Screen variant="ledger" title="Gerenciar campanha" heading={campanha?.titulo} subtitle="Painel do responsável" onBack={salvo ? () => roteador.dismissTo('/') : undefined}><EstadoConexao {...consulta}/>
     {!pessoa ? <PedirLogin/> : campanha && !permitido ? <Notice>Você não é responsável por esta campanha.</Notice> : campanha ? <>
-      {salvo === 'criada' || salvo === 'atualizada' ? <Notice success>{salvo === 'criada' ? 'Campanha publicada! Agora você pode acompanhar as ajudas por aqui.' : 'Alterações salvas na campanha.'}</Notice> : null}
+      {['criada', 'atualizada', 'reaberta'].includes(salvo || '') ? <Notice success>{salvo === 'criada' ? 'Campanha publicada! Agora você pode acompanhar as ajudas por aqui.' : salvo === 'reaberta' ? 'Campanha reaberta. As metas foram atualizadas e o histórico foi preservado.' : 'Alterações salvas na campanha.'}</Notice> : null}
       <Tag>{campanha.estado.toLocaleUpperCase()}</Tag>
       <Button secondary title="Ver página da campanha" onPress={() => roteador.push({ pathname: '/campanha', params: { id: campanha.id } })}/>
       <Heading>Necessidades da campanha</Heading>
@@ -26,10 +26,12 @@ export function Manage() {
       <Card title="Confirmar ajudas" icon="checkmark-circle-outline" onPress={() => roteador.push({ pathname: '/confirmar', params: { campanha: campanha.id } })}/>
       <Card title="Publicar atualização" icon="document-text-outline" onPress={() => roteador.push({ pathname: '/publicar', params: { campanha: campanha.id } })}/>
       <Card title="Editar campanha" icon="create-outline" onPress={() => roteador.push({ pathname: '/criar', params: parametrosDaCampanha(campanha) })}/>
-      <Card title="Saldo e repasses de teste" icon="wallet-outline" onPress={() => roteador.push({ pathname: '/saldo', params: { campanha: campanha.id } })}/>
+      {campanha.necessidades.some(p => p.tipo === 'dinheiro') ? <Card title="Registros financeiros simulados" icon="wallet-outline" onPress={() => roteador.push({ pathname: '/saldo', params: { campanha: campanha.id } })}/> : null}
       <Button secondary title="Resultado e impacto" onPress={() => roteador.push({ pathname: '/resultado', params: { id: campanha.id } })}/>
       <Button secondary title="Adicionar necessidade" onPress={() => roteador.push({ pathname: '/editar-necessidade', params: parametrosDaCampanha(campanha) })}/>
-      {campanha.estado !== 'encerrada' ? <Button danger title="Encerrar campanha" onPress={() => definirJanela(true)}/> : <Notice>Campanha encerrada. O histórico permanece disponível.</Notice>}
+      {campanha.estado === 'ativa' ? <Button danger title="Encerrar campanha" onPress={() => definirJanela(true)}/> : campanha.estado === 'encerrada' ? <><Notice>Campanha encerrada. O histórico permanece disponível.</Notice><Button title="Revisar metas e reabrir" onPress={() => roteador.push({ pathname: '/criar', params: { ...parametrosDaCampanha(campanha), reabrir: '1' } })}/></> : <Notice>Campanha oculta por moderação. Ela não recebe novas ajudas. Consulte a justificativa e aguarde a revisão administrativa.</Notice>}
+      {campanha.motivo ? <Copy muted>{campanha.motivo}</Copy> : null}
+      {!pessoa.telefone ? <Notice>Para combinar entregas por telefone ou WhatsApp, preencha seu telefone no perfil. Ele será mostrado apenas nas ajudas registradas.</Notice> : null}
     </> : null}
     <Dialog visible={janela} title="Encerrar esta campanha?" onClose={() => definirJanela(false)}><Copy>Encerrar impede novas ajudas. Não marca os pedidos como atendidos.</Copy><Field label="Motivo do encerramento *" multiline value={motivo} onChangeText={definirMotivo}/>{erro ? <Notice error>{erro}</Notice> : null}<Button danger title="Confirmar encerramento" disabled={ocupado} onPress={encerrar}/></Dialog>
   </Screen>;
@@ -37,20 +39,20 @@ export function Manage() {
 
 export function ConfirmHelp() {
   const { campanha } = useLocalSearchParams<{ campanha?: string }>(); const consulta = useDados<Ajuda[]>(usuarioLogado() ? `/campanhas/${campanha || 'biblioteca'}/ajudas` : null);
-  const [selecionada, definirSelecionada] = useState<number | null>(null); const [quantidade, definirQuantidade] = useState(''); const [estado, definirEstado] = useState('Entregue'); const [restante, definirRestante] = useState('Manter pendente'); const [mensagem, definirMensagem] = useState(''); const [ocupado, definirOcupado] = useState(false);
+  const [selecionada, definirSelecionada] = useState<number | null>(null); const [quantidade, definirQuantidade] = useState(''); const [restante, definirRestante] = useState('Manter pendente'); const [mensagem, definirMensagem] = useState(''); const [erro, definirErro] = useState(''); const [ocupado, definirOcupado] = useState(false);
   const ajuda = consulta.dados?.find(item => item.id === selecionada);
   const pendentes = consulta.dados?.filter(item => ['reservado', 'em_andamento'].includes(item.estado));
   async function confirmar() {
     if (!ajuda) return;
     definirOcupado(true);
-    try { await requisitar<Ajuda>(`/ajudas/${ajuda.id}/confirmar`, 'PATCH', { recebido: estado === 'Em andamento' ? ajuda.recebido : Number(quantidade), cancelar_restante: restante === 'Cancelar restante' }); definirMensagem('Realização salva.'); definirSelecionada(null); consulta.atualizar(); }
-    catch (problema) { definirMensagem(mensagemErro(problema)); } finally { definirOcupado(false); }
+    try { const recebido = Number(quantidade); if (!Number.isInteger(recebido) || recebido < ajuda.recebido || recebido > ajuda.quantidade) throw new Error(`Informe o total já recebido, de ${ajuda.recebido} a ${ajuda.quantidade}.`); await requisitar<Ajuda>(`/ajudas/${ajuda.id}/confirmar`, 'PATCH', { recebido, cancelar_restante: restante === 'Cancelar restante' }); definirErro(''); definirMensagem('Recebimento confirmado. Somente a quantidade informada conta para a meta.'); definirSelecionada(null); consulta.atualizar(); }
+    catch (problema) { definirErro(mensagemErro(problema)); definirMensagem(''); } finally { definirOcupado(false); }
   }
   return <Screen title="Confirmar ajuda" heading="Registre o recebimento.">
     {!usuarioLogado() ? <PedirLogin/> : <><EstadoConexao {...consulta}/>
-      {pendentes?.map(item => <Card key={item.id} title={`${item.quantidade} · ${item.necessidade}`} subtitle={`${item.pessoa} · já recebido: ${item.recebido}`} onPress={() => { definirSelecionada(item.id); definirQuantidade(String(item.quantidade)); definirEstado('Entregue'); definirRestante('Manter pendente'); definirMensagem(''); }}/>)}
-      {ajuda ? <><Field label="Total recebido até agora *" numeric value={quantidade} onChangeText={definirQuantidade}/><Choices label="Situação da ajuda" options={['Em andamento', 'Entregue']} selected={estado} onSelect={definirEstado}/><Heading>Se houver quantidade restante</Heading><Choices options={['Manter pendente', 'Cancelar restante']} selected={restante} onSelect={definirRestante}/><Button title={ocupado ? 'Salvando...' : 'Confirmar recebimento'} disabled={ocupado} onPress={confirmar}/></> : pendentes?.length === 0 ? <EmptyState title="Nenhuma ajuda pendente.">Quando alguém reservar itens ou vagas, a participação aparecerá aqui para você confirmar.</EmptyState> : pendentes?.length ? <Copy muted>Selecione uma ajuda pendente. Só o responsável confirma a ajuda de outra pessoa.</Copy> : null}
-      {mensagem ? <Notice>{mensagem}</Notice> : null}
+      {pendentes?.map(item => <Card key={item.id} title={`${item.quantidade} · ${item.necessidade}`} subtitle={`${item.pessoa} · já recebido: ${item.recebido}`} onPress={() => { definirSelecionada(item.id); definirQuantidade(String(item.recebido)); definirRestante('Manter pendente'); definirMensagem(''); definirErro(''); }}/>)}
+      {ajuda ? <><Field label="Total recebido até agora *" numeric value={quantidade} onChangeText={definirQuantidade}/><Copy muted>Informe o total acumulado, incluindo entregas anteriores. Uma entrega parcial mantém o restante pendente.</Copy><Heading>Se houver quantidade restante</Heading><Choices options={['Manter pendente', 'Cancelar restante']} selected={restante} onSelect={definirRestante}/><Button title={ocupado ? 'Salvando...' : 'Confirmar recebimento'} disabled={ocupado} onPress={confirmar}/></> : pendentes?.length === 0 ? <EmptyState title="Nenhuma ajuda pendente.">Quando alguém reservar itens ou vagas, a participação aparecerá aqui para você confirmar.</EmptyState> : pendentes?.length ? <Copy muted>Selecione uma ajuda pendente. Só o responsável confirma a ajuda de outra pessoa.</Copy> : null}
+      {mensagem ? <Notice success>{mensagem}</Notice> : null}{erro ? <Notice error>{erro}</Notice> : null}
     </>}
   </Screen>;
 }

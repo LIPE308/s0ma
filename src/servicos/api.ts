@@ -5,14 +5,14 @@ import { Platform } from 'react-native';
 export type Usuario = { id: number; nome: string; email: string; telefone: string; regiao: string; novidades: boolean; administrador: boolean };
 export type Necessidade = { id: string; campanha_id: string; responsavel_id?: number; nome: string; tipo: 'objeto' | 'tarefa' | 'dinheiro'; meta: number; recebido: number; reservado: number; tipo_meta: string; prioridade: string; prazo: string; descricao: string; campanha: string; regiao: string; instrucoes: string; campanha_estado: string };
 export type Campanha = { id: string; usuario_id: number; titulo: string; descricao: string; categoria: string; regiao: string; prazo: string; instrucoes: string; evento: string; estado: string; motivo: string; responsavel: string; necessidades: Necessidade[] };
-export type Ajuda = { id: number; usuario_id: number; campanha_id: string; necessidade_id: string; tipo: string; quantidade: number; recebido: number; necessidade: string; campanha: string; pessoa: string; estado: string; entrega: string; horario: string; instrucoes: string; observacao: string };
+export type Ajuda = { id: number; usuario_id: number; campanha_id: string; necessidade_id: string; tipo: string; quantidade: number; recebido: number; necessidade: string; campanha: string; pessoa: string; estado: string; entrega: string; horario: string; instrucoes: string; observacao: string; telefone_responsavel?: string };
 export type Pagamento = { id: number; necessidade_id: string; campanha: string; necessidade: string; valor: number; taxa_soma: number; taxa_provedor: number; valor_liquido: number; meio: string; estado: string };
 export type Repasse = { id: number; campanha_id: string; campanha: string; valor: number; finalidade: string; estado: string; motivo: string };
 export type Saldo = { campanha: string; confirmado: number; reservado: number; repassado: number; disponivel: number; repasses: Repasse[] };
 export type Atualizacao = { id: number; titulo: string; relato: string; autor: string; criada_em: string };
 export type Atividade = { ajudas: Ajuda[]; campanhas: Campanha[]; pagamentos: Pagamento[] };
 export type Aviso = { id: number; mensagem: string; lido: boolean; criado_em: string };
-export type Denuncia = { id: number; campanha_id: string; campanha: string; motivo: string; relato: string };
+export type Denuncia = { id: number; campanha_id: string; campanha: string; motivo: string; relato: string; estado: string };
 export type Administracao = { campanhas: Campanha[]; denuncias: Denuncia[]; repasses: Repasse[]; pagamentos: Pagamento[] };
 
 // No navegador usa o mesmo computador. No celular configure o IP do computador.
@@ -41,13 +41,20 @@ export function limparSessao() {
   if (Platform.OS === 'web' && typeof window !== 'undefined') { try { window.sessionStorage.removeItem('soma_sessao'); } catch { /* Sem armazenamento disponível. */ } }
 }
 
-export async function requisitar<T>(caminho: string, metodo = 'GET', dados?: unknown): Promise<T> {
+// This is an operation identifier, not an authentication secret.
+export function criarChaveOperacao() { return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2) + '-' + Math.random().toString(36).slice(2); }
+export async function requisitar<T>(caminho: string, metodo = 'GET', dados?: unknown, chave?: string): Promise<T> {
   recuperarSessao();
+  const corpo = dados !== undefined ? JSON.stringify(dados) : undefined;
+  let resumo = 2166136261;
+  for (const letra of metodo + caminho + (corpo || '')) resumo = Math.imul(resumo ^ letra.charCodeAt(0), 16777619);
+  const chaveEnvio = chave ? chave + '-' + (resumo >>> 0).toString(16) : '';
   let resposta: Response;
   try {
-    resposta = await fetch(`${enderecoApi}${caminho}`, { method: metodo, headers: { 'Content-Type': 'application/json', ...(tokenAtual ? { Authorization: `Bearer ${tokenAtual}` } : {}) }, ...(dados !== undefined ? { body: JSON.stringify(dados) } : {}) });
-  } catch { throw new Error('Não foi possível acessar o servidor. Inicie o backend na porta 3001.'); }
-  const resultado = await resposta.json();
+    resposta = await fetch(`${enderecoApi}${caminho}`, { method: metodo, headers: { 'Content-Type': 'application/json', ...(tokenAtual ? { Authorization: `Bearer ${tokenAtual}` } : {}), ...(chaveEnvio ? { 'Idempotency-Key': chaveEnvio } : {}) }, ...(corpo !== undefined ? { body: corpo } : {}) });
+  } catch { throw new Error('Não foi possível conectar. Confira sua conexão e tente novamente.'); }
+  let resultado;
+  try { resultado = await resposta.json(); } catch { throw new Error('Não foi possível ler a resposta. Tente novamente em instantes.'); }
   if (!resposta.ok) {
     if (resposta.status === 401) limparSessao();
     throw new Error(resultado.mensagem || 'Não foi possível concluir a operação.');

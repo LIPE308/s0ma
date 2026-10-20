@@ -17,7 +17,7 @@ export function Login() {
   async function entrar() {
     if (!email.trim() || !senha) { definirErro('Informe seu e-mail e sua senha.'); return; }
     definirOcupado(true); definirErro('');
-    try { const sessao = await requisitar<{ token: string; usuario: Usuario }>('/login', 'POST', { email: email.trim(), senha }); guardarSessao(sessao.token, sessao.usuario); roteador.replace(destinoAposLogin(retorno)); }
+    try { const sessao = await requisitar<{ token: string; usuario: Usuario }>('/login', 'POST', { email: email.trim(), senha }); guardarSessao(sessao.token, sessao.usuario); roteador.replace(sessao.usuario.administrador && !retorno ? '/administracao' : destinoAposLogin(retorno)); }
     catch (problema) { definirErro(mensagemErro(problema)); } finally { definirOcupado(false); }
   }
   return <Screen variant="account" title="soma" heading="Bom ter você por aqui." subtitle="Entre para fazer parte das histórias da sua comunidade." back={false}>
@@ -27,8 +27,7 @@ export function Login() {
     <Button title={ocupado ? 'Entrando...' : 'Entrar'} disabled={ocupado} onPress={entrar}/>
     <Button secondary title="Criar conta" onPress={() => roteador.push({ pathname: '/criar-conta', params: { retorno } })}/>
     <Button secondary title="Explorar sem entrar" onPress={() => roteador.replace('/')}/>
-    <Card title="Conta para a apresentação" subtitle="ana@exemplo.com · senha: academico123"/>
-    <Copy muted>As contas de exemplo são locais e próprias para o projeto acadêmico.</Copy>
+    <Copy muted>Use sua própria conta. O acesso administrativo é configurado pela equipe responsável.</Copy>
   </Screen>;
 }
 

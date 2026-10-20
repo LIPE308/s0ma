@@ -2,6 +2,7 @@ const mysql = require('mysql2/promise');
 const { readFileSync } = require('node:fs');
 const { join } = require('node:path');
 const { gerarSenha } = require('./auxiliares');
+const { randomBytes } = require('node:crypto');
 
 const banco = mysql.createPool({
   host: process.env.MYSQL_HOST || '127.0.0.1',
@@ -43,6 +44,11 @@ async function inicializarBanco() {
   // Cada comando é executado separado; não permitimos multipleStatements.
   const esquema = readFileSync(join(__dirname, 'esquema.sql'), 'utf8');
   for (const comando of esquema.split(';').filter(comando => comando.trim())) await banco.query(comando);
+  const [coluna] = await consultar("SELECT COUNT(*) AS total FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='campanhas' AND COLUMN_NAME='estado_antes_moderacao'");
+  if (!Number(coluna.total)) await banco.query("ALTER TABLE campanhas ADD COLUMN estado_antes_moderacao ENUM('ativa','encerrada') DEFAULT NULL");
+  // The published demonstration administrator must never remain a privileged login.
+  // Keep the account, password, campaign history and ordinary access; revoke only this legacy role.
+  await consultar("UPDATE usuarios SET administrador=0 WHERE email='admin@exemplo.com' AND administrador=1");
   const [contagem] = await consultar('SELECT COUNT(*) AS total FROM usuarios');
   if (Number(contagem.total) > 0) return;
   // Exemplos apenas no banco vazio. Reiniciar não apaga o trabalho da turma.
@@ -51,9 +57,8 @@ async function inicializarBanco() {
       ['Ana Oliveira', 'ana@exemplo.com', 'Campinas, Centro', 0],
       ['Marina Souza', 'marina@exemplo.com', 'Campinas, Centro', 0],
       ['Lucas Pereira', 'lucas@exemplo.com', 'Campinas, Taquaral', 0],
-      ['Administrador', 'admin@exemplo.com', '', 1],
     ]) {
-      const senha = gerarSenha('academico123');
+      const senha = gerarSenha(randomBytes(24).toString('base64url'));
       await consultar('INSERT INTO usuarios (nome, email, senha_resumo, senha_sal, regiao, administrador) VALUES (?, ?, ?, ?, ?, ?)', [nome, email, senha.resumo, senha.sal, regiao, administrador]);
     }
     for (const valores of [

@@ -36,25 +36,28 @@ O MySQL fica na porta 3306. O Compose cria o banco `soma`, o usuário `soma` e a
 
 Se a API iniciar antes do MySQL estar pronto, espere o banco terminar de iniciar e execute novamente `npm run servidor`. Se já usa MySQL no computador, veja a [configuração sem Docker](docs/BACKEND.md#usar-mysql-já-instalado).
 
-## Contas de exemplo
+## Contas e administração da demonstração
 
-Todas usam a senha **academico123**. Também é possível criar uma conta pela tela.
+Cadastre sua própria conta pela tela. Em um banco vazio, as campanhas ilustrativas são criadas com responsáveis de exemplo e senhas aleatórias não divulgadas; elas não são contas de acesso compartilhado. Cadastros e senhas de bancos já existentes são preservados.
 
-| E-mail | Uso |
-| --- | --- |
-| `ana@exemplo.com` | Responsável pela biblioteca |
-| `marina@exemplo.com` | Responsável pela campanha da família |
-| `lucas@exemplo.com` | Responsável pelo abrigo e participante em outras campanhas |
-| `admin@exemplo.com` | Analisar denúncias, campanhas e operações de teste |
+Para autorizar uma conta administrativa, primeiro cadastre-a normalmente. No computador que administra o banco, execute com o e-mail dessa conta:
+
+```bash
+npm run admin:configurar -- seu-email@example.org
+```
+
+O comando usa a configuração privada de `backend/.env`, promove somente a conta informada e encerra suas sessões anteriores. Faça login novamente: o aplicativo abre a área administrativa. Não existe promoção pelo cadastro público nem senha administrativa padrão. Quem tem acesso ao terminal e ao banco é um operador de confiança.
+
+**Compatibilidade de segurança:** a antiga conta publicada `admin@exemplo.com` perde apenas a permissão administrativa ao iniciar esta versão. Sua conta, senha, acesso comum e histórico permanecem. A mudança é necessária porque suas credenciais privilegiadas eram públicas. Configure uma conta própria com o comando acima; esse endereço histórico é reservado e não pode ser promovido pelo comando. Outros administradores são preservados.
 
 ## Funcionalidades
 
 - Cadastro, login, perfil e encerramento de sessão.
-- Criar, consultar, editar e encerrar campanhas com necessidades de objetos, tarefas e dinheiro.
-- Reservar, cancelar e confirmar ajudas, incluindo recebimento parcial. Duas reservas não podem ocupar a última unidade ao mesmo tempo.
+- Criar, consultar, editar e encerrar campanhas com uma ou várias necessidades independentes, inclusive do mesmo tipo. Reabrir exige motivo e atualização de meta.
+- Registrar intenção, combinar a entrega por telefone/WhatsApp e confirmar o total realmente recebido, inclusive parcial. Reservas não contam como recebimento; duas reservas não ocupam a última unidade ao mesmo tempo. O contato e as orientações privadas aparecem na ajuda autorizada.
 - Publicar atualizações, consultar atividade, receber avisos e registrar denúncias.
 - Administração com permissões verificadas na API.
-- Pagamentos e repasses **simulados**, com valores, estados e saldo salvos no MySQL. Nenhum Pix, cobrança, transferência ou reembolso real é executado.
+- Contribuições financeiras **simuladas**, sem novas taxas: o valor integral confirmado conta para a meta. Registros e operações financeiras anteriores são preservados. Nenhum Pix, cobrança, transferência ou reembolso real é executado.
 
 A versão básica não envia e-mail, recupera senhas, analisa conteúdo com IA ou executa o fluxo automático de excedentes. Uma meta fechada recusa pagamentos de teste acima do restante disponível. O front mantém as 35 rotas de referência, com essas limitações explicadas nas telas.
 
@@ -80,4 +83,6 @@ npm run testar:backend
 
 Se escolheu o MySQL próprio no Windows, use **`npm run testar:backend:local`**. Esse comando lê as credenciais locais sem exibi-las e executa a mesma suíte em um banco temporário.
 
-Os testes de backend precisam do MySQL ligado. Criam e removem um banco separado chamado `soma_teste_...`, com as credenciais locais do Compose; não alteram o banco `soma`. Verificam cadastro, permissões, reservas concorrentes, confirmação parcial, financeiro simulado e persistência após reiniciar o Node. A execução web foi validada; Android/iOS não foram validados.
+Os testes de backend precisam do MySQL ligado. Criam e removem um banco separado chamado `soma_teste_...`; não alteram o banco `soma`. Verificam cadastro, permissões, migração do esquema anterior, reservas concorrentes, confirmação parcial, financeiro simulado, moderação, privacidade, reabertura e persistência após reiniciar o Node.
+
+Ao iniciar, a API aplica automaticamente a atualização aditiva do esquema: tabela `operacoes` e coluna `campanhas.estado_antes_moderacao`. Não é necessário recriar o banco nem apagar dados. Veja o [relatório de auditoria e validação](docs/AUDITORIA-ENTREGA.md), o [roteiro de demonstração](docs/DEMONSTRACAO.md) e as [respostas sobre confiança e limites do produto](docs/LIMITES-DO-PRODUTO.md).

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
 import { FotoDeCampanha } from './fotos';
-import { Progress, useTheme } from './ui';
+import { Progress, Tag, useTheme } from './ui';
 import { MotionPressable } from '../design/motion';
 import { radius } from '../design/theme';
 import { formatarDinheiro } from '../data/formatacao';
@@ -17,6 +17,7 @@ export function CartaoCampanha({ campanha, pedido, evento = false, cta, aoAbrir 
     <FotoDeCampanha campanhaId={campanha.id} categoria={campanha.categoria}/>
     <View style={{ padding: 18, gap: 10 }}>
       <Text style={{ fontSize: 11, lineHeight: 16, fontFamily: fontsReady ? 'Manrope-SemiBold' : undefined, letterSpacing: .4, color: colors.accent }}>{campanha.categoria.toLocaleUpperCase()}</Text>
+      {campanha.estado !== 'ativa' ? <Tag>{campanha.estado.toLocaleUpperCase()}</Tag> : null}
       <Text accessibilityRole="header" numberOfLines={2} style={[s.cardTitle, { flex: 0, fontSize: 19, lineHeight: 27 }]}>{titulo}</Text>
       <Text numberOfLines={2} style={s.cardSubtitle}>{evento ? campanha.titulo : campanha.descricao}</Text>
       {detalhes ? <Text style={s.cardSubtitle}>{detalhes.data + ' · ' + detalhes.horario}</Text> : null}
