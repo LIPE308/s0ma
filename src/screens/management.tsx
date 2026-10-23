@@ -5,6 +5,7 @@ import { EstadoConexao, PedirLogin } from '../components/conexao';
 import { useDados, requisitar, usuarioLogado, mensagemErro, type Campanha, type Ajuda } from '../servicos/api';
 import { parametrosDaCampanha } from './creation';
 import { formatarDinheiro } from '../data/formatacao';
+import { RecursosCampanha } from './inteligencia';
 
 export function Manage() {
   const roteador = useRouter(); const { id, salvo } = useLocalSearchParams<{ id?: string; salvo?: string }>(); const consulta = useDados<Campanha>(`/campanhas/${id || 'biblioteca'}`); const campanha = consulta.dados; const pessoa = usuarioLogado();
@@ -23,6 +24,7 @@ export function Manage() {
       <Heading>Necessidades da campanha</Heading>
       {campanha.necessidades.map(pedido => <Card variant="row" key={pedido.id} title={pedido.nome} subtitle={pedido.tipo === 'dinheiro' ? `${formatarDinheiro(pedido.recebido / 100)} recebidos · meta ${formatarDinheiro(pedido.meta / 100)}` : `${pedido.recebido} ${pedido.tipo === 'tarefa' ? 'participações confirmadas' : 'unidades recebidas'} · ${pedido.reservado} ${pedido.tipo === 'tarefa' ? 'vagas reservadas' : 'unidades reservadas'}`}/>)}
       <Heading>Organize a próxima etapa</Heading>
+      <RecursosCampanha id={campanha.id}/>
       <Card title="Confirmar ajudas" icon="checkmark-circle-outline" onPress={() => roteador.push({ pathname: '/confirmar', params: { campanha: campanha.id } })}/>
       <Card title="Publicar atualização" icon="document-text-outline" onPress={() => roteador.push({ pathname: '/publicar', params: { campanha: campanha.id } })}/>
       <Card title="Editar campanha" icon="create-outline" onPress={() => roteador.push({ pathname: '/criar', params: parametrosDaCampanha(campanha) })}/>

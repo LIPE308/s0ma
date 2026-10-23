@@ -11,6 +11,7 @@ import { FotoDeAcolhimento, FotoDeCampanha } from '../components/fotos';
 import { CartaoCampanha } from '../components/campanhas';
 import { ContentMotion, MotionPressable } from '../design/motion';
 import { radius } from '../design/theme';
+import { CampanhaInteligencia } from './inteligencia';
 
 export function CartaoNecessidade({ pedido, aoAbrir }: { pedido: Necessidade; aoAbrir: () => void }) {
   const restante = Math.max(0, pedido.meta - pedido.recebido - Number(pedido.reservado));
@@ -42,6 +43,7 @@ export function Home() {
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>{historias.map(campanha => <View key={campanha.id} style={{ flexBasis: width >= 680 ? '47%' : '100%', flexGrow: 1 }}><CartaoCampanha campanha={campanha} pedido={pedidos.dados?.find(pedido => pedido.campanha_id === campanha.id && pedido.tipo !== 'dinheiro')} aoAbrir={() => roteador.push({ pathname: '/campanha', params: { id: campanha.id } })}/></View>)}</View>
     {!campanhas.carregando && !campanhas.erro && !historias.length ? <EmptyState title="Toda causa começa com alguém." action="Criar uma campanha" onPress={() => roteador.push('/criar')}>Ainda não há campanhas ativas por aqui.</EmptyState> : null}
     <Button secondary title="Conhecer todas as campanhas" onPress={() => explorar('Campanhas')}/>
+    <Card title="Mapa solidário do Brasil" subtitle="Descubra campanhas por estado, categoria e urgência verificada" icon="map-outline" onPress={() => roteador.push('/mapa')}/>
     <Heading>Pequenos gestos, ajuda concreta</Heading><EstadoConexao {...pedidos}/>
     {pedidos.dados?.filter(pedido => pedido.tipo !== 'dinheiro' && pedido.meta > pedido.recebido + Number(pedido.reservado)).slice(0, 3).map(pedido => <CartaoNecessidade key={pedido.id} pedido={pedido} aoAbrir={() => roteador.push({ pathname: '/necessidade', params: { id: pedido.id } })}/>)}
     {!pedidos.carregando && !pedidos.erro && pedidos.dados?.length === 0 ? <EmptyState title="Novas oportunidades podem chegar.">Você pode conhecer as histórias da comunidade enquanto isso.</EmptyState> : null}
@@ -58,6 +60,7 @@ export function Explore() {
   const [regiao, definirRegiao] = useState('Todas as regiões'); const [regiaoEscolhida, definirRegiaoEscolhida] = useState(regiao);
   const [categoria, definirCategoria] = useState('Todas'); const [categoriaEscolhida, definirCategoriaEscolhida] = useState(categoria);
   const [janela, definirJanela] = useState(false);
+  const [urgencia, definirUrgencia] = useState('Todas'); const [verificadas, definirVerificadas] = useState('Todas'); const [ordem, definirOrdem] = useState('Recentes'); const [valorMaximo, definirValorMaximo] = useState('');
   useEffect(() => {
     const destino = parametros.secao || (parametros.tipo === 'Ações' ? 'Eventos' : parametros.tipo ? 'Necessidades' : 'Campanhas');
     definirSecao(['Campanhas', 'Necessidades', 'Voluntariado', 'Eventos'].includes(destino) ? destino : 'Campanhas');
@@ -68,17 +71,20 @@ export function Explore() {
   const termo = busca.toLocaleLowerCase().trim(); const mostrarPedidos = secao === 'Necessidades' || secao === 'Voluntariado';
   const tipoBanco = secao === 'Voluntariado' || tipo === 'Tempo' ? 'tarefa' : tipo === 'Objetos' ? 'objeto' : 'dinheiro';
   const lista = (pedidos.dados || []).filter(pedido => (secao === 'Voluntariado' || tipo !== 'Todos' ? pedido.tipo === tipoBanco : true) && (regiao === 'Todas as regiões' || pedido.regiao === regiao) && (pedido.nome + ' ' + pedido.campanha + ' ' + pedido.descricao).toLocaleLowerCase().includes(termo));
-  const listaCampanhas = (campanhas.dados || []).filter(campanha => (regiao === 'Todas as regiões' || campanha.regiao === regiao) && (categoria === 'Todas' || campanha.categoria === categoria) && (campanha.titulo + ' ' + campanha.descricao + ' ' + campanha.evento + ' ' + campanha.categoria).toLocaleLowerCase().includes(termo) && (secao !== 'Eventos' || !!campanha.evento));
+  const prazoNumerico = (c: Campanha) => { const [d, m, a] = c.prazo.split('/').map(Number); return Date.UTC(a, m - 1, d); };
+  const progresso = (c: Campanha) => Number(c.meta_financeira) > 0 ? Number(c.arrecadado_financeiro) / Number(c.meta_financeira) : 0;
+  const listaCampanhas = (campanhas.dados || []).filter(campanha => (regiao === 'Todas as regiões' || campanha.regiao === regiao) && (categoria === 'Todas' || campanha.categoria === categoria) && (urgencia === 'Todas' || campanha.urgencia === urgencia) && (verificadas === 'Todas' || !!campanha.verificada) && (!valorMaximo || Number.isFinite(Number(valorMaximo.replace(',', '.'))) && Number(campanha.meta_financeira) <= Number(valorMaximo.replace(',', '.')) * 100) && (campanha.titulo + ' ' + campanha.descricao + ' ' + campanha.evento + ' ' + campanha.categoria).toLocaleLowerCase().includes(termo) && (secao !== 'Eventos' || !!campanha.evento)).sort((a, b) => ordem === 'Prazo próximo' ? prazoNumerico(a) - prazoNumerico(b) : ordem === 'Perto da meta' ? progresso(b) - progresso(a) : new Date(b.criada_em || 0).getTime() - new Date(a.criada_em || 0).getTime());
   const regioes = ['Todas as regiões', ...new Set((campanhas.dados || []).map(campanha => campanha.regiao))];
   const categorias = ['Todas', ...new Set((campanhas.dados || []).map(campanha => campanha.categoria))];
   const itens: ItemExplorar[] = mostrarPedidos ? lista.map(dados => ({ tipo: 'pedido', dados })) : listaCampanhas.map(dados => ({ tipo: 'campanha', dados }));
   const consulta = mostrarPedidos ? pedidos : campanhas;
-  function limparFiltros() { definirBusca(''); definirRegiao('Todas as regiões'); definirCategoria('Todas'); definirTipo('Todos'); }
+  function limparFiltros() { definirBusca(''); definirRegiao('Todas as regiões'); definirCategoria('Todas'); definirTipo('Todos'); definirUrgencia('Todas'); definirVerificadas('Todas'); definirOrdem('Recentes'); definirValorMaximo(''); }
   return <ContentMotion style={s.screen}><FlatList<ItemExplorar> keyboardShouldPersistTaps="handled" data={itens} keyExtractor={item => item.tipo + ':' + item.dados.id} contentContainerStyle={[s.content, { paddingTop: Math.max(24, insets.top + 12), paddingBottom: Math.max(32, insets.bottom + 20) }]} ItemSeparatorComponent={() => <View style={{ height: 16 }}/>}
     ListHeaderComponent={<View style={{ gap: 16, marginBottom: 20 }}><Text style={s.demoText}>AMBIENTE ACADÊMICO · DADOS LOCAIS</Text><Logo/><Text accessibilityRole="header" style={[s.heading, { marginBottom: 0 }]}>Explorar</Text><Copy muted>Uma causa, muitas formas de fazer parte.</Copy>
       <Field label="Buscar campanhas ou necessidades" value={busca} onChangeText={definirBusca} placeholder="Uma causa, um objeto, uma ação..."/>
       <Choices options={['Campanhas', 'Necessidades', 'Voluntariado', 'Eventos']} selected={secao} onSelect={definirSecao}/>
       <Button secondary title={'Região: ' + regiao} onPress={() => { definirRegiaoEscolhida(regiao); definirCategoriaEscolhida(categoria); definirJanela(true); }}/>
+      {!mostrarPedidos ? <><Choices label="Urgência revisada" options={['Todas', 'Crítica', 'Moderada', 'Regular']} selected={urgencia} onSelect={definirUrgencia}/><Choices label="Verificação" options={['Todas', 'Verificadas']} selected={verificadas} onSelect={definirVerificadas}/><Choices label="Ordenar campanhas" options={['Recentes', 'Prazo próximo', 'Perto da meta']} selected={ordem} onSelect={definirOrdem}/><Field label="Meta financeira máxima em R$ (opcional)" numeric value={valorMaximo} onChangeText={definirValorMaximo}/></> : null}
       {secao === 'Necessidades' ? <Choices options={['Todos', 'Objetos', 'Tempo', 'R$']} selected={tipo} onSelect={definirTipo}/> : null}
       {secao === 'Voluntariado' ? <Copy muted>Encontre tarefas e reserve uma vaga para participar.</Copy> : secao === 'Eventos' ? <Copy muted>Encontros gratuitos organizados pelas campanhas. Abra um evento para consultar data, horário e local.</Copy> : null}
       {!mostrarPedidos && categoria !== 'Todas' ? <Copy muted>{'Categoria: ' + categoria}</Copy> : null}
@@ -99,6 +105,7 @@ export function Campaign() {
       <View style={{ padding: 20, gap: 10 }}><Tag>{campanha.categoria + ' · ' + campanha.estado.toLocaleUpperCase()}</Tag><Text accessibilityRole="header" style={[s.heading, { marginBottom: 0 }]}>{campanha.titulo}</Text><Copy muted>{campanha.regiao}</Copy></View>
     </View>
     <Card title="A história desta causa" icon="people-outline"><Copy>{campanha.descricao}</Copy></Card>
+    <CampanhaInteligencia id={campanha.id}/>
     {primeiro && campanha.estado === 'ativa' ? <Button title="Ajudar agora" onPress={() => roteador.push({ pathname: '/necessidade', params: { id: primeiro.id } })}/> : <Notice>Esta causa não tem necessidades disponíveis agora. O histórico continua acessível.</Notice>}
     <Heading>Como você pode ajudar</Heading>
     {campanha.necessidades.map(pedido => <CartaoNecessidade key={pedido.id} pedido={pedido} aoAbrir={() => roteador.push({ pathname: '/necessidade', params: { id: pedido.id } })}/>)}
@@ -116,7 +123,7 @@ export function NeedDetails() {
   const disponivel = pedido && pedido.campanha_estado === 'ativa' && (pedido.tipo === 'dinheiro' && pedido.tipo_meta === 'aberta' || pedido.meta > pedido.recebido + Number(pedido.reservado));
   const propria = pedido?.responsavel_id === usuarioLogado()?.id && !!usuarioLogado();
   return <Screen variant="detail" title="Necessidade" heading={pedido?.nome} subtitle={pedido?.campanha}><EstadoConexao {...consulta}/>{pedido ? <>
-    <Tag>{(disponivel ? 'DISPONÍVEL' : pedido.campanha_estado === 'encerrada' ? 'CAMPANHA ENCERRADA' : 'INDISPONÍVEL') + ' · PRIORIDADE ' + pedido.prioridade.toLocaleUpperCase()}</Tag><Copy>{pedido.descricao}</Copy>
+    <Tag>{disponivel ? 'DISPONÍVEL' : pedido.campanha_estado === 'encerrada' ? 'CAMPANHA ENCERRADA' : 'INDISPONÍVEL'}</Tag><Copy muted>{`Ordem sugerida pelo responsável: ${pedido.prioridade}. Não equivale a urgência verificada.`}</Copy><Copy>{pedido.descricao}</Copy>
     <Card title="Cada gesto aproxima a causa" icon={pedido.tipo === 'tarefa' ? 'people-outline' : 'heart-outline'}>
       <Progress done={pedido.recebido} total={pedido.meta}/>
       <Copy muted>{pedido.tipo === 'dinheiro' ? formatarDinheiro(pedido.recebido / 100) + ' de ' + formatarDinheiro(pedido.meta / 100) + ' líquidos de teste' : pedido.recebido + ' de ' + pedido.meta + ' confirmados · ' + Math.max(0, pedido.meta - pedido.recebido - Number(pedido.reservado)) + (pedido.tipo === 'tarefa' ? ' vagas livres' : ' unidades livres')}</Copy>

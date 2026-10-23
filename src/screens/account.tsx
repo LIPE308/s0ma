@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Switch, Text, View } from 'react-native';
+import { Switch, View } from 'react-native';
 import { Button, Card, Choices, Copy, Dialog, EmptyState, Field, Heading, Notice, Screen, useTheme } from '../components/ui';
 import { EstadoConexao, PedirLogin } from '../components/conexao';
 import { requisitar, guardarSessao, limparSessao, atualizarUsuario, usuarioLogado, useDados, mensagemErro, type Usuario, type Aviso, type Campanha, type Atividade } from '../servicos/api';
 import { destinoAposLogin } from '../servicos/navegacao';
 import type { ThemePreference } from '../design/theme';
 import { CartaoCampanha } from '../components/campanhas';
+import { GoogleLogin } from '../components/google-login';
+import { PerfilPessoal } from '../components/perfil-pessoal';
 
 export function Login() {
   const roteador = useRouter(); const { retorno } = useLocalSearchParams<{ retorno?: string }>();
@@ -25,6 +27,7 @@ export function Login() {
     <Field label="Senha" secret value={senha} onChangeText={definirSenha} placeholder="Digite sua senha"/>
     {erro ? <Notice error>{erro}</Notice> : null}
     <Button title={ocupado ? 'Entrando...' : 'Entrar'} disabled={ocupado} onPress={entrar}/>
+    <GoogleLogin/>
     <Button secondary title="Criar conta" onPress={() => roteador.push({ pathname: '/criar-conta', params: { retorno } })}/>
     <Button secondary title="Explorar sem entrar" onPress={() => roteador.replace('/')}/>
     <Copy muted>Use sua própria conta. O acesso administrativo é configurado pela equipe responsável.</Copy>
@@ -68,9 +71,9 @@ export function Access() {
 }
 
 export function Profile() {
-  const roteador = useRouter(); const pessoa = usuarioLogado(); const { s, colors, preferencia, definirTema, erroTema } = useTheme();
+  const roteador = useRouter(); const pessoa = usuarioLogado(); const { preferencia, definirTema, erroTema } = useTheme();
   const consulta = useDados<Usuario>(pessoa ? '/perfil' : null);
-  const [secao, definirSecao] = useState('Meus dados');
+  const [secao, definirSecao] = useState('Campanhas');
   const campanhas = useDados<Campanha[]>(pessoa && secao === 'Campanhas' ? '/campanhas?minhas=1' : null);
   const atividade = useDados<Atividade>(pessoa && secao === 'Participações' ? '/atividade' : null);
   const [nome, definirNome] = useState(''); const [telefone, definirTelefone] = useState(''); const [regiao, definirRegiao] = useState('');
@@ -85,13 +88,13 @@ export function Profile() {
   }
   async function sair() { try { await requisitar('/sair', 'POST'); } catch { /* A sessão local também pode ser encerrada sem conexão. */ } finally { limparSessao(); roteador.replace('/entrar'); } }
   return <Screen variant="form" title="Perfil" heading="Seu lugar na comunidade." subtitle={consulta.dados?.email} back={false}>
-    <Heading>Aparência</Heading><Copy muted>Escolha o que fica melhor para você. Sistema acompanha a aparência do dispositivo.</Copy>
+    {pessoa ? <PerfilPessoal/> : null}
+    {!pessoa ? <PedirLogin/> : <>
+      <EstadoConexao {...consulta}/><Choices options={['Campanhas', 'Participações', 'Meus dados', 'Aparência']} selected={secao} onSelect={definirSecao}/>
+      {secao === 'Aparência' ? <>    <Heading>Aparência</Heading><Copy muted>Escolha o que fica melhor para você. Sistema acompanha a aparência do dispositivo.</Copy>
     <Choices options={['Sistema', 'Claro', 'Escuro']} selected={temas[preferencia]} onSelect={tema => definirTema(tema === 'Claro' ? 'claro' : tema === 'Escuro' ? 'escuro' : 'sistema')}/>
     {erroTema ? <Notice error>{erroTema}</Notice> : <Copy muted>A preferência fica salva neste dispositivo.</Copy>}
-    {!pessoa ? <PedirLogin/> : <>
-      <View style={[s.row, { marginTop: 8 }]}><View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: colors.gentle, alignItems: 'center', justifyContent: 'center' }}><Text style={[s.sectionTitle, { color: colors.gentleInk }]}>{pessoa.nome.slice(0, 1).toLocaleUpperCase()}</Text></View><Copy>{pessoa.nome}</Copy></View>
-      <EstadoConexao {...consulta}/><Choices options={['Meus dados', 'Campanhas', 'Participações']} selected={secao} onSelect={definirSecao}/>
-      {secao === 'Meus dados' ? <><Field label="Nome completo" value={nome} onChangeText={definirNome}/><Field label="Telefone" value={telefone} onChangeText={definirTelefone}/><Field label="Cidade e bairro" value={regiao} onChangeText={definirRegiao}/><Button title="Salvar dados" disabled={ocupado || consulta.carregando || !!consulta.erro} onPress={salvar}/></> : secao === 'Campanhas' ? <><EstadoConexao {...campanhas}/>{campanhas.dados?.map(campanha => <CartaoCampanha key={campanha.id} campanha={campanha} cta="Organizar campanha" aoAbrir={() => roteador.push({ pathname: '/gerenciar', params: { id: campanha.id } })}/>)}{campanhas.dados?.length === 0 ? <EmptyState title="Uma causa pode começar com você." action="Criar campanha" onPress={() => roteador.push('/criar')}>Você ainda não criou uma campanha.</EmptyState> : null}</> : <><EstadoConexao {...atividade}/>{atividade.dados?.ajudas.map(ajuda => <Card key={ajuda.id} title={ajuda.necessidade} subtitle={ajuda.campanha + ' · ' + ajuda.estado} icon="heart-outline" onPress={() => roteador.push({ pathname: '/ajuda', params: { id: String(ajuda.id) } })}/>)}{atividade.dados?.ajudas.length === 0 ? <EmptyState title="Há muitas formas de somar." action="Explorar oportunidades" onPress={() => roteador.push('/explorar')}>Suas participações aparecem aqui depois de registradas.</EmptyState> : null}<Button secondary title="Ver histórico completo" onPress={() => roteador.push('/atividade')}/></>}
+</> : secao === 'Meus dados' ? <><Field label="Nome completo" value={nome} onChangeText={definirNome}/><Field label="Telefone" value={telefone} onChangeText={definirTelefone}/><Field label="Cidade e bairro" value={regiao} onChangeText={definirRegiao}/><Button title="Salvar dados" disabled={ocupado || consulta.carregando || !!consulta.erro} onPress={salvar}/></> : secao === 'Campanhas' ? <><EstadoConexao {...campanhas}/>{campanhas.dados?.map(campanha => <CartaoCampanha key={campanha.id} campanha={campanha} cta="Organizar campanha" aoAbrir={() => roteador.push({ pathname: '/gerenciar', params: { id: campanha.id } })}/>)}{campanhas.dados?.length === 0 ? <EmptyState title="Uma causa pode começar com você." action="Criar campanha" onPress={() => roteador.push('/criar')}>Você ainda não criou uma campanha.</EmptyState> : null}</> : <><EstadoConexao {...atividade}/>{atividade.dados?.ajudas.map(ajuda => <Card key={ajuda.id} title={ajuda.necessidade} subtitle={ajuda.campanha + ' · ' + ajuda.estado} icon="heart-outline" onPress={() => roteador.push({ pathname: '/ajuda', params: { id: String(ajuda.id) } })}/>)}{atividade.dados?.ajudas.length === 0 ? <EmptyState title="Há muitas formas de somar." action="Explorar oportunidades" onPress={() => roteador.push('/explorar')}>Suas participações aparecem aqui depois de registradas.</EmptyState> : null}<Button secondary title="Ver histórico completo" onPress={() => roteador.push('/atividade')}/></>}
       {erro ? <Notice error>{erro}</Notice> : mensagem ? <Notice success>{mensagem}</Notice> : null}
       <Card title="Avisos e preferências" icon="notifications-outline" onPress={() => roteador.push('/avisos')}/>
       {pessoa.administrador ? <Card title="Administração" icon="shield-checkmark-outline" onPress={() => roteador.push('/administracao')}/> : null}

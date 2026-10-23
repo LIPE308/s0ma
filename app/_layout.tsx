@@ -9,6 +9,7 @@ import { DesignProvider } from '../src/design/theme';
 import { MotionProvider, ThemeMotion, useReducedMotion } from '../src/design/motion';
 import { BrandIntroduction, BrandSignature } from '../src/design/brand';
 import { useTheme } from '../src/components/ui';
+import { recuperarSessaoNativa } from '../src/servicos/api';
 
 void SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -19,8 +20,10 @@ export default function RootLayout() {
     'Sora-SemiBold': require('../assets/fonts/Sora-SemiBold.ttf'),
   });
   const [fallback, setFallback] = useState(false);
+  const [sessaoPronta, definirSessaoPronta] = useState(false);
+  useEffect(() => { void recuperarSessaoNativa().finally(() => definirSessaoPronta(true)); }, []);
   useEffect(() => { const timeout = setTimeout(() => setFallback(true), 3000); return () => clearTimeout(timeout); }, []);
-  const ready = fontsReady || !!error || fallback;
+  const ready = (fontsReady || !!error || fallback) && sessaoPronta;
   return <DesignProvider fontsReady={fontsReady}><MotionProvider><Application ready={ready}/></MotionProvider></DesignProvider>;
 }
 
