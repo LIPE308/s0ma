@@ -317,6 +317,7 @@ async function atender(requisicao, resposta) {
           const estado = recebido === atual.quantidade ? 'realizado' : dados.cancelar_restante === true ? 'cancelado' : 'em_andamento';
           if (atual.necessidade_id && diferenca) await consulta('UPDATE necessidades SET recebido=recebido+? WHERE id=?', [diferenca, atual.necessidade_id]);
           await consulta('UPDATE ajudas SET recebido=?,estado=? WHERE id=?', [recebido, estado, atual.id]);
+          if (diferenca) await registrarMarcos(atual.campanha_id, consulta);
           if (diferenca) await avisar(consulta, atual.usuario_id, `Recebimento registrado: ${recebido} de ${atual.quantidade}.`);
         }
         const [salva] = await consulta(`${consultaAjudas} WHERE a.id=?`, [ajuda.id]); return salva;
