@@ -42,7 +42,7 @@ async function lerCorpo(requisicao) {
   const partes = [];
   for await (const parte of requisicao) {
     tamanho += parte.length;
-    if (tamanho > 100000) erro('O formulário excedeu o limite de 100 KB.', 413);
+    if (tamanho > 160000) erro('O formulário excedeu o limite de 160 KB.', 413);
     partes.push(parte);
   }
   try {

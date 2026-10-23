@@ -9,9 +9,18 @@ if (existsSync(arquivoConfiguracao)) process.loadEnvFile(arquivoConfiguracao);
 const { banco, consultar, transacao, inicializarBanco } = require('./banco');
 const { erro, texto, inteiro, opcao, gerarSenha, conferirSenha, resumirToken, usuarioPublico, lerCorpo } = require('./auxiliares');
 const { umaVez } = require('./operacoes');
+const { atenderExtensoes } = require('./extensoes');
+const { atenderGoogle } = require('./google');
+const { registrarMarcos } = require('./marcos');
 
 const categorias = ['Família', 'Saúde', 'Educação', 'Comunidade', 'Instituições', 'Proteção animal', 'Meio ambiente', 'Cultura'];
-const consultaCampanhas = 'SELECT c.*, u.nome AS responsavel FROM campanhas c JOIN usuarios u ON u.id = c.usuario_id';
+const consultaCampanhas = `SELECT c.*, u.nome AS responsavel,
+  (SELECT COALESCE(SUM(meta),0) FROM necessidades WHERE campanha_id=c.id AND tipo='dinheiro') AS meta_financeira,
+  (SELECT COALESCE(SUM(recebido),0) FROM necessidades WHERE campanha_id=c.id AND tipo='dinheiro') AS arrecadado_financeiro,
+  (SELECT uf FROM localizacoes_publicas WHERE campanha_id=c.id) AS uf,
+  COALESCE((SELECT categoria FROM revisoes_urgencia r WHERE campanha_id=c.id AND estado='revisada' AND valida_ate>UTC_TIMESTAMP() AND r.id=(SELECT MAX(id) FROM revisoes_urgencia WHERE campanha_id=c.id)), 'Regular') AS urgencia,
+  EXISTS(SELECT 1 FROM revisoes_urgencia r WHERE campanha_id=c.id AND estado='revisada' AND valida_ate>UTC_TIMESTAMP() AND r.id=(SELECT MAX(id) FROM revisoes_urgencia WHERE campanha_id=c.id)) AS verificada
+  FROM campanhas c JOIN usuarios u ON u.id = c.usuario_id`;
 const consultaNecessidades = `SELECT n.*, c.titulo AS campanha, c.regiao, c.instrucoes, c.estado AS campanha_estado, c.usuario_id AS responsavel_id,
   COALESCE((SELECT SUM(a.quantidade - a.recebido) FROM ajudas a WHERE a.necessidade_id = n.id AND a.estado IN ('reservado','em_andamento')), 0) AS reservado
   FROM necessidades n JOIN campanhas c ON c.id = n.campanha_id`;
@@ -133,7 +142,7 @@ async function atender(requisicao, resposta) {
     const origem = requisicao.headers.origin;
     const origemPermitida = origem && (/^http:\/\/(localhost|127\.0\.0\.1):(8081|8082|3001)$/.test(origem) || origem === process.env.ORIGEM_WEB);
     if (origem && !origemPermitida) erro('Origem não permitida.', 403);
-    if (origemPermitida) { resposta.setHeader('Access-Control-Allow-Origin', origem); resposta.setHeader('Vary', 'Origin'); }
+    if (origemPermitida) { resposta.setHeader('Access-Control-Allow-Origin', origem); resposta.setHeader('Access-Control-Allow-Credentials', 'true'); resposta.setHeader('Vary', 'Origin'); }
     resposta.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
     resposta.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Idempotency-Key');
     if (requisicao.method === 'OPTIONS') { resposta.writeHead(204); resposta.end(); return; }
@@ -147,6 +156,10 @@ async function atender(requisicao, resposta) {
     if (caminho === '/api/saude' && metodo === 'GET') { await consultar('SELECT 1'); responder(resposta, 200, { mensagem: 'Servidor e MySQL funcionando.', banco: 'MySQL', financeiro: 'simulado' }); return; }
     const usuario = await identificarUsuario(requisicao);
     const dados = ['POST', 'PUT', 'PATCH'].includes(metodo) ? await lerCorpo(requisicao) : {};
+    const google = await atenderGoogle({ caminho, metodo, usuario, requisicao, resposta, endereco, dados, consultar, transacao });
+    if (google) { if (!google.redirecionado) responder(resposta, 200, google); return; }
+    const extensao = await atenderExtensoes({ caminho, metodo, dados, usuario, requisicao, endereco, consultar, transacao, obterCampanha, conferirVisibilidade, exigirLogin, exigirResponsavel, exigirAdministrador, calcularSaldo });
+    if (extensao) { responder(resposta, extensao.codigo, extensao.dados); return; }
     let resultado;
     let codigo = 200;
     let partes;
@@ -211,6 +224,7 @@ async function atender(requisicao, resposta) {
           const anteriores = await consulta('SELECT id, recebido, meta FROM necessidades WHERE campanha_id=?', [id]);
           if (reabrindo && !pedidos.some(p => !anteriores.some(a => a.id === p.id && a.meta === p.meta))) erro('Atualize ao menos uma meta ou inclua uma necessidade antes de reabrir.', 409);
           await consulta('UPDATE campanhas SET titulo=?,descricao=?,categoria=?,regiao=?,prazo=?,instrucoes=?,evento=? WHERE id=?', [titulo, descricao, categoria, regiao, prazo, instrucoes, evento, id]);
+          await consulta('UPDATE revisoes_urgencia SET valida_ate=UTC_TIMESTAMP() WHERE campanha_id=?', [id]);
           if (reabrindo) await consulta("UPDATE campanhas SET estado='ativa',estado_antes_moderacao=NULL,motivo=? WHERE id=?", [motivo, id]);
           for (const anterior of anteriores.filter(p => !pedidos.some(n => n.id === p.id))) {
             const [historico] = await consulta('SELECT (SELECT COUNT(*) FROM ajudas WHERE necessidade_id=?) + (SELECT COUNT(*) FROM pagamentos WHERE necessidade_id=?) AS total', [anterior.id, anterior.id]);
@@ -219,6 +233,12 @@ async function atender(requisicao, resposta) {
           }
         } else await consulta('INSERT INTO campanhas (id,usuario_id,titulo,descricao,categoria,regiao,prazo,instrucoes,evento) VALUES (?,?,?,?,?,?,?,?,?)', [id, usuario.id, titulo, descricao, categoria, regiao, prazo, instrucoes, evento]);
         for (const pedido of pedidos) await salvarPedido(consulta, id, pedido);
+        const [fundo] = await consulta('SELECT COALESCE(SUM(valor),0) AS total FROM distribuicoes_solidarias WHERE campanha_id=?', [id]);
+        if (Number(fundo.total)) {
+          const [financeiro] = await consulta("SELECT COALESCE(SUM(meta-recebido),0) AS restante FROM necessidades WHERE campanha_id=? AND tipo='dinheiro'", [id]);
+          const [reservas] = await consulta("SELECT COALESCE(SUM(p.valor_liquido),0) AS total FROM pagamentos p JOIN necessidades n ON n.id=p.necessidade_id WHERE n.campanha_id=? AND p.estado='pendente'", [id]);
+          if (Number(financeiro.restante) < Number(fundo.total) + Number(reservas.total)) erro('A meta precisa preservar os anúncios distribuídos e os pagamentos reservados.', 409);
+        }
         return { id };
       }));
       const [campanha] = await consultar(`${consultaCampanhas} WHERE c.id=?`, [salvo.id]);
@@ -324,6 +344,12 @@ async function atender(requisicao, resposta) {
         if (campanha.estado !== 'ativa' || atual.tipo !== 'dinheiro') erro('Este pedido não recebe doações financeiras.', 409);
         const [pendentes] = await consulta("SELECT COALESCE(SUM(valor_liquido),0) AS total FROM pagamentos WHERE necessidade_id=? AND estado='pendente'", [pedido.id]);
         if (atual.tipo_meta === 'fechada' && liquido > atual.meta - atual.recebido - Number(pendentes.total)) erro('O valor ultrapassa o restante da meta fechada.', 409);
+        if (atual.tipo_meta === 'fechada') {
+          const [total] = await consulta("SELECT COALESCE(SUM(meta-recebido),0) AS restante FROM necessidades WHERE campanha_id=? AND tipo='dinheiro'", [campanha.id]);
+          const [reservas] = await consulta("SELECT COALESCE(SUM(p.valor_liquido),0) AS total FROM pagamentos p JOIN necessidades n ON n.id=p.necessidade_id WHERE n.campanha_id=? AND p.estado='pendente'", [campanha.id]);
+          const [anuncios] = await consulta('SELECT COALESCE(SUM(valor),0) AS total FROM distribuicoes_solidarias WHERE campanha_id=?', [campanha.id]);
+          if (Number(anuncios.total) && liquido > Number(total.restante) - Number(reservas.total) - Number(anuncios.total)) erro('O restante da campanha já está coberto por pagamentos ou anúncios de teste.', 409);
+        }
         const insercao = await consulta('INSERT INTO pagamentos (usuario_id,necessidade_id,valor,taxa_soma,taxa_provedor,valor_liquido,meio) VALUES (?,?,?,?,?,?,?)', [usuario.id, pedido.id, valor, taxaSoma, taxaProvedor, liquido, meio]);
         return { id: insercao.insertId, simulado: true };
       })); codigo = 201;
@@ -350,6 +376,7 @@ async function atender(requisicao, resposta) {
             if (estado === 'confirmado') await consulta('UPDATE necessidades SET recebido=recebido+? WHERE id=?', [atual.valor_liquido, atual.necessidade_id]);
           }
           await consulta('UPDATE pagamentos SET estado=? WHERE id=?', [estado, atual.id]);
+          await registrarMarcos(pagamento.campanha_id, consulta);
           await avisar(consulta, atual.usuario_id, `Pagamento de teste ${atual.id}: ${estado}.`);
         }
         const [salvo] = await consulta('SELECT * FROM pagamentos WHERE id=?', [atual.id]); return { ...salvo, simulado: true };
@@ -419,6 +446,7 @@ async function atender(requisicao, resposta) {
         const estado = decisao === 'ativa' ? publicoAnterior : decisao;
         const anterior = decisao === 'ativa' ? null : publicoAnterior;
         await consulta('UPDATE campanhas SET estado=?,motivo=?,estado_antes_moderacao=? WHERE id=?', [estado, motivo, anterior, campanha.id]);
+        await consulta('UPDATE revisoes_urgencia SET valida_ate=UTC_TIMESTAMP() WHERE campanha_id=?', [campanha.id]);
         await avisar(consulta, campanha.usuario_id, `Sua campanha está ${estado}: ${motivo}`);
         return { mensagem: 'Decisão registrada.', estado };
       });
