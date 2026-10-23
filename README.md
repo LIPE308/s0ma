@@ -1,5 +1,11 @@
 # SOMA
 
+## Criar, ajudar e acompanhar
+
+Novas vaquinhas são criadas em **três etapas**, com calendário visual, prazo opcional e foto preparada automaticamente. Objetos, voluntariado, múltiplos pedidos e edição continuam disponíveis. A **Rota Inteligente** aparece após criar a campanha, no painel do responsável e na aba **Minhas rotas**. A estrada principal tem cinco objetivos e câmera estável; os demais registros continuam acessíveis. O mapa e os filtros receberam controles mais simples.
+
+Veja [o refinamento de experiência e os testes](docs/EXPERIENCIA-SIMPLIFICADA.md). As contribuições financeiras permanecem demonstrações, sem cobrança real.
+
 ## Rota Inteligente e atualização funcional
 
 Campanhas agora abrem uma estrada 3D interativa na web (alternativa 2,5D no aplicativo), com marcos financeiros, simulações educativas explícitas e valores de teste vindos do MySQL. O início dá acesso ao mapa do Brasil; a gestão permite indicar UF, enviar foto e solicitar revisão humana de urgência. A administração reúne revisões auditáveis e distribuição simulada 70/30. Perfis recebem capa, foto, biografia e privacidade; o fluxo Google web está preparado e exige configuração externa e teste com credenciais válidas.
