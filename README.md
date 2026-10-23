@@ -1,6 +1,12 @@
 # SOMA
 
-Identidade **Enlace + azul royal**, com fotografia editorial, histórias de campanhas e superfícies acolhedoras. Os temas **Claro, Escuro e Sistema** podem ser escolhidos no perfil e ficam salvos no dispositivo. O aplicativo mantém 35 rotas, transições suaves e redução de movimento. Consulte a [direção visual](docs/REDESIGN.md) e a [repaginação JF](docs/REPAGINACAO-JF.md).
+## Rota Inteligente e atualização funcional
+
+Campanhas agora abrem uma estrada 3D interativa na web (alternativa 2,5D no aplicativo), com marcos financeiros, simulações educativas explícitas e valores de teste vindos do MySQL. O início dá acesso ao mapa do Brasil; a gestão permite indicar UF, enviar foto e solicitar revisão humana de urgência. A administração reúne revisões auditáveis e distribuição simulada 70/30. Perfis recebem capa, foto, biografia e privacidade; o fluxo Google web está preparado e exige configuração externa e teste com credenciais válidas.
+
+Leia [o escopo, as regras e a configuração Google](docs/ATUALIZACAO-FUNCIONAL.md) e [a validação desta entrega](docs/VALIDACAO-FUNCIONAL.md). Pagamentos e anúncios continuam **simulações acadêmicas, sem dinheiro real**. Não foi realizado deploy.
+
+Identidade **Enlace + azul royal**, com fotografia editorial, histórias de campanhas e superfícies acolhedoras. Os temas **Claro, Escuro e Sistema** podem ser escolhidos no perfil e ficam salvos no dispositivo. O aplicativo preserva as rotas existentes, transições suaves e redução de movimento. Consulte a [direção visual](docs/REDESIGN.md) e a [repaginação JF](docs/REPAGINACAO-JF.md).
 
 Projeto acadêmico com front React Native/Expo e backend em **Node.js puro + MySQL**. Os nomes das variáveis, funções da API, tabelas e mensagens estão em português. O servidor usa `http`, funções e comandos SQL, sem Express ou ORM. A única dependência adicionada ao backend é `mysql2`, para conectar ao MySQL.
 
@@ -59,7 +65,7 @@ O comando usa a configuração privada de `backend/.env`, promove somente a cont
 - Administração com permissões verificadas na API.
 - Contribuições financeiras **simuladas**, sem novas taxas: o valor integral confirmado conta para a meta. Registros e operações financeiras anteriores são preservados. Nenhum Pix, cobrança, transferência ou reembolso real é executado.
 
-A versão básica não envia e-mail, recupera senhas, analisa conteúdo com IA ou executa o fluxo automático de excedentes. Uma meta fechada recusa pagamentos de teste acima do restante disponível. O front mantém as 35 rotas de referência, com essas limitações explicadas nas telas.
+A versão básica não envia e-mail, recupera senhas, analisa conteúdo com IA ou executa o fluxo automático de excedentes. Uma meta fechada recusa pagamentos de teste acima do restante disponível. O front preserva as rotas de referência, com essas limitações explicadas nas telas.
 
 ## Para estudar o código
 
