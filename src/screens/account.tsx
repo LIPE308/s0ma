@@ -90,6 +90,7 @@ export function Profile() {
   return <Screen variant="form" title="Perfil" heading="Seu lugar na comunidade." subtitle={consulta.dados?.email} back={false}>
     {pessoa ? <PerfilPessoal/> : null}
     {!pessoa ? <PedirLogin/> : <>
+      <Card title="Minhas contribuições" icon="heart-outline" onPress={() => roteador.push('/atividade')}/>
       <EstadoConexao {...consulta}/><Choices options={['Campanhas', 'Participações', 'Meus dados', 'Aparência']} selected={secao} onSelect={definirSecao}/>
       {secao === 'Aparência' ? <>    <Heading>Aparência</Heading><Copy muted>Escolha o que fica melhor para você. Sistema acompanha a aparência do dispositivo.</Copy>
     <Choices options={['Sistema', 'Claro', 'Escuro']} selected={temas[preferencia]} onSelect={tema => definirTema(tema === 'Claro' ? 'claro' : tema === 'Escuro' ? 'escuro' : 'sistema')}/>

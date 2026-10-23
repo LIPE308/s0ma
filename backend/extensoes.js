@@ -49,7 +49,7 @@ async function atenderExtensoes({ caminho, metodo, dados, usuario, requisicao, e
     marcos.splice(2, 0, { id: 'anuncios', titulo: 'Primeira distribuição dos anúncios', valor: Number(anuncios.total), concluido: Number(anuncios.total) > 0, data: primeiroAnuncio.data, icone: 'anuncio' }, { id: 'rendimento', titulo: 'Primeiro rendimento creditado', valor: 0, concluido: false, data: null, icone: 'grafico' });
     marcos.splice(2, 0, { id: 'apoiadores', titulo: 'Primeiro apoiador confirmado', valor: Number(apoios.total), unidade: 'pessoas', concluido: Number(apoios.total) > 0, data: Number(apoios.total) > 0 ? datas.find(d => d.chave === 'apoiadores:1')?.alcancado_em || null : null, icone: 'pessoas' });
     for (const marco of marcos) if (marco.concluido && marco.id !== 'financeiro-0' && marco.id.startsWith('financeiro')) marco.data = datas.find(d => d.chave === `${marco.id}:${marco.valor}`)?.alcancado_em || null;
-    return ok({ ...financeiro, saldo_disponivel: saldo.disponivel, anuncios_disponiveis_simulados: Number(anuncios.total), simulado: true, rendimentos: 0, marcos, urgencia: urgencia ? { categoria: urgencia.categoria, pontos: urgencia.pontos, valida_ate: urgencia.valida_ate, verificada: true } : { categoria: 'Regular', verificada: false }, uf: localizacao?.uf || '', imagem: foto?.imagem || '', campanha: campanha.titulo });
+    return ok({ ...financeiro, estado: campanha.estado, categoria: campanha.categoria, saldo_disponivel: saldo.disponivel, anuncios_disponiveis_simulados: Number(anuncios.total), simulado: true, rendimentos: 0, marcos, urgencia: urgencia ? { categoria: urgencia.categoria, pontos: urgencia.pontos, valida_ate: urgencia.valida_ate, verificada: true } : { categoria: 'Regular', verificada: false }, uf: localizacao?.uf || '', imagem: foto?.imagem || '', campanha: campanha.titulo });
   }
   if ((partes = caminho.match(/^\/api\/campanhas\/([^/]+)\/projecao$/)) && metodo === 'POST') {
     const campanha = await obterCampanha(partes[1]); conferirVisibilidade(campanha, usuario);
@@ -129,4 +129,4 @@ async function atenderExtensoes({ caminho, metodo, dados, usuario, requisicao, e
   }
   return null;
 }
-module.exports = { atenderExtensoes, imagemSegura };
+module.exports = { atenderExtensoes, imagemSegura, ufs };

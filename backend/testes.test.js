@@ -336,6 +336,21 @@ test('API Node + MySQL: fluxos completos e persistência', { timeout: 90000 }, a
       await chamar('/google/iniciar', { metodo: 'POST', dados: {}, codigo: 503 });
       await chamar('/google/resgatar', { metodo: 'POST', dados: { codigo: 'codigo-falso' }, codigo: 400 });
     });
+    await turma.test('criação simples: prazo opcional, imagem atômica, reenvio único e planejamento privado', async () => {
+      const imagem = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jfX8AAAAASUVORK5CYII=';
+      const dados = { titulo: 'Meu PlayStation 5', descricao: 'Objetivo pessoal legítimo, sem prioridade emergencial.', categoria: 'Cultura', necessidades: [{ nome: 'Meu PlayStation 5', tipo: 'dinheiro', meta: 500000 }], uf: 'SP', imagem };
+      const enviar = () => chamar('/campanhas', { metodo: 'POST', token: novo.token, dados, chave: 'criacao-simples-reenvio-2026', codigo: 201 });
+      const [a, b] = await Promise.all([enviar(), enviar()]); assert.equal(a.id, b.id); assert.equal(a.prazo, ''); assert.equal(a.regiao, '');
+      let rota = await chamar(`/campanhas/${a.id}/inteligencia`); assert.equal(rota.imagem, imagem); assert.equal(rota.uf, 'SP'); assert.equal(rota.meta, 500000); assert.equal(rota.urgencia.verificada, false);
+      assert.equal((await chamar('/mapa')).campanhas.filter(x => x.id === a.id).length, 1);
+      await chamar('/campanhas', { metodo: 'POST', token: novo.token, dados: { ...dados, titulo: 'Imagem inválida não pode criar campanha', imagem: 'data:image/svg+xml;base64,PHN2Zz4=' }, codigo: 400 });
+      assert.equal((await chamar('/campanhas')).some(x => x.titulo === 'Imagem inválida não pode criar campanha'), false);
+      await chamar('/campanhas', { metodo: 'POST', token: novo.token, dados: { ...dados, uf: 'ZZ' }, codigo: 400 });
+      await chamar(`/administracao/campanhas/${a.id}`, { metodo: 'PATCH', token: administrador.token, dados: { estado: 'ajustes', motivo: 'Revisão para teste do planejamento.' } });
+      rota = await chamar(`/campanhas/${a.id}/inteligencia`, { token: novo.token }); assert.equal(rota.estado, 'ajustes');
+      await chamar(`/campanhas/${a.id}/inteligencia`, { codigo: 404 });
+      assert.equal((await chamar('/mapa')).campanhas.some(x => x.id === a.id), false);
+    });
     await turma.test('reiniciar mantém cadastro, sessão, campanhas, ajudas e financeiro', async () => {
       await chamar('/cadastro', { metodo: 'POST', dados: { nome: 'Conta legada de teste', email: 'admin@exemplo.com', senha: 'senha-legada-de-teste' }, codigo: 201 });
       await conexao.query(`UPDATE ${nomeBanco}.usuarios SET administrador=1 WHERE email='admin@exemplo.com'`);

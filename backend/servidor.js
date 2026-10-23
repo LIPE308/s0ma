@@ -9,7 +9,7 @@ if (existsSync(arquivoConfiguracao)) process.loadEnvFile(arquivoConfiguracao);
 const { banco, consultar, transacao, inicializarBanco } = require('./banco');
 const { erro, texto, inteiro, opcao, gerarSenha, conferirSenha, resumirToken, usuarioPublico, lerCorpo } = require('./auxiliares');
 const { umaVez } = require('./operacoes');
-const { atenderExtensoes } = require('./extensoes');
+const { atenderExtensoes, imagemSegura, ufs } = require('./extensoes');
 const { atenderGoogle } = require('./google');
 const { registrarMarcos } = require('./marcos');
 
@@ -209,8 +209,10 @@ async function atender(requisicao, resposta) {
       const titulo = texto(dados.titulo, 'o título', 150);
       const descricao = texto(dados.descricao, 'a descrição', 10000);
       const categoria = opcao(dados.categoria, categorias, 'categoria');
-      const regiao = texto(dados.regiao, 'a região', 150);
-      const prazo = validarData(dados.prazo, 'o prazo');
+      const regiao = texto(dados.regiao || '', 'a região', 150, false);
+      const prazo = validarData(dados.prazo, 'o prazo', false);
+      const imagem = dados.imagem === undefined ? null : imagemSegura(dados.imagem);
+      const uf = dados.uf == null ? null : dados.uf === '' ? '' : opcao(dados.uf, ufs, 'estado');
       const instrucoes = texto(dados.instrucoes || '', 'as instruções', 2000, false);
       const evento = texto(dados.evento || '', 'a ação', 1000, false);
       if (!Array.isArray(dados.necessidades) || !dados.necessidades.length || dados.necessidades.length > 30) erro('Inclua de 1 a 30 necessidades.');
@@ -233,6 +235,9 @@ async function atender(requisicao, resposta) {
           }
         } else await consulta('INSERT INTO campanhas (id,usuario_id,titulo,descricao,categoria,regiao,prazo,instrucoes,evento) VALUES (?,?,?,?,?,?,?,?,?)', [id, usuario.id, titulo, descricao, categoria, regiao, prazo, instrucoes, evento]);
         for (const pedido of pedidos) await salvarPedido(consulta, id, pedido);
+        if (imagem !== null) await consulta('INSERT INTO imagens_campanha (campanha_id,imagem) VALUES (?,?) ON DUPLICATE KEY UPDATE imagem=?', [id, imagem, imagem]);
+        if (uf) await consulta('INSERT INTO localizacoes_publicas (campanha_id,uf) VALUES (?,?) ON DUPLICATE KEY UPDATE uf=?', [id, uf, uf]);
+        else if (uf === '') await consulta('DELETE FROM localizacoes_publicas WHERE campanha_id=?', [id]);
         const [fundo] = await consulta('SELECT COALESCE(SUM(valor),0) AS total FROM distribuicoes_solidarias WHERE campanha_id=?', [id]);
         if (Number(fundo.total)) {
           const [financeiro] = await consulta("SELECT COALESCE(SUM(meta-recebido),0) AS restante FROM necessidades WHERE campanha_id=? AND tipo='dinheiro'", [id]);

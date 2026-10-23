@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Button, Card, Choices, Copy, Dialog, EmptyState, Field, Heading, Notice, Screen, Tag } from '../components/ui';
+import { Button, Card, Choices, Copy, Dialog, Disclosure, EmptyState, Field, Heading, Notice, Screen, Tag } from '../components/ui';
 import { EstadoConexao, PedirLogin } from '../components/conexao';
 import { useDados, requisitar, usuarioLogado, mensagemErro, type Campanha, type Ajuda } from '../servicos/api';
 import { parametrosDaCampanha } from './creation';
 import { formatarDinheiro } from '../data/formatacao';
+import { RotaConvite } from '../components/rota-convite';
 import { RecursosCampanha } from './inteligencia';
 
 export function Manage() {
@@ -18,13 +19,14 @@ export function Manage() {
   }
   return <Screen variant="ledger" title="Gerenciar campanha" heading={campanha?.titulo} subtitle="Painel do responsável" onBack={salvo ? () => roteador.dismissTo('/') : undefined}><EstadoConexao {...consulta}/>
     {!pessoa ? <PedirLogin/> : campanha && !permitido ? <Notice>Você não é responsável por esta campanha.</Notice> : campanha ? <>
-      {['criada', 'atualizada', 'reaberta'].includes(salvo || '') ? <Notice success>{salvo === 'criada' ? 'Campanha publicada! Agora você pode acompanhar as ajudas por aqui.' : salvo === 'reaberta' ? 'Campanha reaberta. As metas foram atualizadas e o histórico foi preservado.' : 'Alterações salvas na campanha.'}</Notice> : null}
+      {['criada', 'atualizada', 'reaberta'].includes(salvo || '') ? <Notice success>{salvo === 'criada' ? (campanha.estado === 'ativa' ? 'Sua campanha foi criada. Vamos dar o próximo passo?' : 'Sua campanha foi criada e aguarda revisão.') : salvo === 'reaberta' ? 'Campanha reaberta. As metas foram atualizadas e o histórico foi preservado.' : 'Alterações salvas na campanha.'}</Notice> : null}
+      <RotaConvite id={campanha.id} estado={campanha.estado} recemCriada={salvo === 'criada'} criador/>
       <Tag>{campanha.estado.toLocaleUpperCase()}</Tag>
       <Button secondary title="Ver página da campanha" onPress={() => roteador.push({ pathname: '/campanha', params: { id: campanha.id } })}/>
       <Heading>Necessidades da campanha</Heading>
       {campanha.necessidades.map(pedido => <Card variant="row" key={pedido.id} title={pedido.nome} subtitle={pedido.tipo === 'dinheiro' ? `${formatarDinheiro(pedido.recebido / 100)} recebidos · meta ${formatarDinheiro(pedido.meta / 100)}` : `${pedido.recebido} ${pedido.tipo === 'tarefa' ? 'participações confirmadas' : 'unidades recebidas'} · ${pedido.reservado} ${pedido.tipo === 'tarefa' ? 'vagas reservadas' : 'unidades reservadas'}`}/>)}
       <Heading>Organize a próxima etapa</Heading>
-      <RecursosCampanha id={campanha.id}/>
+      <Disclosure title="Imagem, localização e análise de urgência"><RecursosCampanha id={campanha.id}/></Disclosure>
       <Card title="Confirmar ajudas" icon="checkmark-circle-outline" onPress={() => roteador.push({ pathname: '/confirmar', params: { campanha: campanha.id } })}/>
       <Card title="Publicar atualização" icon="document-text-outline" onPress={() => roteador.push({ pathname: '/publicar', params: { campanha: campanha.id } })}/>
       <Card title="Editar campanha" icon="create-outline" onPress={() => roteador.push({ pathname: '/criar', params: parametrosDaCampanha(campanha) })}/>

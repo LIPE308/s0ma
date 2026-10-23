@@ -20,6 +20,7 @@
     "compilar:web": "expo export --platform web --max-workers 2",
     "testar:backend": "node --test backend/testes.test.js",
     "testar:inteligencia": "node --test backend/inteligencia.test.js",
+    "testar:experiencia": "node --experimental-strip-types --test backend/experiencia.test.js",
     "verificar:tipos": "tsc --noEmit"
   },
   "dependencies": {
@@ -35,6 +36,7 @@
     "expo-font": "~14.0.11",
     "expo-haptics": "~15.0.8",
     "expo-image": "~3.0.11",
+    "expo-image-manipulator": "~14.0.8",
     "expo-image-picker": "~17.0.11",
     "expo-linking": "~8.0.12",
     "expo-router": "~6.0.23",

@@ -1,57 +1,70 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Share } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { Button, Card, Choices, Copy, Field, Heading, Line, Notice, Progress, Screen, Tag } from '../components/ui';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
+import { Button, Card, Choices, Copy, Disclosure, Field, Heading, Line, Notice, Progress, Screen, Tag } from '../components/ui';
 import { EstadoConexao } from '../components/conexao';
 import Estrada from '../components/estrada';
-import type { Marco } from '../components/estrada-base';
+import { EstradaAlternativa, type Marco } from '../components/estrada-base';
+import { indiceAtual, marcosDaEstrada } from '../data/rota';
 import { requisitar, useDados, usuarioLogado, mensagemErro, criarChaveOperacao } from '../servicos/api';
 import { formatarDinheiro, converterValor } from '../data/formatacao';
 
-export type Inteligencia = { campanha: string; meta: number; arrecadado: number; restante: number; percentual: number; doacoes: number; anuncios: number; rendimentos: number; saldo_disponivel: number; marcos: Marco[]; urgencia: { categoria: string; verificada: boolean }; uf: string; imagem: string };
+export type Inteligencia = { campanha: string; categoria?: string; estado?: string; meta: number; arrecadado: number; restante: number; percentual: number; doacoes: number; anuncios: number; rendimentos: number; saldo_disponivel: number; marcos: Marco[]; urgencia: { categoria: string; verificada: boolean }; uf: string; imagem: string };
 const dinheiro = (centavos: number) => formatarDinheiro(centavos / 100);
 export function RotaInteligente() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const consulta = useDados<Inteligencia>(id ? `/campanhas/${id}/inteligencia` : null);
-  const [indice, selecionar] = useState<number | null>(null); const [modo, definirModo] = useState('Estrada');
+  const dados = consulta.dados;
+  const marcos = useMemo(() => dados ? marcosDaEstrada(dados.marcos, dados.campanha, dados.categoria) : [], [dados]);
+  const atual = indiceAtual(marcos);
+  const [indice, selecionar] = useState<number | null>(null); const [modo, definirModo] = useState('Estrada 3D');
+  const selecionado = Math.min(indice ?? atual, Math.max(0, marcos.length - 1)); const marco = marcos[selecionado];
+  const planejamento = !!dados?.estado && !['ativa', 'encerrada'].includes(dados.estado);
   const [taxa, definirTaxa] = useState('0'); const [anuncios, definirAnuncios] = useState('0');
   const [projecao, definirProjecao] = useState<{ rendimento_estimado: number; anuncios_estimados: number } | null>(null);
   const [erro, definirErro] = useState(''); const [ocupado, definirOcupado] = useState(false);
-  const dados = consulta.dados;
-  const selecionado = indice ?? Math.max(0, dados?.marcos.findIndex(m => m.id.startsWith('financeiro') && !m.concluido) ?? 0);
-  const marco = dados?.marcos[selecionado];
+  useEffect(() => { definirProjecao(null); }, [dados?.arrecadado, dados?.saldo_disponivel]);
   async function projetar() { definirOcupado(true); definirErro(''); try { definirProjecao(await requisitar(`/campanhas/${id}/projecao`, 'POST', { taxa_mensal: converterValor(taxa), anuncios_mensais: Math.round(converterValor(anuncios) * 100), meses: 1 })); } catch (e) { definirErro(mensagemErro(e)); } finally { definirOcupado(false); } }
-  return <Screen title="Rota Inteligente" heading="Cada gesto abre caminho." subtitle={dados?.campanha}>
-    <EstadoConexao {...consulta}/>{!id ? <Notice>Abra a rota a partir de uma campanha.</Notice> : null}{dados ? <>
-      <Tag>SIMULAÇÃO ACADÊMICA · SEM DINHEIRO REAL</Tag>
-      <Card title={dinheiro(dados.arrecadado)} subtitle={`de ${dinheiro(dados.meta)} · ${dados.percentual.toFixed(1)}% da meta`}><Progress done={dados.arrecadado} total={dados.meta}/><Line label="Faltam" value={dinheiro(dados.restante)}/></Card>
-      <Choices options={['Estrada', 'Lista acessível']} selected={modo} onSelect={definirModo}/>
-      {modo === 'Estrada' ? <Estrada marcos={dados.marcos} percentual={dados.percentual} selecionado={selecionado} aoSelecionar={selecionar}/> : null}
-      <Choices label="Selecionar marco da jornada" options={dados.marcos.map((m, i) => `${i + 1}. ${m.titulo}`)} selected={`${selecionado + 1}. ${marco?.titulo}`} onSelect={valor => selecionar(Number(valor.split('.')[0]) - 1)}/>
-      {marco ? <Card title={marco.titulo} subtitle={marco.concluido ? 'Concluído no ambiente de teste' : 'Próximo passo, ainda não concluído'}><Line label="Valor do marco" value={marco.unidade === 'pessoas' ? `${marco.valor} apoiadores` : dinheiro(marco.valor)}/><Copy muted>{marco.data ? `Registrado em ${new Date(marco.data).toLocaleDateString('pt-BR')}` : marco.concluido ? 'Data de alcance indisponível no histórico legado.' : 'Sem data de alcance.'}</Copy>{marco.id.startsWith('financeiro') ? <Line label="Restante para este marco" value={dinheiro(Math.max(0, marco.valor - dados.arrecadado))}/> : <Copy muted>{marco.id === 'rendimento' ? 'Nenhum rendimento foi creditado. Não há integração com investimentos.' : marco.id === 'apoiadores' ? 'Apenas contribuições financeiras confirmadas ou ajudas com recebimento registrado contam como apoiadores.' : 'Só conclui após uma distribuição registrada no livro de anúncios de teste.'}</Copy>}<Copy muted>Próximo objetivo financeiro: {dados.marcos.find(m => m.id.startsWith('financeiro') && !m.concluido)?.titulo || 'Meta concluída'}</Copy></Card> : null}
-      <Heading>O que já foi registrado</Heading><Card title="Contas transparentes"><Line label="Doações de teste confirmadas" value={dinheiro(dados.doacoes)}/><Line label="Anúncios distribuídos, simulados" value={dinheiro(dados.anuncios)}/><Line label="Rendimentos creditados" value={dinheiro(dados.rendimentos)}/><Line label="Saldo de pagamentos disponível no teste" value={dinheiro(dados.saldo_disponivel)}/><Copy muted>Anúncios têm livro próprio e não ficam disponíveis para repasse. A arrecadação da jornada soma os dois livros de teste.</Copy></Card>
-      <Heading>Explore uma hipótese</Heading><Copy>Estimativa para um mês, sobre o saldo disponível dos pagamentos. As hipóteses começam em zero e são escolhidas por você.</Copy>
-      <Button secondary title="Atualizar jornada e valores registrados" onPress={consulta.atualizar}/>
-      <Field label="Hipótese de rendimento mensal (%) — 0 a 2" numeric value={taxa} onChangeText={v => { definirTaxa(v); definirProjecao(null); }}/><Field label="Hipótese mensal de anúncios (R$)" numeric value={anuncios} onChangeText={v => { definirAnuncios(v); definirProjecao(null); }}/><Button secondary title="Calcular estimativa" disabled={ocupado} onPress={projetar}/>
-      {projecao ? <Card title="ESTIMATIVA · NÃO CREDITADA"><Line label="Rendimento hipotético no mês" value={dinheiro(projecao.rendimento_estimado)}/><Line label="Anúncios hipotéticos no mês" value={dinheiro(projecao.anuncios_estimados)}/><Line label="Progresso hipotético total" value={dinheiro(dados.arrecadado + projecao.rendimento_estimado + projecao.anuncios_estimados)}/><Copy muted>Taxa de {taxa}% ao mês e anúncios de R$ {anuncios}. Sem garantia, impostos, taxas ou novos repasses; não altera a meta registrada.</Copy></Card> : null}
-      <Notice>Em uma emergência, priorize disponibilidade imediata. Avalie prazo, liquidez, risco de perda e custos antes de qualquer decisão. O Soma não investe recursos e não está conectado a um prestador de investimentos.</Notice>{erro ? <Notice error>{erro}</Notice> : null}
-      <Card title="Anúncios que somam" subtitle="70% para campanhas críticas verificadas · 30% para manutenção"><Copy>Espaço reservado para publicidade. Sem rede conectada, sem anúncio exibido e sem receita real. O rateio de teste considera prazo, pontuação, valor necessário e distribuições anteriores, com limite de 35% do fundo por campanha.</Copy></Card>
+  return <Screen title="Rota Inteligente" heading="Seu caminho até a meta." subtitle={dados?.campanha}>
+    <EstadoConexao {...consulta}/>{!id ? <Notice>Escolha uma campanha para abrir sua rota.</Notice> : null}{dados ? <>
+      <Tag>{planejamento ? 'PLANEJAMENTO · CAMPANHA NÃO PÚBLICA' : 'DEMONSTRAÇÃO · SEM DINHEIRO REAL'}</Tag>
+      {planejamento ? <Notice>A campanha ainda não está pública. Você pode planejar sua rota enquanto aguarda a revisão.</Notice> : null}
+      <Card title={dinheiro(dados.arrecadado)} subtitle={`de ${dinheiro(dados.meta)} · ${dados.percentual.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}% da meta`}><Progress done={dados.arrecadado} total={dados.meta}/><Copy muted>Faltam {dinheiro(dados.restante)} para realizar esse objetivo.</Copy></Card>
+      {dados.meta > 0 ? <>
+        <Copy>Sua meta no horizonte: {dados.campanha}</Copy>
+        <Choices label="Como ver a rota" options={['Estrada 3D', 'Versão leve', 'Lista']} selected={modo} onSelect={definirModo}/>
+        {modo === 'Estrada 3D' ? <Estrada marcos={marcos} percentual={dados.percentual} selecionado={selecionado} aoSelecionar={selecionar}/> : modo === 'Versão leve' ? <EstradaAlternativa marcos={marcos} percentual={dados.percentual} selecionado={selecionado} aoSelecionar={selecionar}/> : null}
+        <Copy muted>Toque em um objetivo. A câmera permanece estável para você se orientar.</Copy>
+        {marco ? <Card title={marco.titulo} subtitle={`${marco.concluido ? 'Concluído' : selecionado === atual ? 'Objetivo atual' : 'Futuro'} · ${dinheiro(marco.valor)}`}><Copy>{marco.concluido ? marco.data ? `Alcançado em ${new Date(marco.data).toLocaleDateString('pt-BR')}.` : 'Conquista registrada. A data não está disponível.' : `Faltam ${dinheiro(Math.max(0, marco.valor - dados.arrecadado))} para este objetivo.`}</Copy><Copy muted>Objetivo {selecionado + 1} de {marcos.length}</Copy><Button secondary title="Objetivo anterior" disabled={selecionado === 0} onPress={() => selecionar(selecionado - 1)}/><Button title="Próximo objetivo" disabled={selecionado === marcos.length - 1} onPress={() => selecionar(selecionado + 1)}/></Card> : null}
+        <Disclosure key={modo} title="Ver todos os objetivos" initiallyOpen={modo === 'Lista'}>{marcos.map((m, i) => <Button key={m.id} secondary={selecionado !== i} title={`${m.titulo} · ${dinheiro(m.valor)} · ${m.concluido ? 'concluído' : i === atual ? 'atual' : 'futuro'}`} onPress={() => selecionar(i)}/>)}</Disclosure>
+      </> : <Notice>Esta campanha recebe objetos ou tempo. Suas ajudas continuam disponíveis na campanha; a estrada financeira aparece quando houver uma meta em dinheiro.</Notice>}
+      <Disclosure title="De onde vem cada valor"><Line label="Doações confirmadas no teste" value={dinheiro(dados.doacoes)}/><Line label="Anúncios distribuídos no teste" value={dinheiro(dados.anuncios)}/><Line label="Rendimentos creditados" value={dinheiro(dados.rendimentos)}/><Line label="Saldo de pagamentos disponível no teste" value={dinheiro(dados.saldo_disponivel)}/><Copy muted>Anúncios têm registro separado e não podem ser sacados pelo fluxo de pagamentos. Nenhum valor desta demonstração representa dinheiro real.</Copy></Disclosure>
+      <Disclosure title="Outras conquistas da campanha">{dados.marcos.filter(m => !marcos.some(p => p.id === m.id)).map(m => <Card key={m.id} title={m.titulo} subtitle={m.concluido ? 'Concluído no teste' : 'Ainda não aconteceu'}><Copy muted>{m.unidade === 'pessoas' ? `${m.valor} apoiadores confirmados` : dinheiro(m.valor)}</Copy></Card>)}</Disclosure>
+      <Disclosure title="Simular possibilidades para a meta"><Copy>Escolha suas hipóteses para um mês. Elas começam em zero e não alteram a arrecadação.</Copy><Field label="Rendimento mensal que deseja simular (%) — 0 a 2" numeric value={taxa} onChangeText={v => { definirTaxa(v); definirProjecao(null); }}/><Field label="Anúncios mensais que deseja simular (R$)" numeric value={anuncios} onChangeText={v => { definirAnuncios(v); definirProjecao(null); }}/><Button secondary title="Calcular estimativa" disabled={ocupado} onPress={projetar}/>{projecao ? <Card title="ESTIMATIVA · NÃO RECEBIDA"><Line label="Rendimento hipotético" value={dinheiro(projecao.rendimento_estimado)}/><Line label="Anúncios hipotéticos" value={dinheiro(projecao.anuncios_estimados)}/><Line label="Progresso hipotético total" value={dinheiro(dados.arrecadado + projecao.rendimento_estimado + projecao.anuncios_estimados)}/><Copy muted>Hipóteses: {taxa}% ao mês e R$ {anuncios} de anúncios. Sem garantia, impostos, taxas ou novos repasses.</Copy></Card> : null}<Notice>Em emergências, ter os recursos disponíveis agora é mais importante. O Soma não faz investimentos.</Notice></Disclosure>
+      <Disclosure title="Como os anúncios ajudam"><Copy>70% da receita líquida elegível é destinada a campanhas emergenciais verificadas; 30% mantém o Soma. A distribuição considera prazo, necessidade e recursos já recebidos, com limite por campanha.</Copy><Copy muted>A rede publicitária ainda não está conectada. Receitas e distribuições nesta versão são apenas simuladas.</Copy></Disclosure>
+      {erro ? <Notice error>{erro}</Notice> : null}<Button secondary title="Atualizar minha rota" onPress={() => { definirProjecao(null); consulta.atualizar(); }}/>
     </> : null}
   </Screen>;
 }
 
 export async function escolherImagem() {
-  const resultado = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, quality: .3, base64: true });
+  const resultado = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, quality: .8 });
   if (resultado.canceled) return null;
   const imagem = resultado.assets[0];
-  const conteudo = `data:${imagem.mimeType || 'image/jpeg'};base64,${imagem.base64}`;
-  if (conteudo.length > 70000) throw new Error('Selecione uma imagem menor (até 50 KB).');
-  return conteudo;
+  for (const [largura, qualidade] of [[800, .65], [600, .5], [400, .4], [240, .3]]) {
+    const ajustada = await manipulateAsync(imagem.uri, [{ resize: { width: Math.min(largura, imagem.width || largura) } }], { compress: qualidade, format: SaveFormat.JPEG, base64: true });
+    const conteudo = `data:image/jpeg;base64,${ajustada.base64}`;
+    if (ajustada.base64 && conteudo.length <= 70000) return conteudo;
+  }
+  throw new Error('Não conseguimos preparar essa imagem. Tente outra foto.');
 }
 export function RecursosCampanha({ id }: { id: string }) {
-  const [relato, definirRelato] = useState(''); const [uf, definirUf] = useState('SP'); const [mensagem, definirMensagem] = useState(''); const [ocupado, definirOcupado] = useState(false);
+  const [relato, definirRelato] = useState(''); const [uf, definirUf] = useState('Escolher estado'); const [mensagem, definirMensagem] = useState(''); const [ocupado, definirOcupado] = useState(false);
+  const localizacao = useDados<Inteligencia>(`/campanhas/${id}/inteligencia`);
+  useEffect(() => { if (localizacao.dados) definirUf(localizacao.dados.uf || 'Escolher estado'); }, [localizacao.dados]);
   const revisoes = useDados<{ id: number; relato: string; estado: string; categoria: string; justificativa: string }[]>(`/campanhas/${id}/urgencia`);
   async function salvar(tipo: string) { definirOcupado(true); try {
     if (tipo === 'urgencia') await requisitar(`/campanhas/${id}/urgencia`, 'POST', { relato });
@@ -59,7 +72,7 @@ export function RecursosCampanha({ id }: { id: string }) {
     else { const imagem = await escolherImagem(); if (!imagem) return; await requisitar(`/campanhas/${id}/imagem`, 'PUT', { imagem }); }
     definirMensagem('Informação salva.'); revisoes.atualizar();
   } catch (e) { definirMensagem(mensagemErro(e)); } finally { definirOcupado(false); } }
-  return <><Heading>Cuide da apresentação e da confiança</Heading><Choices label="Estado público no mapa (opcional)" options={'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ')} selected={uf} onSelect={definirUf}/><Button secondary title="Salvar estado no mapa" disabled={ocupado} onPress={() => salvar('localizacao')}/><Button secondary title="Adicionar foto da campanha" disabled={ocupado} onPress={() => salvar('imagem')}/><Field label="Solicitar análise ou recorrer: gravidade, consequências, prazo e evidências" multiline value={relato} onChangeText={definirRelato}/><Copy muted>Não publique documentos médicos, CPF ou endereços. Cite referências para revisão privada pela equipe. Nova solicitação suspende a prioridade anterior até revisão.</Copy><Button secondary title="Solicitar revisão humana de urgência" disabled={ocupado || !relato.trim()} onPress={() => salvar('urgencia')}/><EstadoConexao {...revisoes}/>{revisoes.dados?.map(r => <Card key={r.id} title={r.estado === 'pendente' ? 'Revisão pendente' : r.categoria} subtitle={r.justificativa || 'A equipe avaliará as evidências.'}/>)}{mensagem ? <Notice>{mensagem}</Notice> : null}</>;
+  return <><Heading>Cuide da apresentação e da confiança</Heading><Choices label="Estado público no mapa (opcional)" options={['Escolher estado', ...'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ')]} selected={uf} onSelect={definirUf}/><Button secondary title="Salvar estado no mapa" disabled={ocupado || uf === 'Escolher estado' || localizacao.carregando || !!localizacao.erro} onPress={() => salvar('localizacao')}/><Button secondary title="Adicionar foto da campanha" disabled={ocupado} onPress={() => salvar('imagem')}/><Field label="Solicitar análise ou recorrer: gravidade, consequências, prazo e evidências" multiline value={relato} onChangeText={definirRelato}/><Copy muted>Não publique documentos médicos, CPF ou endereços. Cite referências para revisão privada pela equipe. Nova solicitação suspende a prioridade anterior até revisão.</Copy><Button secondary title="Solicitar revisão humana de urgência" disabled={ocupado || !relato.trim()} onPress={() => salvar('urgencia')}/><EstadoConexao {...revisoes}/>{revisoes.dados?.map(r => <Card key={r.id} title={r.estado === 'pendente' ? 'Revisão pendente' : r.categoria} subtitle={r.justificativa || 'A equipe avaliará as evidências.'}/>)}{mensagem ? <Notice>{mensagem}</Notice> : null}</>;
 }
 
 type Painel = { revisoes: { id: number; titulo: string; relato: string; estado: string; categoria: string; pontos: number; justificativa: string }[]; receitas: { id: number; referencia: string; valor: number; resultado: string }[] };
