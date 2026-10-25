@@ -13,7 +13,7 @@ export function CartaoCampanha({ campanha, pedido, evento = false, cta, aoAbrir 
   const detalhes = evento ? lerEvento(campanha.evento) : null;
   const titulo = evento ? detalhes?.nome || campanha.evento : campanha.titulo;
   const acao = cta || (evento ? 'Ver evento' : campanha.estado === 'ativa' ? 'Ajudar agora' : 'Conhecer a causa');
-  return <MotionPressable accessibilityRole="button" accessibilityLabel={acao + ': ' + titulo} accessibilityHint="Conhecer a história, os detalhes e como participar" onPress={aoAbrir} style={({ pressed }) => [{ overflow: 'hidden', borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }, pressed && s.pressed]}>
+  return <MotionPressable accessibilityRole="button" accessibilityLabel={acao + ': ' + titulo} accessibilityHint="Conhecer a história, os detalhes e como participar" onPress={aoAbrir} style={({ pressed }) => [{ overflow: 'hidden', borderRadius: radius.card, backgroundColor: colors.gentle, borderWidth: 1, borderColor: colors.line }, pressed && s.pressed]}>
     <FotoDeCampanha campanhaId={campanha.id} categoria={campanha.categoria}/>
     <View style={{ padding: 18, gap: 10 }}>
       <Text style={{ fontSize: 11, lineHeight: 16, fontFamily: fontsReady ? 'Manrope-SemiBold' : undefined, letterSpacing: .4, color: colors.accent }}>{campanha.categoria.toLocaleUpperCase()}</Text>

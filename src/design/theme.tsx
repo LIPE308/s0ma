@@ -3,7 +3,7 @@ import { Platform, useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const palette = {
-  light: { bg: '#FAF7F1', surface: '#FFFEFB', ink: '#272B38', muted: '#656775', primary: '#1748F5', soft: '#F3E9DB', accent: '#A7442A', line: '#E9E0D5', gentle: '#E8EFE7', gentleInk: '#345642', brandSoft: '#E9EEFF', hero: '#1748F5', onHero: '#FFFFFF', onPrimary: '#FFFFFF', onPhoto: '#FFFFFF', photoScrim: 'rgba(24,25,31,0.72)', heroWash: 'rgba(255,255,255,0.16)', heroTrack: 'rgba(255,255,255,0.25)', error: '#A72D34', errorBg: '#FFF0F1', success: '#175E49', successBg: '#E5F4ED', overlay: 'rgba(39,43,56,0.62)' },
+  light: { bg: '#F4EFE6', surface: '#FFFEFB', ink: '#272B38', muted: '#5C5E6E', primary: '#1748F5', soft: '#EFE3D3', accent: '#A7442A', line: '#DDD2C4', gentle: '#E3EDE2', gentleInk: '#2D4E3A', brandSoft: '#E9EEFF', hero: '#1748F5', onHero: '#FFFFFF', onPrimary: '#FFFFFF', onPhoto: '#FFFFFF', photoScrim: 'rgba(24,25,31,0.72)', heroWash: 'rgba(255,255,255,0.16)', heroTrack: 'rgba(255,255,255,0.25)', error: '#A72D34', errorBg: '#FFF0F1', success: '#175E49', successBg: '#E5F4ED', overlay: 'rgba(39,43,56,0.62)' },
   dark: { bg: '#171923', surface: '#222532', ink: '#F7F4EE', muted: '#C1BEBA', primary: '#97B5FF', soft: '#34313A', accent: '#F1A184', line: '#41414A', gentle: '#283A30', gentleInk: '#BDDECA', brandSoft: '#293652', hero: '#1748F5', onHero: '#FFFFFF', onPrimary: '#101F48', onPhoto: '#FFFFFF', photoScrim: 'rgba(24,25,31,0.72)', heroWash: 'rgba(255,255,255,0.16)', heroTrack: 'rgba(255,255,255,0.25)', error: '#FFBBC0', errorBg: '#44232E', success: '#A5E5CA', successBg: '#173E38', overlay: 'rgba(0,0,0,0.76)' },
 };
 export type Colors = typeof palette.light;
