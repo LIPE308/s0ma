@@ -83,10 +83,47 @@ async function atenderExtensoes({ caminho, metodo, dados, usuario, requisicao, e
       return ok({ mensagem: 'Pedido ou recurso enviado para revisão humana. Prioridade anterior expirada.' });
     }
   }
+function inferirUf(uf, regiao) {
+  if (uf && ufs.includes(uf.toUpperCase())) return uf.toUpperCase();
+  if (!regiao) return null;
+  const texto = regiao.toUpperCase();
+  const m = texto.match(/\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/);
+  if (m) return m[1];
+  if (texto.includes('SÃO PAULO') || texto.includes('SAO PAULO') || texto.includes('CAMPINAS') || texto.includes('SANTOS') || texto.includes('RIBEIRÃO PRETO') || texto.includes('RIBEIRAO PRETO')) return 'SP';
+  if (texto.includes('RIO DE JANEIRO') || texto.includes('NITERÓI') || texto.includes('NITEROI')) return 'RJ';
+  if (texto.includes('MINAS GERAIS') || texto.includes('BELO HORIZONTE') || texto.includes('UBERLÂNDIA') || texto.includes('UBERLANDIA')) return 'MG';
+  if (texto.includes('PARANÁ') || texto.includes('PARANA') || texto.includes('CURITIBA') || texto.includes('LONDRINA') || texto.includes('MARINGÁ') || texto.includes('MARINGA')) return 'PR';
+  if (texto.includes('RIO GRANDE DO SUL') || texto.includes('PORTO ALEGRE') || texto.includes('CAXIAS DO SUL') || texto.includes('PELOTAS')) return 'RS';
+  if (texto.includes('SANTA CATARINA') || texto.includes('FLORIANÓPOLIS') || texto.includes('FLORIANOPOLIS') || texto.includes('JOINVILLE')) return 'SC';
+  if (texto.includes('BAHIA') || texto.includes('SALVADOR') || texto.includes('FEIRA DE SANTANA')) return 'BA';
+  if (texto.includes('PERNAMBUCO') || texto.includes('RECIFE') || texto.includes('OLINDA') || texto.includes('CARUARU')) return 'PE';
+  if (texto.includes('CEARÁ') || texto.includes('CEARA') || texto.includes('FORTALEZA')) return 'CE';
+  if (texto.includes('DISTRITO FEDERAL') || texto.includes('BRASÍLIA') || texto.includes('BRASILIA')) return 'DF';
+  if (texto.includes('GOIÁS') || texto.includes('GOIAS') || texto.includes('GOIÂNIA') || texto.includes('GOIANIA')) return 'GO';
+  if (texto.includes('AMAZONAS') || texto.includes('MANAUS')) return 'AM';
+  if (texto.includes('PARÁ') || texto.includes('PARA') || texto.includes('BELÉM') || texto.includes('BELEM')) return 'PA';
+  if (texto.includes('MARANHÃO') || texto.includes('MARANHAO') || texto.includes('SÃO LUÍS') || texto.includes('SAO LUIS')) return 'MA';
+  if (texto.includes('ESPÍRITO SANTO') || texto.includes('ESPIRITO SANTO') || texto.includes('VITÓRIA') || texto.includes('VITORIA')) return 'ES';
+  if (texto.includes('MATO GROSSO DO SUL') || texto.includes('CAMPO GRANDE')) return 'MS';
+  if (texto.includes('MATO GROSSO') || texto.includes('CUIABÁ') || texto.includes('CUIABA')) return 'MT';
+  if (texto.includes('PIAUÍ') || texto.includes('PIAUI') || texto.includes('TERESINA')) return 'PI';
+  if (texto.includes('ALAGOAS') || texto.includes('MACEIÓ') || texto.includes('MACEIO')) return 'AL';
+  if (texto.includes('RIO GRANDE DO NORTE') || texto.includes('NATAL')) return 'RN';
+  if (texto.includes('PARAÍBA') || texto.includes('PARAIBA') || texto.includes('JOÃO PESSOA') || texto.includes('JOAO PESSOA')) return 'PB';
+  if (texto.includes('SERGIPE') || texto.includes('ARACAJU')) return 'SE';
+  if (texto.includes('RONDÔNIA') || texto.includes('RONDONIA') || texto.includes('PORTO VELHO')) return 'RO';
+  if (texto.includes('TOCANTINS') || texto.includes('PALMAS')) return 'TO';
+  if (texto.includes('ACRE') || texto.includes('RIO BRANCO')) return 'AC';
+  if (texto.includes('AMAPÁ') || texto.includes('AMAPA') || texto.includes('MACAPÁ') || texto.includes('MACAPA')) return 'AP';
+  if (texto.includes('RORAIMA') || texto.includes('BOA VISTA')) return 'RR';
+  return null;
+}
+
   if (caminho === '/api/mapa' && metodo === 'GET') {
-    const campanhas = await consultar(`SELECT c.id,c.titulo,c.categoria,c.prazo,l.uf,COALESCE(r.categoria,'Regular') AS urgencia,IF(r.id IS NULL,0,1) AS verificada FROM campanhas c LEFT JOIN localizacoes_publicas l ON l.campanha_id=c.id LEFT JOIN (${revisaoAtual}) r ON r.campanha_id=c.id WHERE c.estado='ativa'`);
+    const linhas = await consultar(`SELECT c.id,c.titulo,c.categoria,c.prazo,c.regiao,l.uf,COALESCE(r.categoria,'Regular') AS urgencia,IF(r.id IS NULL,0,1) AS verificada FROM campanhas c LEFT JOIN localizacoes_publicas l ON l.campanha_id=c.id LEFT JOIN (${revisaoAtual}) r ON r.campanha_id=c.id WHERE c.estado='ativa'`);
+    const campanhas = linhas.map(c => ({ ...c, uf: c.uf || inferirUf(c.uf, c.regiao) }));
     const categoria = endereco.searchParams.get('categoria'), urgencia = endereco.searchParams.get('urgencia');
-    return ok({ campanhas: campanhas.filter(c => (!categoria || c.categoria === categoria) && (!urgencia || c.urgencia === urgencia)), aviso: 'Campanhas cadastradas; não representa necessidade social absoluta. Localização aproximada por UF, informada pelo responsável.' });
+    return ok({ campanhas: campanhas.filter(c => (!categoria || c.categoria === categoria) && (!urgencia || c.urgencia === urgencia)), aviso: 'Campanhas cadastradas; não representa necessidade social absoluta. Localização aproximada por UF e cidade, informada pelo responsável.' });
   }
   if (caminho.startsWith('/api/administracao/solidariedade')) {
     exigirAdministrador(usuario);
