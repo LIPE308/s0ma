@@ -18,6 +18,8 @@ Este projeto foi integrado ao [fork da equipe](https://github.com/LIPE308/s0ma),
 
 O SOMA recebido usa o backend local de campanhas em `backend/` e `src/servicos/api.ts`. Os serviços de produtos e usuários da API oficial permanecem em `examples/base/rotaServidor/`, junto com `.env.exemplo`, para referência. Essas APIs possuem contratos diferentes; o token da API oficial não substitui uma sessão do SOMA. Migrar os dados e fluxos para o servidor central do professor depende de endpoints compatíveis e não foi realizado nesta integração.
 
+O [Mapa Solidário regional](docs/MAPA-REGIONAL.md) reúne estados em uma escala de azuis, ranking por região e filtros de ajuda. Usa somente localizações autorizadas; o exemplo visual é identificado e separado dos dados do aplicativo.
+
 ## Executar na web
 
 **No Windows x64, o projeto pode iniciar seu próprio MySQL, sem Docker ou instalação de serviço:**

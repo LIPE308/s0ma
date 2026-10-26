@@ -21,7 +21,8 @@
     "testar:backend": "node --test backend/regras-soma2.test.js backend/testes.test.js backend/testes-soma2.test.js backend/compatibilidade.test.js",
     "testar:inteligencia": "node --test backend/inteligencia.test.js",
     "testar:experiencia": "node --experimental-strip-types --test backend/experiencia.test.js",
-    "verificar:tipos": "tsc --noEmit"
+    "verificar:tipos": "tsc --noEmit",
+    "testar:mapa": "node --experimental-strip-types --test backend/mapa.test.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

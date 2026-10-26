@@ -1,43 +1,192 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { PanResponder, Switch, View } from 'react-native';
-import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg';
-import { Button, Card, Choices, Copy, Dialog, EmptyState, Heading, Line, Screen, Tag, useTheme } from '../components/ui';
+import { Ionicons } from '@expo/vector-icons';
+import { PanResponder, Pressable, Switch, Text, View, useWindowDimensions } from 'react-native';
+import Svg, { Circle, G, Line as SvgLine, Path, Text as SvgText } from 'react-native-svg';
+import { Button, Card, Choices, Copy, Dialog, Disclosure, EmptyState, Heading, Screen, useTheme } from '../components/ui';
 import { EstadoConexao } from '../components/conexao';
 import { useDados } from '../servicos/api';
 import { formatarDinheiro, categorias } from '../data/formatacao';
+import { descricaoNivel, regioesBrasil, resumirMapa } from '../data/prioridade-mapa';
+import { mapaDemonstracao } from '../data/mapa-demonstracao';
 import type { MapaDados } from '../servicos/soma2';
 import cartografia from '../data/mapa-brasil.json';
 
-export function MapaSolidario(){
-  const router=useRouter(),{colors}=useTheme();
-  const [uf,setUf]=useState(''),[categoria,setCategoria]=useState('Todas'),[cidade,setCidade]=useState('Todos'),[zoom,setZoom]=useState(1),[pan,setPan]=useState({x:0,y:0}),[arrastar,setArrastar]=useState(false);
-  const [filtros,setFiltros]=useState(false),[regiao,setRegiao]=useState('Todas');
-  const estadosVisiveis=cartografia.estados.filter(e=>regiao==='Todas'||e.regiao===regiao);
-  const consulta=useDados<MapaDados>('/mapa'+(categoria==='Todas'?'':'?categoria='+encodeURIComponent(categoria)));
-  const selecionado=consulta.dados?.estados.find(e=>e.uf===uf),campanhas=selecionado?.campanhas.filter(c=>cidade==='Todos'||c.municipio===cidade)||[];
-  const nomes=new Map(cartografia.estados.map(e=>[e.uf,e.nome]));
-  const posicao=useRef(pan),inicio=useRef(pan);
-  useEffect(()=>{posicao.current=pan;},[pan]);
-  const gesto=useMemo(()=>PanResponder.create({onMoveShouldSetPanResponder:(_,g)=>arrastar&&(Math.abs(g.dx)>10||Math.abs(g.dy)>10),onPanResponderGrant:()=>{inicio.current=posicao.current;},onPanResponderMove:(_,g)=>setPan({x:Math.max(-220,Math.min(220,inicio.current.x+g.dx*1.4)),y:Math.max(-220,Math.min(220,inicio.current.y+g.dy*1.4))})}),[arrastar]);
-  function selecionar(valor:string){setUf(valor);setCidade('Todos');}
-  return <Screen title="Mapa Solidário" heading="O cuidado tem muitos lugares." subtitle="Descubra causas por estado, sem expor endereços particulares.">
-    <Button secondary title={'Categoria: '+categoria} onPress={()=>setFiltros(true)}/>
-    <EstadoConexao {...consulta}/>
-    <View {...gesto.panHandlers} style={{borderRadius:28,borderWidth:1,borderColor:colors.line,backgroundColor:colors.surface,overflow:'hidden'}}>
-      <Svg viewBox={(-pan.x)+' '+(-pan.y)+' '+600/zoom+' '+580/zoom} width="100%" height={380} accessibilityLabel="Mapa do Brasil agregado por estado. Selecione também pela lista de estados abaixo.">
-        <G>
-          {cartografia.estados.map(e=><Path key={e.uf} d={e.caminho} fill={uf===e.uf?colors.brandSoft:colors.soft} stroke={uf===e.uf?colors.primary:colors.muted} strokeOpacity={uf===e.uf?1:.5} strokeWidth={uf===e.uf?2.5:1.2} onPress={()=>selecionar(e.uf)}/>)}
-          {consulta.dados?.estados.filter(e=>estadosVisiveis.some(p=>p.uf===e.uf)).map(e=>{const ponto=cartografia.estados.find(p=>p.uf===e.uf);if(!ponto)return null;const raio=Math.min(30,8+Math.sqrt(e.intensidade)*3);return <G key={e.uf} onPress={()=>selecionar(e.uf)}><Circle cx={ponto.x} cy={ponto.y} r={raio+8} fill={colors.primary} opacity={.12}/><Circle cx={ponto.x} cy={ponto.y} r={raio} fill={colors.primary} opacity={.28}/><Circle cx={ponto.x} cy={ponto.y} r={4} fill={colors.primary}/><SvgText x={ponto.x+7} y={ponto.y-8} fill={colors.ink} fontSize={12} fontWeight="600">{e.uf}</SvgText></G>;})}
-        </G>
-      </Svg>
-      <View style={{padding:16,gap:10}}><View style={{flexDirection:'row',gap:8}}><View style={{flex:1}}><Button secondary title="Aproximar mapa" disabled={zoom>=2} onPress={()=>setZoom(z=>Math.min(2,z+.25))}/></View><View style={{flex:1}}><Button secondary title="Afastar mapa" disabled={zoom<=1} onPress={()=>{setZoom(z=>Math.max(1,z-.25));setPan({x:0,y:0});}}/></View></View><View style={{flexDirection:'row',gap:10,alignItems:'center'}}><Switch accessibilityLabel="Ativar movimentação do mapa" value={arrastar} onValueChange={setArrastar}/><Copy>Arrastar para movimentar</Copy></View>{zoom>1?<Button secondary title="Centralizar o Brasil" onPress={()=>{setZoom(1);setPan({x:0,y:0});}}/>:null}<Copy muted>Círculos maiores indicam mais intensidade calculada nas campanhas autorizadas, não maior necessidade social da população.</Copy></View>
+const geografia = new Map(cartografia.estados.map(e => [e.uf, e]));
+const chamadas: Record<string, { x: number; y: number }> = {
+  RN: { x: 560, y: 157 }, PB: { x: 560, y: 184 }, PE: { x: 560, y: 211 },
+  AL: { x: 560, y: 238 }, SE: { x: 548, y: 265 }, ES: { x: 498, y: 362 },
+  RJ: { x: 462, y: 412 }, DF: { x: 386, y: 295 },
+};
+const moeda = (centavos: number) => formatarDinheiro(centavos / 100);
+const contagemCampanhas = (total: number) => total + (total === 1 ? ' campanha' : ' campanhas');
+
+function ControleMapa({ titulo, icone, desabilitado, onPress }: {
+  titulo: string; icone: keyof typeof Ionicons.glyphMap; desabilitado?: boolean; onPress: () => void;
+}) {
+  const { colors } = useTheme();
+  return <Pressable accessibilityRole="button" accessibilityLabel={titulo} disabled={desabilitado}
+    accessibilityState={{ disabled: !!desabilitado }} onPress={onPress}
+    style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center',
+      backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, opacity: desabilitado ? .4 : pressed ? .65 : 1 })}>
+    <Ionicons aria-hidden accessible={false} name={icone} size={22} color={colors.primary}/>
+  </Pressable>;
+}
+
+export function MapaSolidario() {
+  const router = useRouter(), { colors, dark, fontsReady } = useTheme(), { width } = useWindowDimensions();
+  const [uf, setUf] = useState(''), [categoria, setCategoria] = useState('Todas'), [cidade, setCidade] = useState('Todos');
+  const [regiao, setRegiao] = useState('Todas'), [apenasDinheiro, setApenasDinheiro] = useState(true), [demo, setDemo] = useState(false);
+  const [filtros, setFiltros] = useState(false), [zoom, setZoom] = useState(1), [pan, setPan] = useState({ x: 0, y: 0 }), [arrastar, setArrastar] = useState(false);
+  const consulta = useDados<MapaDados>(demo ? null : '/mapa' + (categoria === 'Todas' ? '' : '?categoria=' + encodeURIComponent(categoria)));
+  const fonte = useMemo(() => demo ? mapaDemonstracao.map(e => ({ ...e, campanhas: e.campanhas.filter(c => categoria === 'Todas' || c.categoria === categoria) })) : consulta.dados?.estados || [], [demo, categoria, consulta.dados]);
+  const resumo = useMemo(() => resumirMapa(fonte, cartografia.estados, apenasDinheiro), [fonte, apenasDinheiro]);
+  const porUF = useMemo(() => new Map(resumo.ufs.map(e => [e.uf, e])), [resumo.ufs]);
+  const estadosVisiveis = cartografia.estados.filter(e => regiao === 'Todas' || e.regiao === regiao);
+  const estadosAtivos = resumo.ufs.filter(e => regiao === 'Todas' || e.regiao === regiao);
+  const selecionado = porUF.get(uf), geoSelecionada = geografia.get(uf);
+  const campanhas = selecionado?.campanhas.filter(c => cidade === 'Todos' || c.municipio === cidade) || [];
+  const regiaoAtual = resumo.regioes.find(e => e.nome === regiao);
+  const total = estadosAtivos.reduce((s, e) => s + e.campanhas.length, 0), restante = estadosAtivos.reduce((s, e) => s + e.restante, 0);
+  const destaque = resumo.regioes.find(e => e.campanhas > 0), largo = width >= 900;
+  const tintas = dark ? [colors.soft, '#304C72', '#436496', '#84A7FF', '#B6CEFF'] : [colors.soft, '#DCE6FF', '#A6BEFF', '#3157C8', '#1748F5'];
+  const fonteForte = fontsReady ? 'Manrope-SemiBold' : undefined;
+  const posicao = useRef(pan), inicio = useRef(pan);
+  useEffect(() => { posicao.current = pan; }, [pan]);
+  const mover = (x: number, y: number) => setPan(p => ({ x: Math.max(-220, Math.min(220, p.x + x)), y: Math.max(-220, Math.min(220, p.y + y)) }));
+  const gesto = useMemo(() => PanResponder.create({
+    onMoveShouldSetPanResponder: (_, g) => arrastar && zoom > 1 && (Math.abs(g.dx) > 10 || Math.abs(g.dy) > 10),
+    onPanResponderGrant: () => { inicio.current = posicao.current; },
+    onPanResponderMove: (_, g) => setPan({ x: Math.max(-220, Math.min(220, inicio.current.x + g.dx)), y: Math.max(-220, Math.min(220, inicio.current.y + g.dy)) }),
+  }), [arrastar, zoom]);
+  function selecionar(valor: string) { setUf(valor); setCidade('Todos'); }
+  function selecionarRegiao(valor: string) { setRegiao(valor); selecionar(''); }
+  function modo(valor: string) { setDemo(valor === 'Exemplo visual'); setCategoria('Todas'); selecionarRegiao('Todas'); }
+  function centralizar() { setZoom(1); setPan({ x: 0, y: 0 }); selecionarRegiao('Todas'); }
+  const mapaLargura = 600 / zoom, mapaAltura = 580 / zoom;
+  const origemX = zoom > 1 && geoSelecionada ? Math.max(0, Math.min(600 - mapaLargura, geoSelecionada.x - mapaLargura / 2)) : (600 - mapaLargura) / 2;
+  const origemY = zoom > 1 && geoSelecionada ? Math.max(0, Math.min(580 - mapaAltura, geoSelecionada.y - mapaAltura / 2)) : (580 - mapaAltura) / 2;
+  const vazio = !consulta.carregando && !consulta.erro && !demo && !!consulta.dados && !total;
+
+  return <Screen title="Mapa Solidário" heading="Onde sua ajuda faz falta." subtitle="Encontre campanhas por região e entenda o que ainda falta para cada causa.">
+    <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+      <View style={{ flex: 1, flexDirection: 'row', borderRadius: 14, padding: 4, backgroundColor: colors.soft }}>
+        {['Dados do app', 'Exemplo visual'].map(v => <Pressable key={v} accessibilityRole="button" accessibilityLabel={'Fonte do mapa: ' + v}
+          accessibilityState={{ selected: (demo ? 'Exemplo visual' : 'Dados do app') === v }} aria-pressed={(demo ? 'Exemplo visual' : 'Dados do app') === v} onPress={() => modo(v)}
+          style={({ pressed }) => ({ flex: 1, minHeight: 44, paddingHorizontal: 8, borderRadius: 11, alignItems: 'center', justifyContent: 'center',
+            backgroundColor: (demo ? 'Exemplo visual' : 'Dados do app') === v ? colors.surface : 'transparent', opacity: pressed ? .65 : 1 })}>
+          <Text style={{ color: (demo ? 'Exemplo visual' : 'Dados do app') === v ? colors.primary : colors.muted, fontSize: 13, fontFamily: fonteForte, textAlign: 'center' }}>{v}</Text>
+        </Pressable>)}
+      </View>
+      <ControleMapa titulo="Filtrar mapa" icone="options-outline" onPress={() => setFiltros(true)}/>
     </View>
-    <Copy muted>Cartografia: IBGE, malhas simplificadas por UF. A navegação não consulta GPS nem envia sua localização.</Copy>
-    <Heading>Escolha um estado</Heading><Choices label="Estado" options={estadosVisiveis.map(e=>e.uf)} selected={uf} onSelect={selecionar}/>
-    {consulta.dados&&!consulta.dados.estados.length?<EmptyState title="O mapa começa com consentimento.">Ainda não há campanhas ativas com localização autorizada nesta seleção. Responsáveis podem informar apenas estado e município na preparação da campanha.</EmptyState>:null}
-    {uf?<><Heading>{nomes.get(uf)||uf}</Heading>{selecionado?<><Line label="Campanhas registradas" value={String(selecionado.campanhas.length)}/><Line label="Críticas com revisão vigente" value={String(selecionado.criticas)}/><Line label="Moderadas revisadas" value={String(selecionado.moderadas)}/><Line label="Restante financeiro simulado" value={formatarDinheiro(selecionado.restante/100)}/><Choices label="Município aproximado" options={['Todos',...new Set(selecionado.campanhas.map(c=>c.municipio).filter(Boolean))]} selected={cidade} onSelect={setCidade}/>{campanhas.map(c=><Card key={c.id} title={c.titulo} subtitle={(c.municipio||uf)+' · '+formatarDinheiro(c.restante/100)+' restantes no teste'} icon="heart-outline" onPress={()=>router.push({pathname:'/campanha',params:{id:c.id}})}>{c.urgencia.revisada?<Tag>Urgência {c.urgencia.classe==='critica'?'crítica':'moderada'} revisada</Tag>:null}</Card>)}</>:<EmptyState title="Sem campanhas autorizadas neste estado.">Você pode escolher outro estado ou categoria.</EmptyState>}</>:<Copy>Toque no mapa ou em uma UF para conhecer as campanhas.</Copy>}
-    <Card title="Como a intensidade é calculada"><Copy muted>{consulta.dados?.indicador||'O indicador considera urgência revisada, prazo e recursos ainda necessários nas campanhas cadastradas.'}</Copy></Card>
-    <Dialog visible={filtros} title="Categoria no mapa" onClose={()=>setFiltros(false)}><Choices label="Região do Brasil" options={['Todas','Norte','Nordeste','Centro-Oeste','Sudeste','Sul']} selected={regiao} onSelect={v=>{setRegiao(v);setUf('');}}/><Choices label="Categoria no mapa" options={['Todas',...categorias]} selected={categoria} onSelect={v=>{setCategoria(v);setCidade('Todos');}}/><Button title="Ver mapa filtrado" onPress={()=>setFiltros(false)}/></Dialog>
+    <View style={{ gap: 5 }}>
+      <Text style={{ color: colors.muted, fontSize: 13, lineHeight: 21 }}>{regiao === 'Todas' ? 'Brasil' : regiao} · {apenasDinheiro ? 'doações em aberto' : 'todas as ajudas'}{categoria !== 'Todas' ? ' · ' + categoria : ''}</Text>
+      <Text style={{ color: demo ? colors.primary : colors.muted, fontSize: 12, lineHeight: 20 }}>{demo ? 'Demonstração: dados fictícios, sem doações reais.' : 'Somente localizações autorizadas. Sem registros não significa sem necessidade.'}</Text>
+    </View>
+    {!demo ? <><EstadoConexao {...consulta}/>{consulta.erro ? <Button secondary title="Tentar carregar o mapa novamente" onPress={consulta.atualizar}/> : null}</> : null}
+
+    <View style={{ flexDirection: largo ? 'row' : 'column', gap: 24, alignItems: 'stretch' }}>
+      <View style={{ flex: 1, minWidth: 0, gap: 14 }}>
+        <View style={{ backgroundColor: colors.surface, borderRadius: 26, borderWidth: 1, borderColor: colors.line, overflow: 'hidden' }}>
+          <View style={{ padding: 20, paddingBottom: 0, gap: 6 }}>
+            <Text style={{ color: colors.ink, fontSize: 18, fontFamily: fonteForte }}>{regiao === 'Todas' ? 'Brasil, causa por causa' : regiao}</Text>
+            <Text style={{ color: colors.muted, fontSize: 13, lineHeight: 21 }}>{total ? contagemCampanhas(total) + ' nesta seleção · ' + moeda(restante) + ' em aberto' : 'Aguardando campanhas com localização autorizada'}</Text>
+            {demo ? <Text style={{ color: colors.primary, fontSize: 12, lineHeight: 20 }}>Cenário ilustrativo · valores simulados</Text> : null}
+          </View>
+          <View {...gesto.panHandlers} style={{ backgroundColor: colors.surface }}>
+            <Svg viewBox={[origemX - pan.x, origemY - pan.y, mapaLargura, mapaAltura].join(' ')}
+              width="100%" height={largo ? 480 : Math.max(270, Math.min(420, (width - 40) * .96))}
+              accessibilityLabel="Mapa de campanhas por estado. A legenda e a lista abaixo descrevem os mesmos dados.">
+              {cartografia.estados.map(e => {
+                const ativo = regiao === 'Todas' || e.regiao === regiao, dados = porUF.get(e.uf), nivel = dados?.nivel || 0;
+                return <Path key={e.uf} d={e.caminho} fill={tintas[nivel]} opacity={ativo ? 1 : .2} stroke={uf === e.uf ? colors.ink : colors.surface}
+                  strokeWidth={uf === e.uf ? 3 : 1.8} onPress={() => { if (ativo) selecionar(e.uf); }}/>;
+              })}
+              {cartografia.estados.map(e => {
+                if (regiao !== 'Todas' && e.regiao !== regiao) return null;
+                const dados = porUF.get(e.uf), nivel = dados?.nivel || 0, chamada = chamadas[e.uf];
+                const texto = chamada ? colors.ink : nivel >= 3 ? dark ? colors.onPrimary : colors.onHero : colors.ink;
+                return <G key={e.uf} onPress={() => selecionar(e.uf)}>
+                  {chamada ? <SvgLine x1={e.x} y1={e.y} x2={chamada.x - 8} y2={chamada.y - 4} stroke={colors.muted} strokeWidth={.9}/> : null}
+                  {uf === e.uf ? <Circle cx={e.x} cy={e.y} r={15} fill="none" stroke={colors.ink} strokeWidth={1.5}/> : null}
+                  <SvgText x={chamada?.x || e.x} y={chamada?.y || e.y + 4} fill={texto} textAnchor={chamada ? 'start' : 'middle'} fontSize={12} fontWeight="600">{e.uf}</SvgText>
+                </G>;
+              })}
+            </Svg>
+          </View>
+          <View style={{ padding: 16, gap: 14 }}>
+            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'space-between' }}>
+              <ControleMapa titulo="Afastar mapa" icone="remove" desabilitado={zoom <= 1} onPress={() => { setZoom(z => Math.max(1, z - .25)); setPan({ x: 0, y: 0 }); }}/>
+              <View style={{ flex: 1 }}><Button secondary title="Brasil inteiro" onPress={centralizar}/></View>
+              <ControleMapa titulo="Aproximar mapa" icone="add" desabilitado={zoom >= 2.5} onPress={() => setZoom(z => Math.min(2.5, z + .25))}/>
+            </View>
+            <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 19 }}>Toque em uma UF ou use a lista de estados. Zoom: {Math.round(zoom * 100)}%.</Text>
+            <View style={{ gap: 9 }}>
+              {[4, 3, 2, 1, 0].map(nivel => <View key={nivel} style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                <View style={{ width: 14, height: 14, borderRadius: 4, backgroundColor: tintas[nivel], borderWidth: 1, borderColor: colors.line }}/>
+                <Text style={{ flex: 1, color: colors.muted, fontSize: 12, lineHeight: 19 }}>{demo && nivel >= 3 ? nivel === 4 ? 'Prioridade crítica · exemplo' : 'Prioridade moderada · exemplo' : descricaoNivel(nivel)}</Text>
+              </View>)}
+            </View>
+            <Disclosure title="Mover o mapa ampliado">
+              <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}><Switch accessibilityLabel="Ativar movimentação do mapa" value={arrastar} onValueChange={setArrastar}/><Copy>Arrastar quando ampliado</Copy></View>
+              <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+                {([{ titulo: 'Mover mapa para a esquerda', icone: 'arrow-back', x: 60, y: 0 }, { titulo: 'Mover mapa para cima', icone: 'arrow-up', x: 0, y: 60 }, { titulo: 'Mover mapa para baixo', icone: 'arrow-down', x: 0, y: -60 }, { titulo: 'Mover mapa para a direita', icone: 'arrow-forward', x: -60, y: 0 }] as const).map(c => <ControleMapa key={c.titulo} titulo={c.titulo} icone={c.icone} desabilitado={zoom <= 1} onPress={() => mover(c.x, c.y)}/>)}
+              </View>
+            </Disclosure>
+          </View>
+        </View>
+        <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 20 }}>Cartografia: IBGE. Localização por UF e município autorizado, sem GPS nem endereço residencial.</Text>
+      </View>
+
+      <View style={{ width: largo ? 300 : '100%', gap: 12 }}>
+        <Heading>Onde começar a ajudar</Heading>
+        <Copy muted>{destaque ? destaque.nome + ' aparece primeiro no recorte nacional desta categoria.' : 'As regiões aparecerão em ordem de prioridade quando houver dados.'}</Copy>
+        <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 20 }}>Urgências revisadas vêm primeiro. Depois, contam a lacuna financeira e o prazo. {demo ? 'Neste exemplo, todos os dados são fictícios.' : 'O ranking considera apenas os registros do app.'}</Text>
+        {resumo.regioes.map((r, i) => <Pressable key={r.nome} accessibilityRole="button" accessibilityLabel={'Selecionar região ' + r.nome}
+          accessibilityState={{ selected: regiao === r.nome }} aria-pressed={regiao === r.nome} onPress={() => selecionarRegiao(regiao === r.nome ? 'Todas' : r.nome)}
+          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 90, padding: 14, borderRadius: 18,
+            backgroundColor: regiao === r.nome ? colors.brandSoft : colors.surface, borderWidth: 1, borderColor: regiao === r.nome ? colors.primary : colors.line, opacity: pressed ? .7 : 1 })}>
+          <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: r.campanhas ? colors.brandSoft : colors.soft, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontFamily: fonteForte, color: colors.primary }}>{r.campanhas ? i + 1 : '—'}</Text></View>
+          <View style={{ flex: 1, gap: 4 }}><Text style={{ color: colors.ink, fontSize: 16, fontFamily: fonteForte }}>{r.nome}</Text>
+            <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 19 }}>{r.campanhas ? contagemCampanhas(r.campanhas) + ' · ' + moeda(r.restante) + ' em aberto' : 'Sem dados nesta seleção'}</Text>
+            {r.criticas || r.moderadas ? <Text style={{ color: colors.primary, fontSize: 12, lineHeight: 19 }}>{r.criticas ? r.criticas + (r.criticas === 1 ? ' crítica' : ' críticas') : r.moderadas + (r.moderadas === 1 ? ' moderada' : ' moderadas')}{demo ? ' · exemplo' : ' com revisão vigente'}</Text> : null}
+          </View><Ionicons aria-hidden accessible={false} name="chevron-forward" size={17} color={colors.primary}/>
+        </Pressable>)}
+      </View>
+    </View>
+
+    {vazio ? <EmptyState title="Ainda faltam localizações autorizadas." action="Ver exemplo visual do mapa" onPress={() => modo('Exemplo visual')}>Não há campanhas {apenasDinheiro ? 'com doações em aberto e ' : ''}com localização autorizada nesta seleção. Você pode explorar outras causas enquanto o mapa recebe novos registros.</EmptyState> : null}
+    {regiao !== 'Todas' && regiaoAtual ? <View style={{ gap: 10 }}><Heading>{regiao}</Heading><Copy>{regiaoAtual.campanhas ? contagemCampanhas(regiaoAtual.campanhas) + ' nesta região.' : 'Nenhuma campanha com dados nesta seleção.'}</Copy><Button secondary title="Voltar a todas as regiões" onPress={() => selecionarRegiao('Todas')}/></View> : null}
+    {estadosAtivos.length ? <><Heading>Estados nesta seleção</Heading><View style={{ gap: 10 }}>{estadosAtivos.map(e => <Card key={e.uf} title={e.nome + ' · ' + e.uf} subtitle={contagemCampanhas(e.campanhas.length) + ' · ' + moeda(e.restante) + ' em aberto'} onPress={() => selecionar(e.uf)}/>)}</View></> : null}
+    <Disclosure title="Escolher um estado pela lista" initiallyOpen={false}><Choices label="Estado" options={estadosVisiveis.map(e => e.uf)} selected={uf} onSelect={selecionar}/></Disclosure>
+    <Dialog visible={!!uf} title={geoSelecionada?.nome || uf || 'Estado'} onClose={() => selecionar('')}>
+      {selecionado ? <>
+        <Copy>{moeda(selecionado.restante)} ainda faltam nas campanhas desta UF. {demo ? 'Valores ilustrativos.' : 'Valores financeiros de demonstração.'}</Copy>
+        {selecionado.campanhas.some(c => !!c.municipio) ? <Choices label="Município aproximado" options={['Todos', ...new Set(selecionado.campanhas.map(c => c.municipio).filter(Boolean))]} selected={cidade} onSelect={setCidade}/> : null}
+        {campanhas.map(c => <Card key={c.id} title={c.titulo} subtitle={(c.municipio ? c.municipio + ' · ' : '') + moeda(c.restante) + ' em aberto'} onPress={demo ? undefined : () => { selecionar(''); router.push({ pathname: '/campanha', params: { id: c.id } }); }}>
+          <Copy muted>{c.urgencia.revisada ? (c.urgencia.classe === 'critica' ? 'Prioridade crítica' : 'Prioridade moderada') + (demo ? ' ilustrativa.' : ' com revisão vigente.') : 'Sem prioridade de urgência atribuída.'}</Copy>
+          {demo ? <Copy muted>Campanha fictícia, sem botão de doação.</Copy> : null}
+        </Card>)}
+      </> : <EmptyState title="Nenhuma campanha nesta seleção.">Isso não significa ausência de necessidade social neste estado. O mapa usa somente registros com consentimento.</EmptyState>}
+    </Dialog>
+    <Button title="Encontrar uma campanha para ajudar" onPress={() => router.push('/explorar')}/>
+    {!demo ? <Button secondary title="Atualizar dados do mapa" disabled={consulta.carregando} onPress={consulta.atualizar}/> : null}
+    <Disclosure title="Entenda as cores e a ordem das regiões">
+      <Copy>Críticas revisadas vêm antes das moderadas. Em seguida, o indicador combina urgência revisada (3 / 1,5 / 0,5), lacuna financeira limitada a 3 pontos por campanha e prazo revisado de até sete dias (+1). Não concede prioridade nem altera o fundo solidário.</Copy>
+      <Copy>“Maior lacuna” identifica a metade superior dos estados com valor em aberto, comparados nesta categoria e forma de ajuda. Esse valor sozinho não comprova urgência. O filtro regional mantém a escala do Brasil para permitir comparação.</Copy>
+      <Copy muted>Regiões grandes ou com mais usuários podem ter mais registros. A ausência de campanhas não mede a necessidade da população. Não são usados dados de pobreza, população ou localização do visitante.</Copy>
+    </Disclosure>
+    <Disclosure title="Como uma campanha aparece no mapa">
+      <Copy>O responsável escolhe se quer divulgar apenas o estado e, opcionalmente, o município. A campanha precisa estar publicada. Retirar essa autorização também retira o registro do mapa.</Copy>
+      <Button secondary title="Abrir minhas campanhas" onPress={() => router.push('/minhas-campanhas')}/>
+    </Disclosure>
+    <Dialog visible={filtros} title="Filtrar o mapa" onClose={() => setFiltros(false)}>
+      <Choices label="Forma de ajudar" options={['Doações em aberto', 'Todas as ajudas']} selected={apenasDinheiro ? 'Doações em aberto' : 'Todas as ajudas'} onSelect={v => { setApenasDinheiro(v === 'Doações em aberto'); selecionar(''); }}/>
+      <Choices label="Região do Brasil" options={['Todas', ...regioesBrasil]} selected={regiao} onSelect={selecionarRegiao}/>
+      <Choices label="Categoria no mapa" options={['Todas', ...categorias]} selected={categoria} onSelect={v => { setCategoria(v); selecionar(''); }}/>
+      <Button title="Aplicar filtros" onPress={() => setFiltros(false)}/>
+      <Button secondary title="Limpar filtros" onPress={() => { setCategoria('Todas'); selecionarRegiao('Todas'); }}/>
+    </Dialog>
   </Screen>;
 }

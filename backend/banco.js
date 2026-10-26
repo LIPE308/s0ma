@@ -67,7 +67,7 @@ async function inicializarBanco() {
   // Exemplos apenas no banco vazio. Reiniciar não apaga o trabalho da turma.
   await transacao(async consultar => {
     for (const [nome, email, regiao, administrador] of [
-      ['Ana Oliveira', 'ana@exemplo.com', 'Campinas, Centro', 0],
+      ['João', 'ana@exemplo.com', 'Campinas, Centro', 0],
       ['Marina Souza', 'marina@exemplo.com', 'Campinas, Centro', 0],
       ['Lucas Pereira', 'lucas@exemplo.com', 'Campinas, Taquaral', 0],
     ]) {
