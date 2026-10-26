@@ -1,10 +1,23 @@
 # SOMA
 
-**SOMA 2.0:** Rota Inteligente, urgência com revisão humana, fundo de anúncios simulado, Mapa Solidário por consentimento e perfis personalizados. Veja [funcionalidades, regras e configuração Google](docs/SOMA-2.md) e o [plano de implementação](docs/SOMA-2-PLANO.md). Novas campanhas ficam em rascunho e só são públicas depois de enviadas e aprovadas; campanhas anteriores foram preservadas.
+**Integração SOMA 2.0:** [regras e configuração atuais](docs/SOMA-2.md), [validação e limites](docs/SOMA-2-VALIDACAO.md). Preserva criação simplificada, calendário, Minhas rotas e estrada 3D. Acrescenta documentos privados, revisão antes da publicação, prioridade humana, projeções com histórico e fundo conciliado.
 
-Identidade **Enlace + azul royal**, com fotografia editorial, histórias de campanhas e superfícies acolhedoras. Os temas **Claro, Escuro e Sistema** podem ser escolhidos no perfil e ficam salvos no dispositivo. O aplicativo mantém as rotas anteriores e acrescenta 10 rotas do SOMA 2.0, transições suaves e redução de movimento. Consulte a [direção visual](docs/REDESIGN.md) e a [repaginação JF](docs/REPAGINACAO-JF.md).
 
-Projeto acadêmico com front React Native/Expo e backend em **Node.js puro + MySQL**. Os nomes das variáveis, funções da API, tabelas e mensagens estão em português. O servidor usa `http`, funções e comandos SQL, sem Express ou ORM. O backend usa `mysql2` para MySQL e a biblioteca oficial `google-auth-library` para OAuth opcional.
+## Criar, ajudar e acompanhar
+
+Novas vaquinhas são criadas em **três etapas**, com calendário visual, prazo opcional e foto preparada automaticamente. Objetos, voluntariado, múltiplos pedidos e edição continuam disponíveis. A **Rota Inteligente** aparece após criar a campanha, no painel do responsável e na aba **Minhas rotas**. A estrada principal tem cinco objetivos e câmera estável; os demais registros continuam acessíveis. O mapa e os filtros receberam controles mais simples.
+
+Veja [o refinamento de experiência e os testes](docs/EXPERIENCIA-SIMPLIFICADA.md). As contribuições financeiras permanecem demonstrações, sem cobrança real.
+
+## Rota Inteligente e atualização funcional
+
+Campanhas agora abrem uma estrada 3D interativa na web (alternativa 2,5D no aplicativo), com marcos financeiros, simulações educativas explícitas e valores de teste vindos do MySQL. O início dá acesso ao mapa do Brasil; a gestão permite indicar UF, enviar foto e solicitar revisão humana de urgência. A administração reúne revisões auditáveis e distribuição simulada 70/30. Perfis recebem capa, foto, biografia e privacidade; o fluxo Google web está preparado e exige configuração externa e teste com credenciais válidas.
+
+Leia [o escopo, as regras e a configuração Google](docs/ATUALIZACAO-FUNCIONAL.md) e [a validação desta entrega](docs/VALIDACAO-FUNCIONAL.md). Pagamentos e anúncios continuam **simulações acadêmicas, sem dinheiro real**. Não foi realizado deploy.
+
+Identidade **Enlace + azul royal**, com fotografia editorial, histórias de campanhas e superfícies acolhedoras. Os temas **Claro, Escuro e Sistema** podem ser escolhidos no perfil e ficam salvos no dispositivo. O aplicativo preserva as rotas existentes, transições suaves e redução de movimento. Consulte a [direção visual](docs/REDESIGN.md) e a [repaginação JF](docs/REPAGINACAO-JF.md).
+
+Projeto acadêmico com front React Native/Expo e backend em **Node.js puro + MySQL**. Os nomes das variáveis, funções da API, tabelas e mensagens estão em português. O servidor usa `http`, funções e comandos SQL, sem Express ou ORM. A única dependência adicionada ao backend é `mysql2`, para conectar ao MySQL.
 
 Este projeto foi integrado ao [fork da equipe](https://github.com/LIPE308/s0ma), derivado da [base do professor Rodrigo](https://github.com/profRodrigoSenac/projetoIntegrador2026). Os exemplos e serviços originais estão em `examples/`, fora das rotas ativas. Consulte o [relatório da integração](docs/INTEGRACAO.md).
 
@@ -55,13 +68,13 @@ O comando usa a configuração privada de `backend/.env`, promove somente a cont
 ## Funcionalidades
 
 - Cadastro, login, perfil e encerramento de sessão.
-- Criar, consultar, editar e encerrar campanhas com necessidades independentes. Novas publicações, edições e reaberturas passam por revisão; reabrir também exige motivo e atualização de meta.
+- Criar, consultar, editar e encerrar campanhas com uma ou várias necessidades independentes, inclusive do mesmo tipo. Reabrir exige motivo e atualização de meta.
 - Registrar intenção, combinar a entrega por telefone/WhatsApp e confirmar o total realmente recebido, inclusive parcial. Reservas não contam como recebimento; duas reservas não ocupam a última unidade ao mesmo tempo. O contato e as orientações privadas aparecem na ajuda autorizada.
 - Publicar atualizações, consultar atividade, receber avisos e registrar denúncias.
 - Administração com permissões verificadas na API.
 - Contribuições financeiras **simuladas**, sem novas taxas: o valor integral confirmado conta para a meta. Registros e operações financeiras anteriores são preservados. Nenhum Pix, cobrança, transferência ou reembolso real é executado.
 
-A versão básica não envia e-mail, recupera senhas, analisa conteúdo com IA ou executa o fluxo automático de excedentes. Uma meta fechada recusa pagamentos de teste acima do restante disponível. O front mantém as 35 rotas de referência, com essas limitações explicadas nas telas.
+A versão básica não envia e-mail, recupera senhas, analisa conteúdo com IA ou executa o fluxo automático de excedentes. Uma meta fechada recusa pagamentos de teste acima do restante disponível. O front preserva as rotas de referência, com essas limitações explicadas nas telas.
 
 ## Para estudar o código
 
@@ -87,4 +100,4 @@ Se escolheu o MySQL próprio no Windows, use **`npm run testar:backend:local`**.
 
 Os testes de backend precisam do MySQL ligado. Criam e removem um banco separado chamado `soma_teste_...`; não alteram o banco `soma`. Verificam cadastro, permissões, migração do esquema anterior, reservas concorrentes, confirmação parcial, financeiro simulado, moderação, privacidade, reabertura e persistência após reiniciar o Node.
 
-Ao iniciar, a API aplica automaticamente as atualizações aditivas do esquema original e do SOMA 2.0, incluindo lançamentos, urgências e arquivos privados. Não é necessário recriar o banco nem apagar dados. Veja o [guia SOMA 2.0](docs/SOMA-2.md). O [relatório da versão anterior](docs/AUDITORIA-ENTREGA.md), o [roteiro de demonstração](docs/DEMONSTRACAO.md) e as [respostas sobre confiança e limites](docs/LIMITES-DO-PRODUTO.md) preservam o histórico; as mudanças de publicação e a nova Rota estão descritas no guia atual.
+Ao iniciar, a API aplica automaticamente a atualização aditiva do esquema: tabela `operacoes` e coluna `campanhas.estado_antes_moderacao`. Não é necessário recriar o banco nem apagar dados. Veja o [relatório de auditoria e validação](docs/AUDITORIA-ENTREGA.md), o [roteiro de demonstração](docs/DEMONSTRACAO.md) e as [respostas sobre confiança e limites do produto](docs/LIMITES-DO-PRODUTO.md).

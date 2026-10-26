@@ -25,7 +25,7 @@ export default function TabLayout() {
     <Tabs.Screen name="index" options={{ title: 'Início', tabBarIcon: props => <TabIcon {...props} name="home-outline"/> }}/>
     <Tabs.Screen name="explorar" options={{ title: 'Explorar', tabBarIcon: props => <TabIcon {...props} name="search-outline"/> }}/>
     <Tabs.Screen name="criar" options={{ title: 'Criar', tabBarIcon: props => <TabIcon {...props} name="add-circle-outline"/> }}/>
-    <Tabs.Screen name="atividade" options={{ title: 'Atividade', tabBarIcon: props => <TabIcon {...props} name="heart-outline"/> }}/>
+    <Tabs.Screen name="rotas" options={{ title: 'Minhas rotas', tabBarIcon: props => <TabIcon {...props} name="navigate-outline"/> }}/><Tabs.Screen name="atividade" options={{ href: null }}/>
     <Tabs.Screen name="perfil" options={{ title: 'Perfil', tabBarIcon: props => <TabIcon {...props} name="person-outline"/> }}/>
   </Tabs>;
 }

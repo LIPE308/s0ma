@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useIsFocused } from '@react-navigation/native';
 import { Platform } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 
 export type Usuario = { id: number; nome: string; email: string; telefone: string; regiao: string; novidades: boolean; administrador: boolean };
 export type Necessidade = { id: string; campanha_id: string; responsavel_id?: number; nome: string; tipo: 'objeto' | 'tarefa' | 'dinheiro'; meta: number; recebido: number; reservado: number; tipo_meta: string; prioridade: string; prazo: string; descricao: string; campanha: string; regiao: string; instrucoes: string; campanha_estado: string };
-export type Campanha = { id: string; usuario_id: number; titulo: string; descricao: string; categoria: string; regiao: string; prazo: string; instrucoes: string; evento: string; estado: string; motivo: string; responsavel: string; necessidades: Necessidade[]; uf?: string; municipio?: string; imagem_id?: string | null; urgencia?: { classe: string; revisada: boolean }; visualizacoes?: number; meta_financeira?: number; recebido_financeiro?: number; submetida?: boolean };
+export type Campanha = { id: string; usuario_id: number; titulo: string; descricao: string; categoria: string; regiao: string; prazo: string; instrucoes: string; evento: string; estado: string; motivo: string; responsavel: string; necessidades: Necessidade[]; criada_em?:string; arrecadado_financeiro?:number; perfil_publico?:boolean; uf?: string; municipio?: string; imagem_id?: string | null; urgencia?: { classe: string; revisada: boolean }; visualizacoes?: number; meta_financeira?: number; recebido_financeiro?: number; submetida?: boolean };
 export type Ajuda = { id: number; usuario_id: number; campanha_id: string; necessidade_id: string; tipo: string; quantidade: number; recebido: number; necessidade: string; campanha: string; pessoa: string; estado: string; entrega: string; horario: string; instrucoes: string; observacao: string; telefone_responsavel?: string };
 export type Pagamento = { id: number; necessidade_id: string; campanha: string; necessidade: string; valor: number; taxa_soma: number; taxa_provedor: number; valor_liquido: number; meio: string; estado: string };
 export type Repasse = { id: number; campanha_id: string; campanha: string; valor: number; finalidade: string; estado: string; motivo: string };
@@ -18,8 +19,17 @@ export type Administracao = { campanhas: Campanha[]; denuncias: Denuncia[]; repa
 // No navegador usa o mesmo computador. No celular configure o IP do computador.
 const enderecoPadrao = Platform.OS === 'web' && typeof window !== 'undefined' ? (['8081', '8082'].includes(window.location.port) ? `${window.location.protocol}//${window.location.hostname}:3001/api` : `${window.location.origin}/api`) : 'http://localhost:3001/api';
 const enderecoApi = process.env.EXPO_PUBLIC_URL_BACKEND || enderecoPadrao;
+export function urlApi() { return enderecoApi; }
 let tokenAtual = '';
 let pessoaAtual: Usuario | null = null;
+let escritaSessao = Promise.resolve();
+export async function recuperarSessaoNativa() {
+  if (Platform.OS === 'web') { recuperarSessao(); return; }
+  try {
+    const salva = JSON.parse(await SecureStore.getItemAsync('soma_sessao') || 'null');
+    tokenAtual = salva?.token || ''; pessoaAtual = salva?.usuario || null;
+  } catch { tokenAtual = ''; pessoaAtual = null; }
+}
 
 function recuperarSessao() {
   if (Platform.OS !== 'web' || typeof window === 'undefined') return;
@@ -29,9 +39,9 @@ function recuperarSessao() {
   } catch { /* Se o navegador bloquear o armazenamento, mantém a sessão em memória. */ }
 }
 export function usuarioLogado() { recuperarSessao(); return pessoaAtual; }
-export function urlApi() { return enderecoApi; }
 export function guardarSessao(token: string, usuario: Usuario) {
   tokenAtual = token; pessoaAtual = usuario;
+  if (Platform.OS !== 'web') escritaSessao = escritaSessao.then(() => SecureStore.setItemAsync('soma_sessao', JSON.stringify({ token, usuario }))).catch(() => { /* A sessão atual permanece em memória quando o cofre não está disponível. */ });
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
     try { window.sessionStorage.setItem('soma_sessao', JSON.stringify({ token, usuario })); } catch { /* Ainda funciona em memória. */ }
   }
@@ -39,6 +49,7 @@ export function guardarSessao(token: string, usuario: Usuario) {
 export function atualizarUsuario(usuario: Usuario) { guardarSessao(tokenAtual, usuario); }
 export function limparSessao() {
   tokenAtual = ''; pessoaAtual = null;
+  if (Platform.OS !== 'web') escritaSessao = escritaSessao.then(() => SecureStore.deleteItemAsync('soma_sessao')).catch(() => {});
   if (Platform.OS === 'web' && typeof window !== 'undefined') { try { window.sessionStorage.removeItem('soma_sessao'); } catch { /* Sem armazenamento disponível. */ } }
 }
 
@@ -52,7 +63,7 @@ export async function requisitar<T>(caminho: string, metodo = 'GET', dados?: unk
   const chaveEnvio = chave ? chave + '-' + (resumo >>> 0).toString(16) : '';
   let resposta: Response;
   try {
-    resposta = await fetch(`${enderecoApi}${caminho}`, { method: metodo, headers: { 'Content-Type': 'application/json', ...(tokenAtual ? { Authorization: `Bearer ${tokenAtual}` } : {}), ...(chaveEnvio ? { 'Idempotency-Key': chaveEnvio } : {}) }, ...(corpo !== undefined ? { body: corpo } : {}) });
+    resposta = await fetch(`${enderecoApi}${caminho}`, { method: metodo, credentials: 'include', headers: { 'Content-Type': 'application/json', ...(tokenAtual ? { Authorization: `Bearer ${tokenAtual}` } : {}), ...(chaveEnvio ? { 'Idempotency-Key': chaveEnvio } : {}) }, ...(corpo !== undefined ? { body: corpo } : {}) });
   } catch { throw new Error('Não foi possível conectar. Confira sua conexão e tente novamente.'); }
   let resultado;
   try { resultado = await resposta.json(); } catch { throw new Error('Não foi possível ler a resposta. Tente novamente em instantes.'); }

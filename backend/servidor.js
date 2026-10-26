@@ -11,6 +11,8 @@ const { erro, texto, inteiro, opcao, gerarSenha, conferirSenha, resumirToken, us
 const { umaVez } = require('./operacoes');
 const { atenderSoma2, completarCampanhas, ordenarFeed, marcarEdicao, revisarPublicacao, auditar, lancar } = require('./soma2');
 const { atenderGoogle } = require('./google');
+const { atenderExtensoes } = require('./extensoes');
+const { prepararArquivo } = require('./midias');
 
 const categorias = ['Família', 'Saúde', 'Educação', 'Comunidade', 'Instituições', 'Proteção animal', 'Meio ambiente', 'Cultura', 'Necessidades pessoais', 'Objetivos individuais', 'Outras causas'];
 const consultaCampanhas = 'SELECT c.*, u.nome AS responsavel FROM campanhas c JOIN usuarios u ON u.id = c.usuario_id';
@@ -151,7 +153,7 @@ async function atender(requisicao, resposta) {
     if (caminho === '/api/arquivos' && requisicao.method === 'POST') exigirLogin(usuario);
     const dados = ['POST', 'PUT', 'PATCH'].includes(metodo) ? await lerCorpo(requisicao, caminho === '/api/arquivos' ? 2900000 : 100000) : {};
     const contexto = { caminho, metodo, usuario, dados, requisicao, resposta, consultar, transacao, obterCampanha, exigirLogin, exigirAdministrador, exigirResponsavel, conferirVisibilidade, calcularSaldo };
-    const nova = await atenderGoogle(contexto) || await atenderSoma2(contexto);
+    const nova = await atenderGoogle(contexto) || await atenderSoma2(contexto) || await atenderExtensoes(contexto);
     if (nova) { if (!nova.enviada) responder(resposta, nova.codigo || 200, nova.resultado); return; }
     let resultado;
     let codigo = 200;
@@ -202,8 +204,11 @@ async function atender(requisicao, resposta) {
       const titulo = texto(dados.titulo, 'o título', 150);
       const descricao = texto(dados.descricao, 'a descrição', 10000);
       const categoria = opcao(dados.categoria, categorias, 'categoria');
-      const regiao = texto(dados.regiao || 'Região não informada', 'a região', 150);
+      const regiao = texto(dados.regiao || '', 'a região', 150, false);
       const prazo = validarData(dados.prazo, 'o prazo', false);
+      const imagem = dados.imagem ? prepararArquivo(String(dados.imagem).replace(/^data:image\/(?:png|jpeg);base64,/,''),'campanha') : null;
+      if (dados.imagem && typeof dados.imagem !== 'string') erro('Imagem inválida.');
+      const uf = dados.uf ? opcao(dados.uf, 'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' '), 'estado') : '';
       const instrucoes = texto(dados.instrucoes || '', 'as instruções', 2000, false);
       const evento = texto(dados.evento || '', 'a ação', 1000, false);
       if (!Array.isArray(dados.necessidades) || !dados.necessidades.length || dados.necessidades.length > 30) erro('Inclua de 1 a 30 necessidades.');
@@ -211,6 +216,7 @@ async function atender(requisicao, resposta) {
       if (new Set(pedidos.map(p => p.id)).size !== pedidos.length) erro('Há pedidos duplicados.');
       const salvo = await transacao(async consulta => {
         if (metodo === 'POST') await consulta('SELECT id FROM usuarios WHERE id=? FOR UPDATE',[usuario.id]);
+        if (imagem) { const [fotos]=await consulta('SELECT COUNT(*) AS total FROM arquivos WHERE usuario_id=?',[usuario.id]);if(Number(fotos.total)>=50) erro('Limite de 50 arquivos por conta atingido.',409); }
         return umaVez(consulta, usuario.id, requisicao, dados, async () => {
         if (metodo !== 'POST') {
           const campanha = await obterCampanha(id, consulta, true); exigirResponsavel(usuario, campanha);
@@ -233,6 +239,8 @@ async function atender(requisicao, resposta) {
           await auditar(consulta,usuario.id,id,'rascunho_criado');
         }
         for (const pedido of pedidos) await salvarPedido(consulta, id, pedido);
+        if (imagem) { const fotoId=randomUUID();await consulta("INSERT INTO arquivos (id,usuario_id,campanha_id,nome,mime,finalidade,publico,tamanho,conteudo) VALUES (?,?,?,?,?,'campanha',1,?,?)",[fotoId,usuario.id,id,'foto-da-campanha',imagem.mime,imagem.conteudo.length,imagem.conteudo]);await consulta('INSERT INTO campanhas_detalhes (campanha_id,imagem_id) VALUES (?,?) ON DUPLICATE KEY UPDATE imagem_id=VALUES(imagem_id)',[id,fotoId]); }
+        if (uf) await consulta('INSERT INTO campanhas_detalhes (campanha_id,uf,mapa_autorizado) VALUES (?,?,1) ON DUPLICATE KEY UPDATE uf=VALUES(uf),mapa_autorizado=1',[id,uf]);
         return { id };
         });
       });

@@ -18,7 +18,8 @@ type ScreenVariant = 'editorial' | 'form' | 'account' | 'detail' | 'ledger';
 export function Screen({ title, heading, subtitle, children, back = true, onBack, step, action, variant = 'editorial' }: { title: string; heading?: string; subtitle?: string; children: ReactNode; back?: boolean; onBack?: () => void; step?: string; action?: ReactNode; variant?: ScreenVariant }) {
   const router = useRouter(); const { s, colors } = useTheme(); const insets = useSafeAreaInsets();
   const form = variant === 'form' || variant === 'account';
-  const currentStep = step ? Number(step.match(/\d+/)?.[0]) : 0;
+    const currentStep = step ? Number(step.match(/\d+/)?.[0]) : 0;
+    const totalSteps = step ? Number(step.match(/DE\s+(\d+)/i)?.[1] || 4) : 4;
   return <KeyboardAvoidingView style={s.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
     <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={[s.content, form && s.formContent, { paddingTop: Math.max(24, insets.top + 12), paddingBottom: Math.max(32, insets.bottom + 20) }]}>
       <View style={s.demo}><View style={s.dot}/><Text style={s.demoText}>AMBIENTE ACADÊMICO · DADOS LOCAIS</Text></View>
@@ -26,7 +27,7 @@ export function Screen({ title, heading, subtitle, children, back = true, onBack
         <View style={[s.row, { flex: 1, minWidth: 0 }]}>{back ? <Pressable accessibilityRole="button" accessibilityLabel="Voltar" onPress={onBack || (() => router.canGoBack() ? router.back() : router.replace('/'))} style={({ pressed }) => [s.back, pressed && s.pressed]}><Ionicons name="arrow-back" size={22} color={colors.primary}/></Pressable> : null}{title === 'soma' ? <Logo/> : <Text style={s.headerTitle}>{title}</Text>}</View>
         {action}{back ? <Pressable accessibilityRole="button" accessibilityLabel="Ir para o início" onPress={() => router.dismissTo('/')} style={({ pressed }) => [s.home, pressed && s.pressed]}><Ionicons name="home-outline" size={19} color={colors.primary}/><Text style={s.homeText}>Início</Text></Pressable> : null}
       </View>
-      {step ? <View style={s.stepper}><Text style={s.eyebrow}>{step}</Text><View accessible={false} style={s.stepSegments}>{[1, 2, 3, 4].map(number => <View key={number} style={[s.stepSegment, number <= currentStep && { backgroundColor: colors.primary }]}/>)}</View></View> : null}
+      {step ? <View style={s.stepper}><Text style={s.eyebrow}>{step}</Text><View accessible={false} style={s.stepSegments}>{Array.from({ length: totalSteps }, (_, i) => i + 1).map(number => <View key={number} style={[s.stepSegment, number <= currentStep && { backgroundColor: colors.primary }]}/>)}</View></View> : null}
       {variant === 'account' ? <View style={s.authHero}><BrandMark size={44}/>{heading ? <Text accessibilityRole="header" style={[s.heading, { marginTop: 10, fontSize: 28, lineHeight: 36 }]}>{heading}</Text> : null}{subtitle ? <Text style={[s.subtitle, { marginBottom: 0 }]}>{subtitle}</Text> : null}</View> : <View style={variant === 'detail' ? s.detailHeading : undefined}>
         {heading ? <Text accessibilityRole="header" style={s.heading}>{heading}</Text> : null}
         {subtitle ? <Text style={s.subtitle}>{subtitle}</Text> : null}
@@ -51,6 +52,11 @@ export function Field({ label, value, onChangeText, placeholder, secret, multili
 
 export function Copy({ children, muted = false, inverse = false }: { children: ReactNode; muted?: boolean; inverse?: boolean }) { const { s } = useTheme(); return <Text style={[s.copy, muted && s.muted, inverse && s.inverse]}>{children}</Text>; }
 export function Heading({ children }: { children: ReactNode }) { const { s } = useTheme(); return <Text accessibilityRole="header" style={s.sectionTitle}>{children}</Text>; }
+
+export function Disclosure({ title, children, initiallyOpen = false }: { title: string; children: ReactNode; initiallyOpen?: boolean }) {
+  const [open, setOpen] = useState(initiallyOpen); const { s, colors } = useTheme();
+  return <View style={{ borderTopWidth: 1, borderColor: colors.line, gap: open ? 16 : 0 }}><Pressable accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}><Text style={[s.label, { flexShrink: 1 }]}>{title}</Text><Ionicons name={open ? 'chevron-up' : 'chevron-down'} color={colors.primary} size={22}/></Pressable>{open ? children : null}</View>;
+}
 export function Tag({ children }: { children: ReactNode }) { const { s } = useTheme(); return <View style={s.tag}><Text style={s.tagText}>{children}</Text></View>; }
 export function Notice({ children, error = false, success = false }: { children: ReactNode; error?: boolean; success?: boolean }) {
   const { s, colors } = useTheme();

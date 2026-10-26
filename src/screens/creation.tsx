@@ -5,10 +5,12 @@ import { Button, Card, Choices, Copy, Field, Heading, Notice, Screen, useTheme }
 import { PedirLogin } from '../components/conexao';
 import { categorias, converterValor, formatarDinheiro } from '../data/formatacao';
 import { requisitar, usuarioLogado, mensagemErro, criarChaveOperacao, type Campanha } from '../servicos/api';
+import { Calendario } from '../components/calendario';
+import { CriacaoSimples } from './criacao-simples';
 import { dataDeEventoValida, formatarEvento, lerEvento } from '../data/eventos';
 
 export type PedidoRascunho = { id: string; nome: string; tipo: string; meta: string; tipo_meta: string; prioridade: string; prazo: string; descricao: string };
-export type ParametrosRascunho = { campanha_id?: string; titulo?: string; descricao?: string; categoria?: string; pedidos?: string; regiao?: string; prazo?: string; instrucoes?: string; evento?: string; editar?: string; reabrir?: string };
+export type ParametrosRascunho = { campanha_id?: string; titulo?: string; descricao?: string; categoria?: string; pedidos?: string; regiao?: string; prazo?: string; instrucoes?: string; evento?: string; editar?: string; reabrir?: string; avancado?: string };
 export function lerPedidos(valor?: string): PedidoRascunho[] {
   if (!valor) return [];
   try { const lista = JSON.parse(valor); return Array.isArray(lista) ? lista.filter(pedido => pedido && typeof pedido.id === 'string' && typeof pedido.nome === 'string') : []; } catch { return []; }
@@ -18,6 +20,11 @@ export function parametrosDaCampanha(campanha: Campanha): ParametrosRascunho {
 }
 
 export function Story() {
+  const parametros = useLocalSearchParams<ParametrosRascunho>();
+  return !parametros.campanha_id && parametros.avancado !== '1' ? <CriacaoSimples/> : <StoryAdvanced/>;
+}
+
+function StoryAdvanced() {
   const roteador = useRouter(); const parametros = useLocalSearchParams<ParametrosRascunho>();
   const [titulo, definirTitulo] = useState(parametros.titulo || ''); const [descricao, definirDescricao] = useState(parametros.descricao || ''); const [categoria, definirCategoria] = useState(parametros.categoria || 'Família'); const [erro, definirErro] = useState('');
   useEffect(() => { definirTitulo(parametros.titulo || ''); definirDescricao(parametros.descricao || ''); definirCategoria(parametros.categoria || 'Família'); }, [parametros.titulo, parametros.descricao, parametros.categoria]);
@@ -51,7 +58,7 @@ export function EditRequest() {
   function salvar() {
     const valor = converterValor(meta);
     if (!nome.trim() || !Number.isFinite(valor) || valor <= 0 || (tipo !== 'dinheiro' && !Number.isInteger(valor))) { definirErro('Informe o nome e uma meta válida, maior que zero.'); return; }
-    if ((prazo.trim() && !dataDeEventoValida(prazo.trim())) || !descricao.trim()) { definirErro('Informe instruções para a necessidade e, se preencher um prazo, use DD/MM/AAAA.'); return; }
+    if (prazo.trim() && !dataDeEventoValida(prazo.trim())) { definirErro('Escolha uma data válida ou deixe sem prazo.'); return; }
     const pedido = { id: original?.id || `rascunho-${Date.now()}`, nome, tipo, meta, tipo_meta: tipoMeta, prioridade, prazo, descricao };
     const novaLista = original ? pedidos.map(anterior => anterior.id === original.id ? pedido : anterior) : [...pedidos, pedido];
     roteador.replace({ pathname: '/pedidos', params: { ...parametros, pedidos: JSON.stringify(novaLista), editar: '' } });
@@ -61,8 +68,8 @@ export function EditRequest() {
     <Choices label="Tipo de ajuda" options={['Dinheiro', 'Objeto', 'Tarefa']} selected={tipo === 'dinheiro' ? 'Dinheiro' : tipo === 'tarefa' ? 'Tarefa' : 'Objeto'} onSelect={valor => definirTipo(valor === 'Dinheiro' ? 'dinheiro' : valor === 'Tarefa' ? 'tarefa' : 'objeto')}/>
     <Field label={tipo === 'dinheiro' ? 'Meta em reais (simulação) *' : tipo === 'tarefa' ? 'Número de vagas *' : 'Quantidade de unidades *'} numeric value={meta} onChangeText={definirMeta}/>
     {tipo === 'dinheiro' ? <><Copy muted>O valor confirmado no teste conta integralmente para a meta. Nenhum dinheiro real é movimentado.</Copy><Choices label="Limite de arrecadação" hint="Fechada: aceita doações até atingir a meta. Aberta: permite continuar recebendo depois da meta." options={['Fechada', 'Aberta']} selected={tipoMeta === 'fechada' ? 'Fechada' : 'Aberta'} onSelect={valor => definirTipoMeta(valor === 'Fechada' ? 'fechada' : 'aberta')}/></> : null}
-    <Choices label="Prioridade da necessidade" hint="Normal: sem urgência especial. Alta: precisa de ajuda com mais urgência." options={['Normal', 'Alta']} selected={prioridade} onSelect={definirPrioridade}/>
-    <Field label="Prazo para receber ajuda (opcional)" value={prazo} onChangeText={definirPrazo} placeholder="DD/MM/AAAA"/><Field label="Instruções para quem vai ajudar *" multiline value={descricao} onChangeText={definirDescricao} placeholder="Explique o que doar ou fazer e como combinar a ajuda."/>
+    <Choices label="Ordem de atendimento sugerida" hint="Preferência do responsável entre os pedidos. Não concede urgência verificada nem prioridade no fundo solidário." options={['Normal', 'Alta']} selected={prioridade} onSelect={definirPrioridade}/>
+    <Calendario label="Prazo para receber ajuda" value={prazo} onChange={definirPrazo} opcional permitirPassado={!!parametros.campanha_id}/><Field label="Orientações para quem vai ajudar (opcional)" multiline value={descricao} onChangeText={definirDescricao} placeholder="Explique o que doar ou fazer e como combinar a ajuda."/>
     {erro ? <Notice error>{erro}</Notice> : null}<Button title="Salvar necessidade no rascunho" onPress={salvar}/>
   </Screen>;
 }
@@ -77,14 +84,14 @@ export function Organization() {
   const [nomeEvento, definirNomeEvento] = useState(originalEvento?.nome || ''); const [dataEvento, definirDataEvento] = useState(originalEvento?.data || '');
   const [horaEvento, definirHoraEvento] = useState(originalEvento?.horario || ''); const [localEvento, definirLocalEvento] = useState(originalEvento?.local || '');
   const temObjeto = pedidos.some(pedido => pedido.tipo === 'objeto');
-  return <Screen variant="form" title={parametros.campanha_id ? 'Editar campanha' : 'Criar campanha'} step="PASSO 3 DE 4" heading="Onde e até quando?">
-    <Field label="Região pública (opcional)" value={regiao} onChangeText={definirRegiao}/><Copy muted>Este texto será público. Não informe endereço particular. A autorização para o mapa é feita separadamente.</Copy><Field label="Prazo da campanha (opcional)" value={prazo} onChangeText={definirPrazo} placeholder="DD/MM/AAAA"/>
+  return <Screen variant="form" title={parametros.campanha_id ? 'Editar campanha' : 'Criar campanha'} step="PASSO 3 DE 4" heading="Onde e até quando?" onBack={() => roteador.replace({ pathname: '/pedidos', params: { ...parametros, regiao, prazo, instrucoes, evento } })}>
+    <Field label="Cidade ou região (opcional)" value={regiao} onChangeText={definirRegiao}/><Calendario label="Prazo da campanha" value={prazo} onChange={definirPrazo} opcional permitirPassado={!!parametros.campanha_id}/>
     <Card title={usuarioLogado()?.nome || 'Entre na sua conta'} subtitle="Responsável pela campanha" icon="person-outline"/>
     {temObjeto ? <Field label="Orientações privadas para combinar a entrega" multiline value={instrucoes} onChangeText={definirInstrucoes} placeholder="Exibidas após registrar a ajuda. A entrega é combinada diretamente com você."/> : null}
     <View style={s.row}><Switch accessibilityLabel="Incluir evento gratuito" value={temEvento} onValueChange={definirTemEvento} trackColor={{ false: colors.line, true: colors.primary }}/><Copy>Incluir um evento gratuito</Copy></View>
-    {temEvento ? legado ? <><Field label="Nome, data, horário e local da ação *" multiline value={evento} onChangeText={definirEvento}/><Button secondary title="Organizar data e local em campos" onPress={() => { definirNomeEvento(evento); definirLegado(false); }}/></> : <><Field label="Nome do evento *" value={nomeEvento} onChangeText={definirNomeEvento}/><Field label="Data do evento *" value={dataEvento} onChangeText={definirDataEvento} placeholder="25/10/2026"/><Field label="Horário do evento *" value={horaEvento} onChangeText={definirHoraEvento} placeholder="09:00"/><Field label="Local do evento *" value={localEvento} onChangeText={definirLocalEvento} placeholder="Nome do espaço e endereço"/></> : null}
+    {temEvento ? legado ? <><Field label="Nome, data, horário e local da ação *" multiline value={evento} onChangeText={definirEvento}/><Button secondary title="Organizar data e local em campos" onPress={() => { definirNomeEvento(evento); definirLegado(false); }}/></> : <><Field label="Nome do evento *" value={nomeEvento} onChangeText={definirNomeEvento}/><Calendario label="Data do evento" value={dataEvento} onChange={definirDataEvento} permitirPassado={!!parametros.campanha_id}/><Field label="Horário do evento *" value={horaEvento} onChangeText={definirHoraEvento} placeholder="09:00"/><Field label="Local do evento *" value={localEvento} onChangeText={definirLocalEvento} placeholder="Nome do espaço e endereço"/></> : null}
     {erro ? <Notice error>{erro}</Notice> : null}<Button title="Continuar: revisão" onPress={() => {
-      if (prazo.trim() && !dataDeEventoValida(prazo.trim())) { definirErro('Use um prazo válido (DD/MM/AAAA) ou deixe o campo vazio.'); return; }
+      if (prazo.trim() && !dataDeEventoValida(prazo.trim())) { definirErro('Escolha uma data válida ou deixe a campanha sem prazo.'); return; }
       if (temEvento && !legado && (!nomeEvento.trim() || !localEvento.trim() || !dataDeEventoValida(dataEvento.trim()) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(horaEvento.trim()))) { definirErro('Informe nome, local, uma data válida (DD/MM/AAAA) e horário (HH:MM) para o evento.'); return; }
       if (temEvento && legado && !evento.trim()) { definirErro('Informe os detalhes do encontro.'); return; }
       const eventoFinal = temEvento ? legado ? evento : formatarEvento({ nome: nomeEvento, data: dataEvento, horario: horaEvento, local: localEvento }) : '';
@@ -108,7 +115,7 @@ export function CampaignReview() {
   }
   return <Screen variant="form" title="Revisão da campanha" step="PASSO 4 DE 4" heading="Uma causa bem explicada.">
     {!usuarioLogado() ? <PedirLogin/> : parametros.titulo ? <><Card title={parametros.titulo} subtitle={`${parametros.categoria} · ${parametros.regiao}`}><Copy>{parametros.descricao}</Copy>{pedidos.map(pedido => <Copy key={pedido.id}>• {pedido.nome} · {pedido.tipo}</Copy>)}{parametros.evento ? <Copy>{parametros.evento}</Copy> : null}</Card>
-      <Copy muted>Ao salvar, o rascunho será preparado para análise. A publicação e a reabertura dependem da revisão administrativa.</Copy>
+      <Copy muted>Ao salvar, o rascunho ficará preparado para envio. A publicação depende da revisão administrativa.</Copy>
       {parametros.reabrir === '1' ? <Field label="Motivo da reabertura *" multiline value={motivo} onChangeText={definirMotivo}/> : null}
       {erro ? <Notice error>{erro}</Notice> : null}<Button title={ocupado ? 'Salvando...' : parametros.campanha_id ? 'Salvar e preparar revisão' : 'Salvar rascunho e continuar'} disabled={ocupado || !pedidos.length} onPress={salvarCampanha}/>
       <Button secondary title="Editar a história" onPress={() => roteador.push({ pathname: '/criar', params: parametros })}/></> : <><Notice>Comece preenchendo sua campanha.</Notice><Button title="Criar campanha" onPress={() => roteador.push('/criar')}/></>}

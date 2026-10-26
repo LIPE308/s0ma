@@ -2,12 +2,20 @@
 
 Atualização do briefing de 22/10/2026, preservando a base 6bf9b56, o azul royal, React Native/Expo, Node HTTP e MySQL. A auditoria e o plano anteriores às alterações estão em [SOMA-2-PLANO.md](SOMA-2-PLANO.md). Não há implantação pública ou movimentação financeira real.
 
+## Integração com a main de 26/10/2026
+
+A main recebeu os commits bcb3dc8 a 6d63efd enquanto esta atualização era desenvolvida. A integração conserva a criação financeira em três passos, o calendário, a aba Minhas rotas, a entrada de contribuições simplificada e a estrada 3D com alternativa leve/lista. Os fluxos adicionais de objetos, tarefas e múltiplas metas continuam disponíveis. As rotas /rota e /rota-inteligente usam a mesma tela e fonte de dados.
+
+O backend novo concentra os critérios de urgência, documentos privados, revisão prévia, conciliação e razão contábil. /campanhas/:id/inteligencia é uma leitura compatível dos mesmos valores; não soma novamente os anúncios. As operações antigas de rateio em uma etapa, perfil e upload sem preparação retornam 410 e apontam para os fluxos atuais. Não há dois motores financeiros ativos.
+
+A migração 003-integracao-main amplia perfis sem remover colunas antigas; preserva biografia e importa JPEG/PNG, identidades Google, UF explicitamente autorizada e distribuições publicitárias anteriores uma única vez. Os créditos antigos são incorporados às necessidades e lançamentos, com referência à fonte, sem repetir a arrecadação efetiva. As tabelas originais continuam intactas. Imagens antigas fora dos formatos válidos permanecem na origem e exigem novo envio; perfis importados ficam privados até nova autorização e declaração de maioridade. Revisões de urgência anteriores ficam no histórico privado; a prioridade exige os critérios/evidências atuais.
+
 ## O que funciona
 
 - Novas campanhas são rascunhos privados. O responsável prepara imagem, evidências opcionais, localização autorizada e pedido de urgência; envia para análise. A administração publica ou pede ajustes/suspende. Campanhas antigas ativas foram preservadas.
 - Necessidades continuam independentes: dinheiro, objetos e tarefas, inclusive campanhas de um único tipo e vários pedidos do mesmo tipo. Nenhuma meta financeira artificial é exigida para campanhas só de objetos.
 - Finalidades pessoais, individuais e institucionais são aceitas. Prazo e texto de região pública tornaram-se opcionais; urgência exige um prazo verificável.
-- A Rota Inteligente é uma trilha com pontos conectados, etapas concluídas/atuais/futuras e detalhes ao selecionar um marco. Acompanha o progresso confirmado e a origem dos recursos.
+- A Rota Inteligente conserva a estrada 3D e oferece uma trilha leve com pontos conectados, etapas concluídas/atuais/futuras e detalhes ao selecionar um marco. Acompanha o progresso confirmado e a origem dos recursos.
 - Anúncios solidários têm espaço visual, transparência pública e painel administrativo de **simulação**: receita pendente, conciliação, distribuição, lançamentos e auditoria.
 - O Mapa Solidário usa cartografia oficial do IBGE empacotada no app, zoom, movimentação opcional, seleção por UF/município e filtro de categoria. Só entra campanha ativa com consentimento explícito para estado/município.
 - Descoberta avançada por urgência revisada, categoria, UF, meta, prazo revisado, recentes, proximidade da meta e pouca visibilidade.
@@ -109,7 +117,7 @@ Esses controles apoiam privacidade, mas **não certificam conformidade com a LGP
 
 ## Banco e reversão
 
-A API cria automaticamente 14 tabelas adicionais por backend/esquema-soma2.sql: migrações, perfis, detalhes de campanha, arquivos, urgências, histórico de urgência, auditoria, receitas, distribuições, lançamentos, visualizações, identidades e os dois estados temporários OAuth.
+A API cria automaticamente as tabelas da extensão anterior, conserva suas fontes e acrescenta o esquema de 14 tabelas (perfis é compartilhada) por backend/esquema-soma2.sql: migrações, perfis, detalhes de campanha, arquivos, urgências, histórico de urgência, auditoria, receitas, distribuições, lançamentos, visualizações, identidades e os dois estados temporários OAuth.
 
 Não remove ou recria tabelas existentes e não troca senhas. A migração 002-lancamentos faz importação única dos saldos e operações legados. A marcação transacional impede repetição ao reiniciar ou configurar outro administrador.
 
@@ -142,6 +150,8 @@ Comandos:
     npx tsc --noEmit
     npm run lint
     npm run compilar:web
+
+Projeções de novas contribuições são suspensas fora da arrecadação ativa. Quando a cadência disponível não alcança a meta no prazo declarado, há alerta explícito.
 
 As exportações Android/iOS verificam bundles, não execução em aparelhos. Os resultados finais e a inspeção web são registrados no relatório de validação desta entrega.
 

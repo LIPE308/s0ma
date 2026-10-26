@@ -317,7 +317,7 @@ async function atenderSoma2(ctx) {
     ];
     let atual=false;
     for(const m of marcos){const opcional=['projecao','anuncios'].includes(m.id);m.estado=m.concluido?'concluido':!atual&&!opcional?'atual':'futuro';if(!m.concluido&&!opcional)atual=true;}
-    return ok({campanha:{id:campanha.id,titulo:campanha.titulo,estado:campanha.estado},simulado:true,meta,confirmado,disponivel:saldo.disponivel,reservado:saldo.reservado,repassado:saldo.repassado,restante,percentual:meta>0?Math.min(100,confirmado/meta*100):0,doacoes_confirmadas:doacoes.reduce((s,p)=>s+Number(p.valor),0),quantidade_doacoes:doacoes.length,anuncios_creditados:Number(creditos[0].valor),saldo_legado:confirmado-doacoes.reduce((s,p)=>s+Number(p.valor),0)-Number(creditos[0].valor),aplicado:0,rendimentos_realizados:0,urgencia,necessidades:metas,marcos,projecao});
+    return ok({campanha:{id:campanha.id,titulo:campanha.titulo,estado:campanha.estado,categoria:campanha.categoria},simulado:true,meta,confirmado,disponivel:saldo.disponivel,reservado:saldo.reservado,repassado:saldo.repassado,restante,percentual:meta>0?Math.min(100,confirmado/meta*100):0,doacoes_confirmadas:doacoes.reduce((s,p)=>s+Number(p.valor),0),quantidade_doacoes:doacoes.length,anuncios_creditados:Number(creditos[0].valor),saldo_legado:confirmado-doacoes.reduce((s,p)=>s+Number(p.valor),0)-Number(creditos[0].valor),aplicado:0,rendimentos_realizados:0,urgencia,necessidades:metas,marcos,projecao});
   }
   if (caminho==='/api/administracao/soma2' && metodo==='GET'){
     exigirAdministrador(usuario);

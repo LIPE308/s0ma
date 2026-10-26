@@ -1,13 +1,16 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, Text, View, useWindowDimensions } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { Button, Card, Copy, Dialog, EmptyState, Field, Heading, Line, Notice, Progress, Screen, Tag, useTheme } from '../components/ui';
+import { Button, Card, Choices, Copy, Dialog, EmptyState, Field, Heading, Line, Notice, Progress, Screen, Tag, useTheme } from '../components/ui';
 import { EstadoConexao } from '../components/conexao';
 import { useDados, type Campanha } from '../servicos/api';
 import { formatarDinheiro, converterValor } from '../data/formatacao';
 import { EntryMotion, MotionPressable } from '../design/motion';
+import Estrada from '../components/estrada';
+import { marcosDaEstrada, indiceAtual } from '../data/rota';
+import type { Marco as MarcoEstrada } from '../components/estrada-base';
 import type { Marco, Rota } from '../servicos/soma2';
 
 const moeda=(centavos:number)=>formatarDinheiro(centavos/100);
@@ -28,6 +31,12 @@ function Trilha({marcos}:{marcos:Marco[]}){
     </View>)}
   </EntryMotion><Dialog visible={!!selecionado} title={selecionado?.titulo||'Etapa'} onClose={()=>setSelecionado(null)}><Tag>{selecionado?.concluido?'Concluído':'Em construção'}</Tag><Copy>{selecionado?.detalhe}</Copy><Copy muted>Este marco acompanha os registros da campanha. Projeções nunca entram no valor confirmado.</Copy><Button title="Voltar à rota" onPress={()=>setSelecionado(null)}/></Dialog></>;
 }
+function EstradaDaRota({rota}:{rota:Rota}) {
+  const [modo,setModo]=useState('Estrada 3D'),[selecionado,setSelecionado]=useState<number|null>(null);
+  const marcos=useMemo(()=>marcosDaEstrada([0,25,50,75,100].map((p,i)=>({id:'financeiro-'+(i===0?0:i+1),titulo:p===0?'Seu primeiro passo':p+'% da meta',valor:Math.ceil(rota.meta*p/100),concluido:p===0||rota.meta>0&&rota.confirmado>=Math.ceil(rota.meta*p/100),data:null,icone:'moedas'} satisfies MarcoEstrada)),rota.campanha.titulo,rota.campanha.categoria),[rota.meta,rota.confirmado,rota.campanha.titulo,rota.campanha.categoria]);
+  const atual=indiceAtual(marcos),indice=Math.min(selecionado??atual,marcos.length-1),m=marcos[indice];
+  return <><Choices label="Como ver a rota" options={['Estrada 3D','Versão leve','Lista']} selected={modo} onSelect={setModo}/>{modo==='Estrada 3D'?<Estrada marcos={marcos} percentual={rota.percentual} selecionado={indice} aoSelecionar={setSelecionado}/>:modo==='Versão leve'?<Trilha marcos={rota.marcos}/>:null}{modo==='Lista'?marcos.map((p,i)=><Button key={p.id} secondary title={p.titulo+' · '+moeda(p.valor)+' · '+(p.concluido?'concluído':i===atual?'atual':'futuro')} onPress={()=>setSelecionado(i)}/>):null}<Card title={m.titulo} subtitle={m.concluido?'Concluído no teste':indice===atual?'Objetivo atual':'Objetivo futuro'}><Line label="Marco financeiro" value={moeda(m.valor)}/><Copy muted>Faltam {moeda(Math.max(0,m.valor-rota.confirmado))} confirmados para este objetivo. Selecionar uma etapa não altera a arrecadação.</Copy><Button secondary title="Objetivo anterior" disabled={indice===0} onPress={()=>setSelecionado(indice-1)}/><Button secondary title="Próximo objetivo" disabled={indice===marcos.length-1} onPress={()=>setSelecionado(indice+1)}/></Card></>;
+}
 export function RotaInteligente(){
   const {id}=useLocalSearchParams<{id?:string}>(),router=useRouter(),{colors,fontsReady}=useTheme(),{width}=useWindowDimensions();
   const [cenario,setCenario]=useState(''),[taxa,setTaxa]=useState(''),[dias,setDias]=useState('30'),[custos,setCustos]=useState('0,00'),[erro,setErro]=useState('');
@@ -46,7 +55,7 @@ export function RotaInteligente(){
       {rota.meta===0?<Notice>Esta campanha não tem meta financeira. Objetos e tarefas continuam com seu próprio acompanhamento.</Notice>:null}
       {rota.urgencia.revisada?<Tag>{rota.urgencia.classe==='critica'?'Urgência crítica revisada':'Urgência moderada revisada'}</Tag>:null}
       <View style={{flexDirection:width>=760?'row':'column',gap:24,alignItems:'stretch'}}>
-        <View style={{flex:1,minWidth:0}}><Heading>Seu caminho até a meta</Heading><Copy muted>Toque em uma etapa para entender o que já aconteceu e o que vem pela frente.</Copy><Trilha marcos={rota.marcos}/></View>
+        <View style={{flex:1,minWidth:0}}><Heading>Seu caminho até a meta</Heading><Copy muted>Toque em uma etapa para entender o que já aconteceu e o que vem pela frente.</Copy>{rota.meta>0?<EstradaDaRota rota={rota}/>:<Trilha marcos={rota.marcos}/>}</View>
         <View style={{width:width>=760?270:'100%',gap:18}}>
           <Card title="De onde vem cada valor" icon="heart-outline"><Line label="Doações confirmadas" value={moeda(rota.doacoes_confirmadas)}/><Line label="Créditos de anúncios" value={moeda(rota.anuncios_creditados)}/>{rota.saldo_legado!==0?<><Line label="Saldo histórico importado" value={moeda(rota.saldo_legado)}/><Copy muted>Registro anterior à Rota Inteligente. Não representa uma nova doação.</Copy></>:null}<Copy muted>{rota.quantidade_doacoes} doações confirmadas no teste.</Copy></Card>
           <Card title="Cada valor no seu lugar"><Line label="Confirmado na meta" value={moeda(rota.confirmado)}/><Line label="Disponível no teste" value={moeda(rota.disponivel)}/><Line label="Reservado em repasses" value={moeda(rota.reservado)}/><Line label="Já repassado no teste" value={moeda(rota.repassado)}/><Line label="Aplicado" value={moeda(rota.aplicado)}/><Line label="Rendimentos realizados" value={moeda(rota.rendimentos_realizados)}/><Copy muted>Não existe aplicação automática, custódia ou operação bancária.</Copy></Card>

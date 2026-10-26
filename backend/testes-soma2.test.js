@@ -150,6 +150,16 @@ test('SOMA 2.0: revisão, urgência, anúncios, rota, mapa, perfil e privacidade
       assert.equal((await chamar('/arquivos/'+foto.id,{token:b.token})).mime,'image/png');await aprovar(camp,b);
       const imagem=await fetch(url+'/arquivos/'+foto.id+'/imagem');assert.equal(imagem.status,200);assert.equal(imagem.headers.get('content-type'),'image/png');
     });
+    await suite.test('criação simplificada preserva foto e UF atomicamente, reenvio único e rota privada',async()=>{
+      const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jL1sAAAAASUVORK5CYII=';
+      const corpo={...campanha('Criar em três passos'),prazo:'',regiao:'',imagem:png,uf:'SC'};
+      const enviar=()=>chamar('/campanhas',{method:'POST',token:b.token,body:corpo,key:'criacao-simples-unica',status:201});const [a1,a2]=await Promise.all([enviar(),enviar()]);assert.equal(a1.id,a2.id);assert.equal(a1.regiao,'');
+      await chamar('/campanhas/'+a1.id+'/inteligencia',{status:404});const rota=await chamar('/campanhas/'+a1.id+'/inteligencia',{token:b.token});assert.equal(rota.estado,'rascunho');assert.equal(rota.imagem,'');assert.equal(rota.meta,100000);
+      const arquivos=await chamar('/campanhas/'+a1.id+'/arquivos',{token:b.token});assert.equal(arquivos.length,1);
+      await chamar('/campanhas',{method:'POST',token:b.token,body:{...corpo,titulo:'UF inválida não salva',uf:'ZZ'},status:400});await chamar('/campanhas',{method:'POST',token:b.token,body:{...corpo,titulo:'Imagem inválida não salva',imagem:'data:image/png;base64,aW52YWxpZG8='},status:400});
+      const minhas=await chamar('/campanhas?minhas=1',{token:b.token});assert.ok(!minhas.some(c=>c.titulo==='UF inválida não salva'||c.titulo==='Imagem inválida não salva'));
+      await chamar('/administracao/solidariedade/simular',{method:'POST',token:admin.token,body:{valor:10000,referencia:'atalho-invalido'},status:410});
+    });
     await suite.test('Google sem credenciais não inventa autenticação; ausência de sessão segue protegida',async()=>{
       assert.equal((await chamar('/configuracao')).google,false);
       await chamar('/auth/google/iniciar',{status:503});await chamar('/auth/google/trocar',{method:'POST',status:503});

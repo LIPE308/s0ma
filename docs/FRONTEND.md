@@ -37,7 +37,7 @@ A integração usa fetch e useEffect para consultar o servidor e exibir carregam
 - `backend/`: API e esquema do MySQL.
 - `examples/`: exemplos anteriores, fora do roteamento.
 
-O rascunho da campanha passa dados pelos parâmetros entre as quatro etapas. Ao salvar a revisão, a API grava a campanha e os pedidos em uma transação. Cadastro, atividade, ajudas, atualizações, denúncias e administração usam dados do MySQL. A sessão sobrevive ao recarregamento da aba web. Pagamentos e repasses são testes salvos no banco, com essa indicação nas telas.
+Novas vaquinhas usam três etapas em `criacao-simples.tsx`, com rascunho em memória preservado ao voltar, prazo opcional e calendário visual. Outras formas de ajuda, múltiplos pedidos e edição preservam o fluxo adicional de quatro etapas, com parâmetros entre rotas. Ao salvar, a API grava campanha, pedidos, imagem e UF opcional na mesma transação. Cadastro, atividade, ajudas, atualizações, denúncias e administração usam dados do MySQL. A sessão sobrevive ao recarregamento da aba web. Pagamentos e repasses são testes salvos no banco, com essa indicação nas telas. Consulte `EXPERIENCIA-SIMPLIFICADA.md` para a navegação atual.
 
 Para executar, consulte o [README](../README.md). Para configurar o banco e estudar as regras, consulte o [backend](BACKEND.md).
 

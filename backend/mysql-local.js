@@ -158,7 +158,7 @@ async function main() {
   const configuracao = carregarConfiguracao();
   if (acao === 'testar') {
     const { conexao } = await conectar(configuracao); await conexao.end();
-    return executar(process.execPath, ['--test', join(__dirname, 'regras-soma2.test.js'), join(__dirname, 'testes.test.js'), join(__dirname, 'testes-soma2.test.js')], {
+    return executar(process.execPath, ['--test', join(__dirname, 'regras-soma2.test.js'), join(__dirname, 'testes.test.js'), join(__dirname, 'testes-soma2.test.js'), join(__dirname, 'compatibilidade.test.js')], {
       cwd: join(__dirname, '..'), env: { ...process.env, MYSQL_HOST: '127.0.0.1', MYSQL_PORTA: String(configuracao.porta),
         MYSQL_TESTE_USUARIO: 'root', MYSQL_TESTE_SENHA: configuracao.senhaRoot },
     });

@@ -55,6 +55,8 @@ async function inicializarBanco() {
   // Cada comando é executado separado; não permitimos multipleStatements.
   const esquema = readFileSync(join(__dirname, 'esquema.sql'), 'utf8');
   for (const comando of esquema.split(';').filter(comando => comando.trim())) await banco.query(comando);
+  const extensoes = readFileSync(join(__dirname, 'extensoes.sql'), 'utf8');
+  for (const comando of extensoes.split(';').filter(comando => comando.trim())) await banco.query(comando);
   const [coluna] = await consultar("SELECT COUNT(*) AS total FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='campanhas' AND COLUMN_NAME='estado_antes_moderacao'");
   if (!Number(coluna.total)) await banco.query("ALTER TABLE campanhas ADD COLUMN estado_antes_moderacao ENUM('ativa','encerrada') DEFAULT NULL");
   // The published demonstration administrator must never remain a privileged login.
