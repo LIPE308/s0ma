@@ -97,6 +97,7 @@ async function atenderSoma2(ctx) {
       }
       await transacao(async consulta => {
         await consulta('INSERT INTO perfis (usuario_id,tipo,biografia,nome_instituicao,adulto,publico,local_publico,apoios_publicos,cor,avatar_id,capa_id) VALUES (?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE tipo=VALUES(tipo),biografia=VALUES(biografia),nome_instituicao=VALUES(nome_instituicao),adulto=VALUES(adulto),publico=VALUES(publico),local_publico=VALUES(local_publico),apoios_publicos=VALUES(apoios_publicos),cor=VALUES(cor),avatar_id=VALUES(avatar_id),capa_id=VALUES(capa_id)', [usuario.id,tipo,biografia,instituicao,Number(dados.adulto),Number(publico),Number(publico && dados.local_publico),Number(publico && dados.apoios_publicos),cor,midias.avatar_id,midias.capa_id]);
+        if(dados.usar_foto_google!==undefined)await consulta('UPDATE perfis SET usar_foto_google=? WHERE usuario_id=?',[Number(dados.usar_foto_google===true),usuario.id]);
         await auditar(consulta, usuario.id, null, 'perfil_atualizado', { tipo, publico });
         if (!dados.adulto) {
           await consulta("UPDATE campanhas SET estado='rascunho',estado_antes_moderacao='ativa' WHERE usuario_id=? AND estado='ativa'",[usuario.id]);
@@ -112,7 +113,7 @@ async function atenderSoma2(ctx) {
     if (!perfil || (!proprio && (!perfil.publico || !perfil.adulto))) erro('Perfil não disponível.', 404);
     const campanhas = await consultar("SELECT id,titulo,estado FROM campanhas WHERE usuario_id=? AND estado IN ('ativa','encerrada')", [id]);
     const apoios = perfil.apoios_publicos && perfil.adulto ? await consultar("SELECT DISTINCT c.id,c.titulo FROM campanhas c JOIN pagamentos p ON p.necessidade_id IN (SELECT id FROM necessidades WHERE campanha_id=c.id) WHERE p.usuario_id=? AND p.estado='confirmado' AND c.estado IN ('ativa','encerrada')", [id]) : [];
-    return ok({ usuario_id: id, nome: perfil.nome, tipo: perfil.tipo, nome_instituicao: perfil.nome_instituicao, biografia: perfil.adulto ? perfil.biografia : '', regiao: perfil.local_publico && perfil.adulto ? perfil.regiao : '', avatar_id: perfil.adulto ? perfil.avatar_id : null, capa_id: perfil.adulto ? perfil.capa_id : null, cor: perfil.cor, campanhas, apoios });
+    return ok({ usuario_id: id, nome: perfil.nome, tipo: perfil.tipo, nome_instituicao: perfil.nome_instituicao, biografia: perfil.adulto ? perfil.biografia : '', regiao: perfil.local_publico && perfil.adulto ? perfil.regiao : '', foto_google:perfil.adulto&&perfil.usar_foto_google?perfil.foto_google:null,avatar_id: perfil.adulto ? perfil.avatar_id : null, capa_id: perfil.adulto ? perfil.capa_id : null, cor: perfil.cor, campanhas, apoios });
   }
   if (caminho === '/api/arquivos' && metodo === 'POST') {
     exigirLogin(usuario);
@@ -122,10 +123,9 @@ async function atenderSoma2(ctx) {
     else campanhaId = null;
     if (finalidade !== 'documento' && dados.consentimento !== true) erro('Autorize o uso da imagem e evite fotos de pessoas vulneráveis.');
     const arquivo = prepararArquivo(dados.base64, finalidade), id = randomUUID();
-    const [limite] = await consultar('SELECT COUNT(*) AS total FROM arquivos WHERE usuario_id=?', [usuario.id]);
-    if (Number(limite.total) >= 50) erro('Limite de 50 arquivos por conta atingido.', 409);
-    await transacao(async consulta => {
+    const salvo = await transacao(async consulta => {
       await consulta('SELECT id FROM usuarios WHERE id=? FOR UPDATE',[usuario.id]);
+      return umaVez(consulta,usuario.id,requisicao,dados,async()=>{
       const [quantidade] = await consulta('SELECT COUNT(*) AS total FROM arquivos WHERE usuario_id=?',[usuario.id]);
       if (Number(quantidade.total)>=50) erro('Limite de 50 arquivos por conta atingido.',409);
       await consulta('INSERT INTO arquivos (id,usuario_id,campanha_id,nome,mime,finalidade,publico,tamanho,conteudo) VALUES (?,?,?,?,?,?,?,?,?)', [id,usuario.id,campanhaId,nomeSeguro(dados.nome),arquivo.mime,finalidade,Number(finalidade !== 'documento'),arquivo.conteudo.length,arquivo.conteudo]);
@@ -135,8 +135,10 @@ async function atenderSoma2(ctx) {
         if (['ativa','encerrada'].includes(atual.estado)) await marcarEdicao(consulta,atual,usuario.id);
       }
       await auditar(consulta, usuario.id, campanhaId, 'arquivo_recebido', { id, finalidade, tamanho: arquivo.conteudo.length });
+      return {id,nome:nomeSeguro(dados.nome),mime:arquivo.mime,finalidade};
+      });
     });
-    return ok({ id, nome: nomeSeguro(dados.nome), mime: arquivo.mime, finalidade }, 201);
+    return ok(salvo, 201);
   }
   if ((partes = caminho.match(/^\/api\/campanhas\/([^/]+)\/arquivos$/)) && metodo === 'GET') {
     const campanha = await obterCampanha(partes[1]); exigirResponsavel(usuario, campanha);

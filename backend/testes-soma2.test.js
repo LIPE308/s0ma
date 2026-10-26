@@ -30,6 +30,32 @@ test('SOMA 2.0: revisão, urgência, anúncios, rota, mapa, perfil e privacidade
     a=await conta('a@teste.example','Responsável A');b=await conta('b@teste.example','Responsável B');c=await conta('c@teste.example','Responsável C');d=await conta('d@teste.example','Doador D');admin=await conta('operador@teste.example','Operador');
     execFileSync(process.execPath,['backend/configurar-admin.js','operador@teste.example'],{env,stdio:'pipe'});
     admin=await chamar('/login',{method:'POST',body:{email:'operador@teste.example',senha:'SenhaTeste_2026!'}});
+    await suite.test('sessão web HttpOnly restaura, rejeita CSRF e encerra sem depender de JavaScript persistente',async()=>{
+      const login=await fetch(url+'/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:'d@teste.example',senha:'SenhaTeste_2026!'})});
+      assert.equal(login.status,200);const cookie=login.headers.get('set-cookie');
+      assert.match(cookie,/HttpOnly/);assert.match(cookie,/SameSite=Lax/);assert.match(cookie,/Path=\/api/);assert.match(cookie,/Max-Age=86400/);
+      const h={Cookie:cookie.split(';')[0]};const sessao=await fetch(url+'/sessao',{headers:h});assert.equal(sessao.status,200);assert.equal((await sessao.json()).id,d.usuario.id);
+      assert.equal((await fetch(url+'/sessao',{headers:{Cookie:'soma_sessao='+'0'.repeat(64)}})).status,401);
+      assert.equal((await fetch(url+'/sessao',{headers:{...h,Authorization:'Basic invalido'}})).status,401);
+      assert.equal((await fetch(url+'/sair',{method:'POST',headers:{...h,Origin:'https://nao-autorizado.example','Content-Type':'application/json'},body:'{}'})).status,403);
+      assert.equal((await fetch(url+'/perfil',{method:'PUT',headers:{...h,'Content-Type':'text/plain'},body:'{}'})).status,415);
+      const sair=await fetch(url+'/sair',{method:'POST',headers:{...h,'Content-Type':'application/json'},body:'{}'});assert.equal(sair.status,200);assert.match(sair.headers.get('set-cookie'),/Max-Age=0/);
+      assert.equal((await fetch(url+'/sessao',{headers:h})).status,401);
+      assert.equal((await fetch(url+'/sair',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).status,200);
+    });
+    await suite.test('primeiro perfil é curto, privado e não aceita avatar de outra pessoa',async()=>{
+      await chamar('/cadastro',{method:'POST',body:{nome:'Primeiro acesso',email:'novo@teste.example',senha:'SenhaTeste_2026!'},status:201});
+      const novo=await chamar('/login',{method:'POST',body:{email:'novo@teste.example',senha:'SenhaTeste_2026!'}});
+      assert.equal((await chamar('/sessao',{token:novo.token})).perfil_completo,false);
+      const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jL1sAAAAASUVORK5CYII=';
+      const avatar=await chamar('/arquivos',{method:'POST',token:a.token,body:{finalidade:'avatar',nome:'avatar.png',base64:png,consentimento:true},status:201});
+      await chamar('/perfil/completar',{method:'PUT',token:novo.token,body:{nome:'Pessoa nova',avatar_id:avatar.id},status:403});
+      await chamar('/perfil/completar',{method:'PUT',token:novo.token,body:{nome:'Pessoa nova',regiao:'Cidade fictícia',usar_foto_google:true}});
+      const p=await chamar('/perfil-ampliado',{token:novo.token});assert.equal(p.nome,'Pessoa nova');assert.equal(Boolean(p.adulto),false);assert.equal(Boolean(p.publico),false);
+      assert.equal((await chamar('/sessao',{token:novo.token})).perfil_completo,true);
+      await chamar('/perfis/'+novo.usuario.id,{status:404});
+      await chamar('/cadastro',{method:'POST',body:{nome:'Incompleto',email:'incompleto@teste.example',senha:'SenhaTeste_2026!'},status:201});
+    });
     async function aprovar(camp,pessoa){await chamar('/campanhas/'+camp.id+'/enviar',{method:'POST',token:pessoa.token});await chamar('/administracao/campanhas/'+camp.id,{method:'PATCH',token:admin.token,body:{estado:'ativa',motivo:'Revisão humana da fixture de teste'}});}
     async function tornarCritica(camp,pessoa,dias=3){
       await chamar('/arquivos',{method:'POST',token:pessoa.token,body:{campanha_id:camp.id,finalidade:'documento',nome:'evidencia.pdf',base64:pdf},status:201});
@@ -55,6 +81,11 @@ test('SOMA 2.0: revisão, urgência, anúncios, rota, mapa, perfil e privacidade
       await chamar('/arquivos/'+arquivo.id,{status:401});await chamar('/arquivos/'+arquivo.id,{token:d.token,status:403});await chamar('/arquivos/'+arquivo.id+'/imagem',{status:404});
       assert.equal((await chamar('/arquivos/'+arquivo.id,{token:admin.token})).mime,'application/pdf');
       await chamar('/campanhas/'+rascunho.id+'/arquivos',{token:d.token,status:403});
+      const corpo={campanha_id:rascunho.id,finalidade:'documento',nome:'reenvio.pdf',base64:pdf};
+      const enviar=()=>chamar('/arquivos',{method:'POST',token:a.token,body:corpo,status:201,key:'documento-reenvio-unico'});
+      const[x,y]=await Promise.all([enviar(),enviar()]);assert.equal(x.id,y.id);
+      const [arquivos]=await db.query('SELECT COUNT(*) AS total FROM '+nomeBanco+'.arquivos WHERE id=?',[x.id]);assert.equal(arquivos[0].total,1);
+      await chamar('/campanhas/'+rascunho.id+'/compartilhar',{method:'POST',token:a.token,body:{id:'privada',canal:'link'},status:409});
     });
     await suite.test('urgência: indicação do autor não vira prioridade; evidência insuficiente é rejeitada',async()=>{
       await chamar('/campanhas/'+rascunho.id+'/urgencia',{method:'POST',token:a.token,body:{natureza:'vida',consequencias:'Necessidade imediata com consequência relevante descrita para o teste.',prazo_limite:data(-1),recursos_disponiveis:0},status:400});
@@ -67,6 +98,16 @@ test('SOMA 2.0: revisão, urgência, anúncios, rota, mapa, perfil e privacidade
       await aprovar(rascunho,a);
       assert.equal((await chamar('/campanhas/'+rascunho.id)).urgencia.classe,'critica');
       const json=JSON.stringify(await chamar('/campanhas/'+rascunho.id));assert.ok(!json.includes('consequencias'));assert.ok(!json.includes('evidencia.pdf'));
+    });
+    await suite.test('compartilhar é deduplicado e privado por usuário, sem criar receita ou alterar urgência',async()=>{
+      const antes=await chamar('/campanhas/'+rascunho.id+'/rota');
+      const compartilhar=()=>chamar('/campanhas/'+rascunho.id+'/compartilhar',{method:'POST',token:d.token,body:{id:'partilha-unica',canal:'link'}});
+      await Promise.all([compartilhar(),compartilhar()]);
+      const lista=await chamar('/meus-compartilhamentos',{token:d.token});assert.equal(lista.length,1);assert.equal(lista[0].registros,1);
+      assert.equal((await chamar('/meus-compartilhamentos',{token:b.token})).length,0);
+      assert.equal((await chamar('/campanhas/'+rascunho.id+'/rota')).confirmado,antes.confirmado);
+      assert.equal((await chamar('/campanhas/'+rascunho.id+'/rota')).anuncios_creditados,antes.anuncios_creditados);
+      assert.equal((await chamar('/campanhas/'+rascunho.id)).urgencia.classe,'critica');
     });
     await suite.test('mapa usa consentimento e UF; filtros e contagem não expõem endereço',async()=>{
       assert.ok(!(await chamar('/mapa')).estados.some(e=>e.campanhas.some(c=>c.id===rascunho.id)));
@@ -122,6 +163,12 @@ test('SOMA 2.0: revisão, urgência, anúncios, rota, mapa, perfil e privacidade
       const rota=await chamar('/campanhas/'+campC.id+'/rota');assert.equal(rota.doacoes_confirmadas,3000);assert.equal(rota.confirmado,antes.confirmado+3000);assert.equal(rota.necessidades.find(x=>x.id===outro.id).recebido,outroAntes);assert.ok(rota.projecao.doacoes);assert.ok(rota.projecao.dias_para_meta>0);
       const [sum]=await db.query('SELECT SUM(valor) AS total FROM '+nomeBanco+'.lancamentos WHERE campanha_id=?',[campC.id]);assert.equal(Number(sum[0].total),rota.confirmado);
     });
+    await suite.test('doação curta rotulada Simulação confirma uma vez e preserva a meta independente',async()=>{
+      const antes=await chamar('/campanhas/'+campC.id+'/rota'),corpo={necessidade_id:campC.necessidades[1].id,valor:2000,meio:'Simulação'};
+      const criar=()=>chamar('/pagamentos',{method:'POST',token:d.token,body:corpo,key:'doacao-curta-unica',status:201});const[p1,p2]=await Promise.all([criar(),criar()]);assert.equal(p1.id,p2.id);assert.equal((await chamar('/pagamentos/'+p1.id,{token:d.token})).meio,'Simulação');
+      const confirmar=()=>chamar('/pagamentos/'+p1.id+'/simular',{method:'PATCH',token:d.token,body:{estado:'confirmado'}});await Promise.all([confirmar(),confirmar()]);
+      const depois=await chamar('/campanhas/'+campC.id+'/rota');assert.equal(depois.confirmado,antes.confirmado+2000);assert.equal(depois.necessidades[0].recebido,antes.necessidades[0].recebido);
+    });
     await suite.test('perfil institucional e privacidade: menor não publica dados ou recebe papel administrativo',async()=>{
       await chamar('/perfis/'+d.usuario.id,{status:404});
       await chamar('/perfil-ampliado',{method:'PUT',token:d.token,body:perfil({tipo:'instituicao',nome_instituicao:'Instituição fictícia',publico:true,local_publico:true,apoios_publicos:true,administrador:true})});
@@ -168,6 +215,7 @@ test('SOMA 2.0: revisão, urgência, anúncios, rota, mapa, perfil e privacidade
     await suite.test('reinício mantém migração, ledger, arquivos e distribuições sem repetir créditos',async()=>{
       const [antes]=await db.query('SELECT COUNT(*) AS total,SUM(valor) AS valor FROM '+nomeBanco+'.lancamentos');
       await parar();await iniciar();
+      const incompleto=await chamar('/login',{method:'POST',body:{email:'incompleto@teste.example',senha:'SenhaTeste_2026!'}});assert.equal((await chamar('/sessao',{token:incompleto.token})).perfil_completo,false);
       const [depois]=await db.query('SELECT COUNT(*) AS total,SUM(valor) AS valor FROM '+nomeBanco+'.lancamentos');assert.deepEqual(depois,antes);
       const [m]=await db.query("SELECT chave FROM "+nomeBanco+".soma_migracoes WHERE chave='002-lancamentos'");assert.equal(m.length,1);
       assert.equal((await chamar('/arquivos/'+arquivo.id,{token:a.token})).base64,pdf);

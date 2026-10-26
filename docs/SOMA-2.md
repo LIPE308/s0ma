@@ -1,5 +1,7 @@
 # SOMA 2.0 — implementação, regras e entrega
 
+> Atualização visual de 26/10/2026: [reformulação em azul](REFORMULACAO-AZUL.md). Entrada, sessão web, criação em quatro etapas e acompanhamento 2D substituem as descrições de som, estrada 3D e navegação anteriores neste documento. As regras de revisão, urgência e fundo permanecem.
+
 Atualização do briefing de 22/10/2026, preservando a base 6bf9b56, o azul royal, React Native/Expo, Node HTTP e MySQL. A auditoria e o plano anteriores às alterações estão em [SOMA-2-PLANO.md](SOMA-2-PLANO.md). Não há implantação pública ou movimentação financeira real.
 
 ## Integração com a main de 26/10/2026

@@ -3,13 +3,13 @@ import { Platform, useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const palette = {
-  light: { bg: '#FAF7F1', surface: '#FFFEFB', ink: '#272B38', muted: '#656775', primary: '#1748F5', soft: '#F3E9DB', accent: '#A7442A', line: '#E9E0D5', gentle: '#E8EFE7', gentleInk: '#345642', brandSoft: '#E9EEFF', hero: '#1748F5', onHero: '#FFFFFF', onPrimary: '#FFFFFF', onPhoto: '#FFFFFF', photoScrim: 'rgba(24,25,31,0.72)', heroWash: 'rgba(255,255,255,0.16)', heroTrack: 'rgba(255,255,255,0.25)', error: '#A72D34', errorBg: '#FFF0F1', success: '#175E49', successBg: '#E5F4ED', overlay: 'rgba(39,43,56,0.62)' },
-  dark: { bg: '#171923', surface: '#222532', ink: '#F7F4EE', muted: '#C1BEBA', primary: '#97B5FF', soft: '#34313A', accent: '#F1A184', line: '#41414A', gentle: '#283A30', gentleInk: '#BDDECA', brandSoft: '#293652', hero: '#1748F5', onHero: '#FFFFFF', onPrimary: '#101F48', onPhoto: '#FFFFFF', photoScrim: 'rgba(24,25,31,0.72)', heroWash: 'rgba(255,255,255,0.16)', heroTrack: 'rgba(255,255,255,0.25)', error: '#FFBBC0', errorBg: '#44232E', success: '#A5E5CA', successBg: '#173E38', overlay: 'rgba(0,0,0,0.76)' },
+  light: { bg: '#F7F9FC', surface: '#FFFFFF', ink: '#17243B', muted: '#5E6C82', primary: '#1748F5', soft: '#EDF3FF', accent: '#153A99', line: '#DDE5F0', gentle: '#EDF5F1', gentleInk: '#24735B', brandSoft: '#EDF3FF', hero: '#1748F5', onHero: '#FFFFFF', onPrimary: '#FFFFFF', onPhoto: '#FFFFFF', photoScrim: 'rgba(24,25,31,0.72)', heroWash: 'rgba(255,255,255,0.16)', heroTrack: 'rgba(255,255,255,0.25)', error: '#A72D34', errorBg: '#FFF0F1', success: '#175E49', successBg: '#E5F4ED', overlay: 'rgba(39,43,56,0.62)' },
+  dark: { bg: '#111B2B', surface: '#1A293E', ink: '#F7F4EE', muted: '#C1BEBA', primary: '#97B5FF', soft: '#253752', accent: '#A8C4FF', line: '#344960', gentle: '#283A30', gentleInk: '#BDDECA', brandSoft: '#293652', hero: '#1748F5', onHero: '#FFFFFF', onPrimary: '#101F48', onPhoto: '#FFFFFF', photoScrim: 'rgba(24,25,31,0.72)', heroWash: 'rgba(255,255,255,0.16)', heroTrack: 'rgba(255,255,255,0.25)', error: '#FFBBC0', errorBg: '#44232E', success: '#A5E5CA', successBg: '#173E38', overlay: 'rgba(0,0,0,0.76)' },
 };
 export type Colors = typeof palette.light;
 export type ThemePreference = 'sistema' | 'claro' | 'escuro';
 export const themeStorageKey = 'soma_tema';
-function validPreference(value: string | null): ThemePreference { return value === 'claro' || value === 'escuro' ? value : 'sistema'; }
+function validPreference(value: string | null): ThemePreference { return value === 'sistema' || value === 'escuro' ? value : 'claro'; }
 function initialPreference(): ThemePreference {
   if (Platform.OS !== 'web' || typeof window === 'undefined') return 'sistema';
   try { return validPreference(window.localStorage.getItem(themeStorageKey)); } catch { return 'sistema'; }
@@ -51,4 +51,4 @@ export function DesignProvider({ fontsReady, children }: { fontsReady: boolean; 
 export function useDesign() { return useContext(DesignContext); }
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, section: 48 };
 export const radius = { control: 16, card: 22, hero: 28, pill: 99 };
-export const motion = { press: 120, content: 220, theme: 180, tab: 180, introduction: 6850 };
+export const motion = { press: 120, content: 220, theme: 180, tab: 180, introduction: 0 };

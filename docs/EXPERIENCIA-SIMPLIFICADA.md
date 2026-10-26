@@ -1,5 +1,7 @@
 # Experiência simplificada do Soma
 
+> Atualização visual de 26/10/2026: [reformulação em azul](REFORMULACAO-AZUL.md). Entrada, sessão web, criação em quatro etapas e acompanhamento 2D substituem as descrições de som, estrada 3D e navegação anteriores neste documento. As regras de revisão, urgência e fundo permanecem.
+
 > Registro da versão 6d63efd e anteriores. A integração atual preserva a experiência descrita e atualiza os contratos de API, publicação, privacidade, urgência e conciliação: [guia SOMA 2.0](SOMA-2.md) e [validação atual](SOMA-2-VALIDACAO.md).
 
 Refinamento sobre a versão `dfd8eb3`, na branch existente `mudancas-jf`. Preserva Expo/React Native, Node HTTP, MySQL, identidade azul royal, temas, tipografia, sessões, permissões, classificação de urgência, pagamentos de teste e rateio dos anúncios. Nenhuma tabela foi recriada ou apagada. Os commits são integrados à `main` depois das validações, sem force push.

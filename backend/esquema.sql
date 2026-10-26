@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS pagamentos (
   taxa_soma INT NOT NULL,
   taxa_provedor INT NOT NULL,
   valor_liquido INT NOT NULL CHECK (valor_liquido > 0),
-  meio ENUM('Pix','Crédito','Débito') NOT NULL,
+  meio ENUM('Pix','Crédito','Débito','Simulação') NOT NULL,
   estado ENUM('pendente','confirmado','cancelado','reembolsado') NOT NULL DEFAULT 'pendente',
   criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id),

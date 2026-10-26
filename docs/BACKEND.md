@@ -1,5 +1,7 @@
 # Backend acadêmico: Node.js + MySQL
 
+> Atualização visual de 26/10/2026: [reformulação em azul](REFORMULACAO-AZUL.md). Entrada, sessão web, criação em quatro etapas e acompanhamento 2D substituem as descrições de som, estrada 3D e navegação anteriores neste documento. As regras de revisão, urgência e fundo permanecem.
+
 > Atualização SOMA 2.0 (22/10/2026): consulte [o guia atual](SOMA-2.md) e [a validação da entrega](SOMA-2-VALIDACAO.md). Este documento registra a base anterior; publicação direta, ausência de mapa/rota e contagens antigas foram substituídas pelo fluxo de revisão e extensões descritos no guia atual.
 
 O fluxo é simples: a tela chama `fetch`, o Node recebe uma requisição HTTP, executa SQL no MySQL e responde JSON. Não usamos Express, ORM, filas ou serviços externos. `mysql2` é o driver que permite ao Node acessar o MySQL. A inicialização aplica a pequena atualização aditiva descrita abaixo.

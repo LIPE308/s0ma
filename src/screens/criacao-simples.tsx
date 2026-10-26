@@ -1,49 +1,50 @@
-import { useCallback, useRef, useState } from 'react';
-import { BackHandler } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { BackHandler, Switch, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Button, Card, Choices, Copy, Disclosure, Field, Notice, Screen } from '../components/ui';
 import { Calendario } from '../components/calendario';
-import { PedirLogin } from '../components/conexao';
+import { PedirLogin, EstadoConexao } from '../components/conexao';
+import { escolherDocumento } from '../components/arquivos';
 import { categorias, converterValor, formatarDinheiro } from '../data/formatacao';
 import { inicioDoDia, lerData } from '../data/calendario';
-import { criarChaveOperacao, mensagemErro, requisitar, usuarioLogado, type Campanha } from '../servicos/api';
+import { criarChaveOperacao, mensagemErro, requisitar, usuarioLogado, useDados, type Campanha } from '../servicos/api';
+import type { PerfilAmpliado } from '../servicos/soma2';
 import { escolherImagem } from './inteligencia';
-
-export function CriacaoSimples() {
-  const router = useRouter(); const [etapa, definirEtapa] = useState(0);
-  const [titulo, definirTitulo] = useState(''); const [descricao, definirDescricao] = useState(''); const [categoria, definirCategoria] = useState('Família');
-  const [meta, definirMeta] = useState(''); const [prazo, definirPrazo] = useState(''); const [imagem, definirImagem] = useState('');
-  const [regiao, definirRegiao] = useState(''); const [uf, definirUf] = useState('Não informar');
-  const [erro, definirErro] = useState(''); const [ocupado, definirOcupado] = useState(false); const envio = useRef(criarChaveOperacao());
-  const valor = Math.round(converterValor(meta) * 100);
-  const voltar = useCallback(() => { if (ocupado) return; definirErro(''); definirEtapa(e => Math.max(0, e - 1)); }, [ocupado]);
-  useFocusEffect(useCallback(() => { const listener = BackHandler.addEventListener('hardwareBackPress', () => { if (etapa > 0) { voltar(); return true; } return false; }); return () => listener.remove(); }, [etapa, voltar]));
-  function continuar() {
-    definirErro('');
-    if (etapa === 0 && (!titulo.trim() || !descricao.trim())) { definirErro('Dê um nome à campanha e conte por que ela é importante.'); return; }
-    if (etapa === 0 && (titulo.trim().length > 150 || descricao.length > 10000)) { definirErro('Use até 150 letras no nome e até 10.000 na história.'); return; }
-    if (etapa === 1 && (!Number.isSafeInteger(valor) || valor < 1000 || valor > 100000000)) { definirErro('Informe uma meta entre R$ 10 e R$ 1.000.000.'); return; }
-    if (etapa === 1 && prazo && (!lerData(prazo) || lerData(prazo)! < inicioDoDia())) { definirErro('Escolha hoje ou uma data futura. Você também pode deixar sem prazo.'); return; }
-    definirEtapa(e => e + 1);
-  }
-  async function foto() { definirErro(''); definirOcupado(true); try { const escolhida = await escolherImagem(); if (escolhida) definirImagem(escolhida); } catch (e) { definirErro(mensagemErro(e)); } finally { definirOcupado(false); } }
-  async function publicar() {
-    definirOcupado(true); definirErro('');
-    try {
-      const campanha = await requisitar<Campanha>('/campanhas', 'POST', { titulo: titulo.trim(), descricao: descricao.trim(), categoria, regiao: regiao.trim(), uf: uf === 'Não informar' ? '' : uf, prazo, imagem: imagem || undefined, necessidades: [{ nome: titulo.trim(), tipo: 'dinheiro', meta: valor, tipo_meta: 'fechada', prioridade: 'Normal', prazo, descricao: '' }] }, envio.current);
-      // Limpa somente após confirmação do servidor; falhas conservam todos os dados e a chave de reenvio.
-      definirEtapa(0); definirTitulo(''); definirDescricao(''); definirMeta(''); definirPrazo(''); definirImagem(''); definirRegiao(''); definirUf('Não informar'); definirCategoria('Família'); envio.current = criarChaveOperacao();
-      router.push({ pathname: '/preparar-campanha', params: { id: campanha.id } });
-    } catch (e) { definirErro(mensagemErro(e)); } finally { definirOcupado(false); }
-  }
-  return <Screen variant="form" title="Criar campanha" heading={['Qual é o seu objetivo?', 'Quanto você precisa?', 'Tudo pronto para começar?'][etapa]} step={`PASSO ${etapa + 1} DE 3`} back={etapa > 0} onBack={voltar}>
-    {!usuarioLogado() ? <PedirLogin/> : <>
-      {etapa === 0 ? <><Field label="Nome da campanha" value={titulo} onChangeText={definirTitulo} placeholder="Ex.: Livros para nossa comunidade"/><Field label="Conte por que essa campanha é importante" multiline value={descricao} onChangeText={definirDescricao} placeholder="Quem será ajudado e o que você quer realizar?"/><Choices label="Categoria" options={categorias} selected={categoria} onSelect={definirCategoria}/></> : etapa === 1 ? <><Field label="Quanto você precisa arrecadar? (R$)" numeric value={meta} onChangeText={definirMeta} placeholder="Ex.: 5.000,00"/><Calendario label="Até quando você gostaria de alcançar a meta?" value={prazo} onChange={definirPrazo} opcional/>{imagem ? <Image source={{ uri: imagem }} style={{ height: 180, borderRadius: 20 }} contentFit="cover" accessibilityLabel="Prévia da imagem da campanha"/> : null}<Copy muted>Ao escolher a foto, você autoriza o uso na campanha após revisão. Evite pessoas vulneráveis e informações sensíveis.</Copy><Button secondary title={ocupado ? 'Preparando imagem…' : imagem ? 'Trocar imagem (opcional)' : 'Adicionar imagem (opcional)'} disabled={ocupado} onPress={foto}/>{imagem ? <Button secondary title="Remover imagem" disabled={ocupado} onPress={() => definirImagem('')}/> : null}<Disclosure title="Adicionar localização (opcional)"><Field label="Cidade ou região (opcional)" value={regiao} onChangeText={definirRegiao}/><Choices label="Estado no Mapa Solidário" options={['Não informar', ...'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ')]} selected={uf} onSelect={definirUf}/><Copy muted>Informe apenas uma região geral, sem endereço pessoal.</Copy></Disclosure></> : <><Card title={titulo} subtitle={categoria}>{imagem ? <Image source={{ uri: imagem }} style={{ height: 180, borderRadius: 16 }} contentFit="cover" accessibilityLabel="Prévia da sua campanha"/> : null}<Copy>{descricao}</Copy><Copy>Meta: {formatarDinheiro(valor / 100)}</Copy><Copy muted>{prazo ? `Data desejada: ${prazo}` : 'Sem prazo definido'}{regiao ? ` · ${regiao}` : ''}</Copy></Card><Notice>As contribuições financeiras ainda são de demonstração. Nenhum dinheiro real será cobrado ou recebido.</Notice><Copy muted>Você salvará um rascunho privado e preparará o envio para revisão. A publicação depende de aprovação.</Copy></>}
-      {erro ? <Notice error>{erro}</Notice> : null}
-      <Button title={etapa === 2 ? ocupado ? 'Criando campanha…' : 'Salvar rascunho e continuar' : 'Continuar'} disabled={ocupado} onPress={etapa === 2 ? publicar : continuar}/>
-      {etapa > 0 ? <Button secondary title="Voltar e conferir" disabled={ocupado} onPress={voltar}/> : null}
-      {etapa === 0 ? <Disclosure title="Preciso de objetos, voluntários ou mais de uma meta"><Copy>Você também pode organizar entregas, tarefas e encontros.</Copy><Button secondary title="Criar com outras formas de ajuda" onPress={() => { if (!titulo.trim() || !descricao.trim()) { definirErro('Preencha o nome e a história antes de continuar.'); return; } router.push({ pathname: '/pedidos', params: { titulo, descricao, categoria, avancado: '1' } }); }}/></Disclosure> : null}
-    </>}
-  </Screen>;
+type Documento={nome:string;base64:string;chave:string};
+export function CriacaoSimples(){
+ const r=useRouter(),[etapa,setEtapa]=useState(0),[titulo,setTitulo]=useState(''),[descricao,setDescricao]=useState(''),[categoria,setCategoria]=useState('Família'),[imagem,setImagem]=useState(''),[documentos,setDocumentos]=useState<Documento[]>([]);
+ const [meta,setMeta]=useState(''),[prazo,setPrazo]=useState(''),[cidade,setCidade]=useState(''),[uf,setUf]=useState('Não informar'),[mapa,setMapa]=useState(false),[adulto,setAdulto]=useState(false),[ocupado,setOcupado]=useState(false),[erro,setErro]=useState('');
+ const perfil=useDados<PerfilAmpliado>(usuarioLogado()?'/perfil-ampliado':null),envio=useRef(criarChaveOperacao()),salva=useRef<Campanha|null>(null),ultimoCorpo=useRef('');
+ useEffect(()=>{if(perfil.dados)setAdulto(Boolean(perfil.dados.adulto));},[perfil.dados]);
+ const voltar=useCallback(()=>{if(!ocupado){setEtapa(e=>Math.max(0,e-1));setErro('');}},[ocupado]);
+ useFocusEffect(useCallback(()=>{const l=BackHandler.addEventListener('hardwareBackPress',()=>{if(etapa>0){voltar();return true;}return false;});return()=>l.remove();},[etapa,voltar]));
+ const valor=Math.round(converterValor(meta)*100);
+ function continuar(){setErro('');if(etapa===0&&(!titulo.trim()||!descricao.trim())){setErro('Dê um nome à campanha e conte a história.');return;}if(etapa===0&&(titulo.trim().length>150||descricao.length>10000)){setErro('Use até 150 caracteres no nome e 10.000 na história.');return;}if(etapa===2&&(!Number.isSafeInteger(valor)||valor<1000||valor>100000000)){setErro('Informe uma meta entre R$ 10 e R$ 1.000.000.');return;}if(etapa===2&&prazo&&(!lerData(prazo)||lerData(prazo)!<inicioDoDia())){setErro('Escolha hoje, uma data futura ou deixe sem prazo.');return;}if(etapa===2&&mapa&&uf==='Não informar'){setErro('Escolha o estado para autorizar a presença no mapa.');return;}setEtapa(e=>e+1);}
+ async function foto(){setOcupado(true);setErro('');try{const v=await escolherImagem();if(v)setImagem(v);}catch(e){setErro(mensagemErro(e));}finally{setOcupado(false);}}
+ async function documento(){setOcupado(true);setErro('');try{const d=await escolherDocumento();if(d)setDocumentos(ds=>[...ds,{...d,chave:criarChaveOperacao()}]);}catch(e){setErro(mensagemErro(e));}finally{setOcupado(false);}}
+ async function salvar(enviar:boolean){
+  if(enviar&&!adulto){setErro('A publicação precisa de um responsável maior de 18 anos. Você pode salvar o rascunho.');return;}
+  setOcupado(true);setErro('');
+  try{
+   const corpo={titulo:titulo.trim(),descricao:descricao.trim(),categoria,prazo,regiao:cidade.trim(),uf:mapa?uf:'',imagem:imagem||undefined,necessidades:[{nome:titulo.trim(),tipo:'dinheiro',meta:valor,tipo_meta:'fechada',prioridade:'Normal',prazo,descricao:''}]};
+   if(!salva.current){salva.current=await requisitar<Campanha>('/campanhas','POST',corpo,envio.current);ultimoCorpo.current=JSON.stringify(corpo);}
+   else if(ultimoCorpo.current!==JSON.stringify(corpo)){const atual=await requisitar<Campanha>('/campanhas/'+salva.current.id,'PUT',{...corpo,necessidades:[{...corpo.necessidades[0],id:salva.current.necessidades[0].id}]},envio.current);salva.current=atual;ultimoCorpo.current=JSON.stringify(corpo);}
+   const id=salva.current.id;
+   await requisitar('/campanhas/'+id+'/contexto','PUT',{mapa_autorizado:mapa,uf:mapa?uf:'',municipio:''});
+   for(const d of documentos)await requisitar('/arquivos','POST',{nome:d.nome,base64:d.base64,finalidade:'documento',campanha_id:id},d.chave);
+   if(enviar){const p=perfil.dados;if(!p)throw new Error('Reabra o perfil antes de enviar a campanha.');await requisitar('/perfil-ampliado','PUT',{tipo:p.tipo,biografia:p.biografia,nome_instituicao:p.nome_instituicao,adulto:true,publico:Boolean(p.publico),local_publico:Boolean(p.local_publico),apoios_publicos:Boolean(p.apoios_publicos),cor:p.cor,avatar_id:p.avatar_id,capa_id:p.capa_id,usar_foto_google:Boolean(p.usar_foto_google)});await requisitar('/campanhas/'+id+'/enviar','POST');}
+   r.replace({pathname:'/gerenciar',params:{id,salvo:enviar?'enviada':'criada'}});
+  }catch(e){setErro((salva.current?'O rascunho foi salvo. Você pode tentar concluir novamente. ':'')+mensagemErro(e));}finally{setOcupado(false);}
+ }
+ return <Screen variant="form" title="Criar campanha" heading={['Toda história merece ser ouvida.','Uma imagem aproxima.','O que você quer realizar?','Vamos conferir?'][etapa]} step={'Passo '+(etapa+1)+' de 4'} back={etapa>0} onBack={voltar}>
+ {!usuarioLogado()?<PedirLogin/>:<>
+ {etapa===0?<><Field label="Nome da campanha" value={titulo} onChangeText={setTitulo} placeholder="Ex.: Livros para nossa comunidade"/><Field label="Conte sua história" multiline value={descricao} onChangeText={setDescricao} placeholder="Quem precisa de ajuda? O que esse apoio pode transformar?"/><Copy muted>Não inclua documentos, telefone ou endereço residencial na história pública.</Copy><Disclosure title={'Categoria: '+categoria}><Choices label="Categoria da campanha" options={categorias} selected={categoria} onSelect={setCategoria}/></Disclosure><Disclosure title="Preciso de objetos, voluntários ou mais de uma meta"><Copy>Organize outras formas de ajuda com o mesmo cuidado.</Copy><Button secondary title="Criar com outras formas de ajuda" onPress={()=>{if(!titulo.trim()||!descricao.trim()){setErro('Preencha o nome e a história primeiro.');return;}r.push({pathname:'/pedidos',params:{titulo,descricao,categoria,avancado:'1'}});}}/></Disclosure></>:etapa===1?<>
+ {imagem?<Image source={{uri:imagem}} accessibilityLabel="Prévia da foto escolhida" contentFit="cover" style={{height:240,borderRadius:22}}/>:<Card title="Mostre o que importa"><Copy>Uma foto autorizada ajuda a contar a história. Ela é opcional.</Copy></Card>}<Button secondary title={ocupado?'Preparando…':imagem?'Trocar foto':'Adicionar foto'} disabled={ocupado} onPress={foto}/>{imagem?<Button secondary title="Remover foto" disabled={ocupado} onPress={()=>setImagem('')}/>:null}<Copy muted>Use fotos com autorização. Documentos e dados pessoais não devem aparecer na imagem pública.</Copy><Disclosure title={'Documentos privados (opcional)'+(documentos.length?' · '+documentos.length:'')}><Copy>Somente você e a equipe de revisão terão acesso. Até três arquivos de 2 MB. Eles não concedem prioridade automaticamente.</Copy>{documentos.map(d=><View key={d.chave} style={{gap:6}}><Copy>{d.nome}</Copy><Button secondary title={'Remover '+d.nome} onPress={()=>setDocumentos(ds=>ds.filter(v=>v.chave!==d.chave))}/></View>)}{documentos.length<3?<Button secondary title="Adicionar documento privado" disabled={ocupado} onPress={documento}/>:null}</Disclosure>
+ </>:etapa===2?<><Field label="Quanto você precisa arrecadar? (R$)" numeric value={meta} onChangeText={setMeta} placeholder="Ex.: 2.000,00"/><Calendario label="Prazo desejado" value={prazo} onChange={setPrazo} opcional/><Disclosure title="Adicionar localização (opcional)"><Field label="Cidade ou região pública" value={cidade} onChangeText={setCidade} placeholder="Sem endereço residencial"/><View style={{flexDirection:'row',alignItems:'center',gap:12}}><Switch accessibilityLabel="Incluir apenas meu estado no mapa" value={mapa} onValueChange={setMapa}/><Copy>Incluir apenas o estado no mapa</Copy></View>{mapa?<Choices label="Estado" options={['Não informar',...'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ')]} selected={uf} onSelect={setUf}/>:null}</Disclosure></>:<>
+ {imagem?<Image source={{uri:imagem}} accessibilityLabel="Foto escolhida para a campanha" contentFit="cover" style={{height:190,borderRadius:22}}/>:null}<Card title={titulo} subtitle={categoria}><Copy>{descricao}</Copy><Copy>Meta: {formatarDinheiro(valor/100)}</Copy><Copy muted>{prazo?'Prazo desejado: '+prazo:'Sem prazo definido'}{cidade?' · '+cidade:''}</Copy>{documentos.length?<Copy muted>{documentos.length} documento(s) em espaço privado.</Copy>:null}</Card><Copy>Ao enviar, a equipe revisa a campanha antes de publicar. Você pode guardar um rascunho e continuar depois.</Copy><EstadoConexao {...perfil}/><View style={{flexDirection:'row',alignItems:'center',gap:12}}><Switch accessibilityLabel="Declaro ser maior de 18 anos" value={adulto} onValueChange={setAdulto}/><Copy>Declaro ser maior de 18 anos e responsável pela campanha.</Copy></View><Copy muted>As contribuições financeiras nesta versão são simuladas. Nenhum dinheiro será cobrado.</Copy>
+ </>}
+ {erro?<Notice error>{erro}</Notice>:null}{etapa<3?<Button title="Continuar" disabled={ocupado} onPress={continuar}/>:<><Button title={ocupado?'Salvando…':'Enviar para análise'} disabled={ocupado||!adulto||!perfil.dados} onPress={()=>salvar(true)}/><Button secondary title="Salvar rascunho e continuar depois" disabled={ocupado} onPress={()=>salvar(false)}/></>}{etapa>0?<Button secondary title="Voltar e conferir" disabled={ocupado} onPress={voltar}/>:null}{salva.current&&erro?<Button secondary title="Abrir rascunho salvo" onPress={()=>r.replace({pathname:'/gerenciar',params:{id:salva.current!.id}})}/>:null}
+ </>}
+ </Screen>;
 }

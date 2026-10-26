@@ -23,9 +23,9 @@ function FotoEditorial({ source, descricao, height, style, position = 'center' }
   const { colors, fontsReady } = useTheme(); const reduced = useReducedMotion();
   return <View style={[{ height, backgroundColor: colors.soft, overflow: 'hidden' }, style]}>
     <Image source={source} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition={position} cachePolicy="memory-disk" transition={reduced ? 0 : 160} accessibilityLabel={descricao + '; foto ilustrativa, sem relação com os participantes desta campanha'}/>
-    <View pointerEvents="none" style={{ alignSelf: 'flex-end', margin: 12, paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill, backgroundColor: colors.photoScrim }}>
+    {height>=130?<View pointerEvents="none" style={{ alignSelf: 'flex-end', margin: 12, paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill, backgroundColor: colors.photoScrim }}>
       <Text style={{ color: colors.onPhoto, fontSize: 10, lineHeight: 15, fontFamily: fontsReady ? 'Manrope-SemiBold' : undefined }}>Foto ilustrativa</Text>
-    </View>
+    </View>:null}
   </View>;
 }
 
@@ -45,9 +45,9 @@ export function FotoDeAcolhimento({ aoEncontrar }: { aoEncontrar: () => void }) 
 export function FotoDeCampanha({ campanhaId, categoria, height = 180 }: { campanhaId: string; categoria: string; height?: number }) {
   const { colors, fontsReady } = useTheme(); const foto = fotosDeCampanhas[campanhaId];
   if (foto) return <FotoEditorial source={foto.source} descricao={foto.descricao} height={height} style={{ borderTopLeftRadius: radius.card, borderTopRightRadius: radius.card }}/>;
-  return <View style={{ height: 120, padding: 20, justifyContent: 'center', alignItems: 'flex-start', gap: 10, borderTopLeftRadius: radius.card, borderTopRightRadius: radius.card, backgroundColor: colors.gentle }}>
-    <Ionicons name="people-outline" size={32} color={colors.gentleInk}/>
-    <Text style={{ color: colors.gentleInk, fontSize: 15, fontFamily: fontsReady ? 'Manrope-SemiBold' : undefined }}>{categoria} · uma causa da comunidade</Text>
+  return <View style={{ height, padding: 16, justifyContent: 'center', alignItems: 'flex-start', gap: 10, borderTopLeftRadius: radius.card, borderTopRightRadius: radius.card, backgroundColor: colors.brandSoft }}>
+    <Ionicons name="people-outline" size={32} color={colors.primary}/>
+    {height>110?<Text style={{ color: colors.primary, fontSize: 15, fontFamily: fontsReady ? 'Manrope-SemiBold' : undefined }}>{categoria} · uma causa da comunidade</Text>:null}
   </View>;
 }
 

@@ -12,27 +12,21 @@ export function ImagemPublica({ id, altura = 180 }: { id?:string|null; altura?:n
 }
 export function ImagemPrivada({ id, altura = 180 }: { id?:string|null; altura?:number }) {
   const consulta=useDados<Arquivo>(id?'/arquivos/'+id:null);
-  return consulta.dados?.base64 ? <Image accessibilityLabel="Sua imagem de perfil" source={{uri:'data:'+consulta.dados.mime+';base64,'+consulta.dados.base64}} style={{width:'100%',height:altura,borderRadius:20}} resizeMode="cover"/> : null;
+  return consulta.dados?.base64 ? <Image accessibilityLabel="Imagem privada autorizada" source={{uri:'data:'+consulta.dados.mime+';base64,'+consulta.dados.base64}} style={{width:'100%',height:altura,borderRadius:20}} resizeMode="cover"/> : null;
+}
+export async function escolherDocumento(soImagem=false){
+  const escolha=await DocumentPicker.getDocumentAsync({type:soImagem?['image/jpeg','image/png']:['application/pdf','image/jpeg','image/png'],copyToCacheDirectory:true});
+  if(escolha.canceled)return null;const arquivo=escolha.assets[0];
+  if(!arquivo.size||arquivo.size>2*1024*1024)throw new Error('Escolha um JPEG, PNG ou PDF de até 2 MB.');
+  let base64:string;
+  if(Platform.OS==='web'){const r=await fetch(arquivo.uri);const blob=await r.blob();base64=await new Promise<string>((resolve,reject)=>{const leitor=new FileReader();leitor.onload=()=>resolve(String(leitor.result).split(',')[1]);leitor.onerror=()=>reject(new Error('Não foi possível ler o arquivo.'));leitor.readAsDataURL(blob);});}
+  else base64=await FileSystem.readAsStringAsync(arquivo.uri,{encoding:FileSystem.EncodingType.Base64});
+  return {nome:arquivo.name,base64};
 }
 export function EnviarArquivo({finalidade,campanha,aoEnviar}:{finalidade:'documento'|'campanha'|'avatar'|'capa';campanha?:string;aoEnviar:(arquivo:Arquivo)=>void}){
-  const [ocupado,setOcupado]=useState(false),[erro,setErro]=useState('');
-  async function escolher(){
-    setOcupado(true);setErro('');
-    try{
-      const escolha=await DocumentPicker.getDocumentAsync({type:finalidade==='documento'?['application/pdf','image/jpeg','image/png']:['image/jpeg','image/png'],copyToCacheDirectory:true});
-      if(escolha.canceled)return;
-      const arquivo=escolha.assets[0];
-      if(!arquivo.size || arquivo.size>2*1024*1024)throw new Error('Escolha um arquivo JPEG, PNG ou PDF de até 2 MB.');
-      let base64:string;
-      if(Platform.OS==='web'){
-        const r=await fetch(arquivo.uri);const blob=await r.blob();
-        base64=await new Promise<string>((resolve,reject)=>{const leitor=new FileReader();leitor.onload=()=>resolve(String(leitor.result).split(',')[1]);leitor.onerror=()=>reject(new Error('Não foi possível ler o arquivo.'));leitor.readAsDataURL(blob);});
-      }else base64=await FileSystem.readAsStringAsync(arquivo.uri,{encoding:FileSystem.EncodingType.Base64});
-      const salvo=await requisitar<Arquivo>('/arquivos','POST',{nome:arquivo.name,base64,finalidade,campanha_id:campanha,consentimento:true});
-      aoEnviar(salvo);
-    }catch(e){setErro(mensagemErro(e));}finally{setOcupado(false);}
-  }
-  return <><Copy muted>{finalidade==='documento'?'Documento privado: acessível ao responsável e à administração. Não publique documentos de terceiros sem autorização.':'Ao escolher uma foto, você autoriza seu uso neste perfil/campanha. Não use imagens sensíveis ou de pessoas sem autorização.'} Até 2 MB, JPEG/PNG{finalidade==='documento'?' ou PDF':''}.</Copy><Button secondary title={ocupado?'Enviando arquivo…':finalidade==='documento'?'Adicionar documento privado':finalidade==='campanha'?'Adicionar foto da campanha':finalidade==='avatar'?'Escolher foto de perfil':'Escolher imagem de capa'} disabled={ocupado} onPress={escolher}/>{erro?<Notice error>{erro}</Notice>:null}</>;
+ const [ocupado,setOcupado]=useState(false),[erro,setErro]=useState('');
+ async function escolher(){setOcupado(true);setErro('');try{const arquivo=await escolherDocumento(finalidade!=='documento');if(!arquivo)return;const salvo=await requisitar<Arquivo>('/arquivos','POST',{...arquivo,finalidade,campanha_id:campanha,consentimento:true});aoEnviar(salvo);}catch(e){setErro(mensagemErro(e));}finally{setOcupado(false);}}
+ return <><Copy muted>{finalidade==='documento'?'Somente você e a equipe de revisão podem abrir este documento.':'Escolha uma foto autorizada, sem documentos nem informações sensíveis.'} Até 2 MB, JPEG/PNG{finalidade==='documento'?' ou PDF':''}.</Copy><Button secondary title={ocupado?'Enviando…':finalidade==='documento'?'Adicionar documento privado':finalidade==='campanha'?'Adicionar foto da campanha':finalidade==='avatar'?'Escolher foto de perfil':'Escolher capa'} disabled={ocupado} onPress={escolher}/>{erro?<Notice error>{erro}</Notice>:null}</>;
 }
 export function AbrirArquivo({arquivo}:{arquivo:Arquivo}){
   const [ocupado,setOcupado]=useState(false),[erro,setErro]=useState('');

@@ -23,5 +23,6 @@ async function migrarSoma2(consultar, banco, transacao) {
     await consulta("INSERT INTO soma_migracoes (chave) VALUES ('002-lancamentos')");
   });
   await require('./migrar-compatibilidade').migrarCompatibilidade(consultar,transacao);
+  await require('./experiencia').migrarExperiencia(consultar,banco,transacao);
 }
 module.exports = { migrarSoma2 };

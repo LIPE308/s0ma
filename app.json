@@ -38,13 +38,6 @@
           }
         }
       ],
-      [
-        "expo-audio",
-        {
-          "microphonePermission": false,
-          "recordAudioAndroid": false
-        }
-      ],
       "expo-asset",
       "expo-secure-store",
       [

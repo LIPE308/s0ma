@@ -1,5 +1,7 @@
 # Roteiro de demonstração do SOMA 2.0
 
+> Atualização visual de 26/10/2026: [reformulação em azul](REFORMULACAO-AZUL.md). Entrada, sessão web, criação em quatro etapas e acompanhamento 2D substituem as descrições de som, estrada 3D e navegação anteriores neste documento. As regras de revisão, urgência e fundo permanecem.
+
 Use somente dados fictícios identificados como demonstração. Não use documentos pessoais, endereços residenciais ou dados de beneficiários. Não apague dados existentes.
 
 1. Siga o README, abra http://localhost:3001 e verifique /api/saude. Cadastre uma conta organizadora, uma doadora e uma administrativa. Autorize só a última pelo comando local descrito no README e entre novamente.

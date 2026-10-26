@@ -2,7 +2,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { useRouter } from 'expo-router';
 import { Button, Copy } from '../components/ui';
-import type { Marco } from '../components/estrada-base';
+type Marco={id:string;titulo:string;valor:number;concluido:boolean;data:string|null;icone:string;unidade?:string};
 export { RotaInteligente } from './rota';
 export { FundoSolidario as SolidariedadeAdmin } from './fundo';
 export type Inteligencia = { campanha:string; categoria?:string; estado?:string; meta:number; arrecadado:number; restante:number; percentual:number; doacoes:number; anuncios:number; rendimentos:number; saldo_disponivel:number; marcos:Marco[]; urgencia:{categoria:string;verificada:boolean};uf:string;imagem:string };

@@ -7,7 +7,7 @@ import * as SystemUI from 'expo-system-ui';
 import { Platform, View } from 'react-native';
 import { DesignProvider } from '../src/design/theme';
 import { MotionProvider, ThemeMotion, useReducedMotion } from '../src/design/motion';
-import { BrandIntroduction, BrandSignature } from '../src/design/brand';
+import { BrandSignature } from '../src/design/brand';
 import { useTheme } from '../src/components/ui';
 import { recuperarSessaoNativa } from '../src/servicos/api';
 
@@ -31,5 +31,5 @@ function Application({ ready }: { ready: boolean }) {
   const { colors, dark, temaPronto } = useTheme(); const reduced = useReducedMotion(); const pronto = ready && temaPronto;
   useEffect(() => { if (pronto) void SplashScreen.hideAsync().catch(() => {}); }, [pronto]);
   useEffect(() => { if (Platform.OS !== 'web') void SystemUI.setBackgroundColorAsync(colors.bg).catch(() => {}); }, [colors.bg]);
-  return <ThemeMotion testID="theme-motion" themeKey={dark ? 'dark' : 'light'} style={{ flex: 1, backgroundColor: colors.bg }}><StatusBar style={dark ? 'light' : 'dark'}/>{pronto ? <><Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg }, animation: reduced ? 'none' : 'slide_from_right', animationDuration: 220 }}/><BrandIntroduction/></> : <View accessibilityLabel="Carregando SOMA" style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><BrandSignature size={64}/></View>}</ThemeMotion>;
+  return <ThemeMotion testID="theme-motion" themeKey={dark ? 'dark' : 'light'} style={{ flex: 1, backgroundColor: colors.bg }}><StatusBar style={dark ? 'light' : 'dark'}/>{pronto ? <><Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg }, animation: reduced ? 'none' : 'slide_from_right', animationDuration: 220 }}/></> : <View accessibilityLabel="Carregando SOMA" style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><BrandSignature size={64}/></View>}</ThemeMotion>;
 }

@@ -1,5 +1,7 @@
 # Soma / Pulso — front acadêmico
 
+> Atualização visual de 26/10/2026: [reformulação em azul](REFORMULACAO-AZUL.md). Entrada, sessão web, criação em quatro etapas e acompanhamento 2D substituem as descrições de som, estrada 3D e navegação anteriores neste documento. As regras de revisão, urgência e fundo permanecem.
+
 > Atualização SOMA 2.0 (22/10/2026): consulte [o guia atual](SOMA-2.md) e [a validação da entrega](SOMA-2-VALIDACAO.md). Este documento registra a base anterior; publicação direta, ausência de mapa/rota e contagens antigas foram substituídas pelo fluxo de revisão e extensões descritos no guia atual.
 
 Para o comportamento atual de administração, simulação financeira, entrega combinada externamente, reabertura e privacidade, consulte a [auditoria de entrega](AUDITORIA-ENTREGA.md) e o [roteiro de demonstração](DEMONSTRACAO.md). A identidade visual e as rotas existentes foram preservadas.

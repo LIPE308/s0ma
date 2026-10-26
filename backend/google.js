@@ -3,6 +3,8 @@ const { OAuth2Client, CodeChallengeMethod } = require('google-auth-library');
 const { randomBytes } = require('node:crypto');
 const { erro, resumirToken, gerarSenha, usuarioPublico } = require('./auxiliares');
 const { auditar } = require('./soma2');
+const { gravarCookieSessao } = require('./sessao-web');
+const { fotoGoogleSegura } = require('./experiencia');
 function cookies(req) { return Object.fromEntries(String(req.headers.cookie || '').split(';').map(s=>s.trim().split('='))); }
 function configuracao() {
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !process.env.GOOGLE_REDIRECT_URI) return null;
@@ -28,7 +30,11 @@ async function atenderGoogle(ctx) {
     resposta.writeHead(302,{Location:url,'Cache-Control':'no-store'});resposta.end();return{enviada:true};
   }
   if(caminho==='/api/auth/google/callback' && metodo==='GET'){
+    try {
     const params=new URL(requisicao.url,'http://localhost').searchParams,estado=params.get('state'),code=params.get('code');
+    if(params.get('error')==='access_denied' && /^[a-f0-9]{64}$/.test(estado||'') && cookies(requisicao).soma_oauth_estado===estado){
+      await transacao(async q=>{const[f]=await q('SELECT expira_em FROM oauth_fluxos WHERE resumo_estado=? FOR UPDATE',[resumirToken(estado)]);if(!f||Number(f.expira_em)<Date.now())erro('Acesso expirado.',401);await q('DELETE FROM oauth_fluxos WHERE resumo_estado=?',[resumirToken(estado)]);});
+      resposta.setHeader('Set-Cookie',cookie('soma_oauth_estado','',0));resposta.writeHead(302,{Location:config.uri.origin+'/entrar?aviso=google_cancelado','Cache-Control':'no-store'});resposta.end();return{enviada:true};}
     if(!estado || !/^[a-f0-9]{64}$/.test(estado) || cookies(requisicao).soma_oauth_estado!==estado || !code || code.length>4000)erro('Retorno Google inválido. Inicie o acesso novamente.',400);
     const fluxo=await transacao(async consulta=>{
       const [f]=await consulta('SELECT * FROM oauth_fluxos WHERE resumo_estado=? FOR UPDATE',[resumirToken(estado)]);
@@ -57,12 +63,17 @@ async function atenderGoogle(ctx) {
         const senha=gerarSenha(randomBytes(32).toString('base64url'));
         const r=await consulta('INSERT INTO usuarios (nome,email,senha_resumo,senha_sal) VALUES (?,?,?,?)',[String(payload.name||'Pessoa SOMA').slice(0,150),payload.email.toLowerCase(),senha.resumo,senha.sal]);id=r.insertId;
       }
+      await consulta('INSERT INTO perfis (usuario_id,foto_google) VALUES (?,?) ON DUPLICATE KEY UPDATE foto_google=COALESCE(VALUES(foto_google),foto_google)',[id,fotoGoogleSegura(payload.picture)]);
       if(!identidade)await consulta("INSERT INTO identidades (usuario_id,provedor,sujeito) VALUES (?,'google',?)",[id,payload.sub]);
       await consulta('INSERT INTO oauth_entregas (resumo_codigo,usuario_id,expira_em) VALUES (?,?,?)',[resumirToken(entrega),id,Date.now()+60000]);
       await auditar(consulta,id,null,'google_validado',{vinculacao:Boolean(fluxo.usuario_id)});
     });
     resposta.setHeader('Set-Cookie',[cookie('soma_oauth_estado','',0),cookie('soma_oauth_entrega',entrega,60)]);
     resposta.writeHead(302,{Location:config.uri.origin+'/google','Cache-Control':'no-store','Referrer-Policy':'no-referrer'});resposta.end();return{enviada:true};
+    } catch {
+      resposta.setHeader('Set-Cookie',cookie('soma_oauth_estado','',0));
+      resposta.writeHead(302,{Location:config.uri.origin+'/entrar?aviso=google_erro','Cache-Control':'no-store','Referrer-Policy':'no-referrer'});resposta.end();return{enviada:true};
+    }
   }
   if(caminho==='/api/auth/google/trocar' && metodo==='POST'){
     const codigo=cookies(requisicao).soma_oauth_entrega;
@@ -77,6 +88,7 @@ async function atenderGoogle(ctx) {
       return{token,usuario:usuarioPublico(pessoa)};
     });
     resposta.setHeader('Set-Cookie',cookie('soma_oauth_entrega','',0));
+    gravarCookieSessao(requisicao,resposta,resultado.token);
     return{resultado};
   }
   erro('Rota Google não encontrada.',404);

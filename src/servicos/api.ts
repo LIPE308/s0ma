@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useIsFocused } from '@react-navigation/native';
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
-export type Usuario = { id: number; nome: string; email: string; telefone: string; regiao: string; novidades: boolean; administrador: boolean };
+export type Usuario = { id: number; nome: string; email: string; telefone: string; regiao: string; novidades: boolean; administrador: boolean; perfil_completo?:boolean };
 export type Necessidade = { id: string; campanha_id: string; responsavel_id?: number; nome: string; tipo: 'objeto' | 'tarefa' | 'dinheiro'; meta: number; recebido: number; reservado: number; tipo_meta: string; prioridade: string; prazo: string; descricao: string; campanha: string; regiao: string; instrucoes: string; campanha_estado: string };
 export type Campanha = { id: string; usuario_id: number; titulo: string; descricao: string; categoria: string; regiao: string; prazo: string; instrucoes: string; evento: string; estado: string; motivo: string; responsavel: string; necessidades: Necessidade[]; criada_em?:string; arrecadado_financeiro?:number; perfil_publico?:boolean; uf?: string; municipio?: string; imagem_id?: string | null; urgencia?: { classe: string; revisada: boolean }; visualizacoes?: number; meta_financeira?: number; recebido_financeiro?: number; submetida?: boolean };
 export type Ajuda = { id: number; usuario_id: number; campanha_id: string; necessidade_id: string; tipo: string; quantidade: number; recebido: number; necessidade: string; campanha: string; pessoa: string; estado: string; entrega: string; horario: string; instrucoes: string; observacao: string; telefone_responsavel?: string };
@@ -23,40 +23,37 @@ export function urlApi() { return enderecoApi; }
 let tokenAtual = '';
 let pessoaAtual: Usuario | null = null;
 let escritaSessao = Promise.resolve();
+const ouvintes=new Set<()=>void>();
+const avisar=()=>ouvintes.forEach(f=>f());
+export function useSessao(){return useSyncExternalStore(f=>{ouvintes.add(f);return()=>ouvintes.delete(f);},()=>pessoaAtual,()=>null);}
 export async function recuperarSessaoNativa() {
-  if (Platform.OS === 'web') { recuperarSessao(); return; }
-  try {
-    const salva = JSON.parse(await SecureStore.getItemAsync('soma_sessao') || 'null');
-    tokenAtual = salva?.token || ''; pessoaAtual = salva?.usuario || null;
-  } catch { tokenAtual = ''; pessoaAtual = null; }
-}
-
-function recuperarSessao() {
-  if (Platform.OS !== 'web' || typeof window === 'undefined') return;
-  try {
-    const salva = JSON.parse(window.sessionStorage.getItem('soma_sessao') || 'null');
-    tokenAtual = salva?.token || ''; pessoaAtual = salva?.usuario || null;
-  } catch { /* Se o navegador bloquear o armazenamento, mantém a sessão em memória. */ }
-}
-export function usuarioLogado() { recuperarSessao(); return pessoaAtual; }
-export function guardarSessao(token: string, usuario: Usuario) {
-  tokenAtual = token; pessoaAtual = usuario;
-  if (Platform.OS !== 'web') escritaSessao = escritaSessao.then(() => SecureStore.setItemAsync('soma_sessao', JSON.stringify({ token, usuario }))).catch(() => { /* A sessão atual permanece em memória quando o cofre não está disponível. */ });
-  if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    try { window.sessionStorage.setItem('soma_sessao', JSON.stringify({ token, usuario })); } catch { /* Ainda funciona em memória. */ }
+  if(Platform.OS==='web') {
+    let legado='';
+    try{legado=JSON.parse(window.sessionStorage.getItem('soma_sessao')||'null')?.token||'';}catch{}
+    const controller=new AbortController(),limite=setTimeout(()=>controller.abort(),10000);
+    try{const r=await fetch(enderecoApi+'/sessao',{signal:controller.signal,credentials:'include',headers:legado?{Authorization:'Bearer '+legado}:{}});if(!r.ok){limparSessao();return;}pessoaAtual=await r.json();tokenAtual='';try{window.sessionStorage.removeItem('soma_sessao');}catch{}avisar();}catch{pessoaAtual=null;avisar();}finally{clearTimeout(limite);}
+    return;
   }
+  try {const salva=JSON.parse(await SecureStore.getItemAsync('soma_sessao')||'null');tokenAtual=salva?.token||'';pessoaAtual=salva?.usuario||null;} catch {tokenAtual='';pessoaAtual=null;}
+  avisar();
 }
-export function atualizarUsuario(usuario: Usuario) { guardarSessao(tokenAtual, usuario); }
-export function limparSessao() {
-  tokenAtual = ''; pessoaAtual = null;
-  if (Platform.OS !== 'web') escritaSessao = escritaSessao.then(() => SecureStore.deleteItemAsync('soma_sessao')).catch(() => {});
-  if (Platform.OS === 'web' && typeof window !== 'undefined') { try { window.sessionStorage.removeItem('soma_sessao'); } catch { /* Sem armazenamento disponível. */ } }
+export function usuarioLogado(){return pessoaAtual;}
+export function guardarSessao(token:string,usuario:Usuario){
+  tokenAtual=Platform.OS==='web'?'':token;pessoaAtual=usuario;
+  if(Platform.OS!=='web')escritaSessao=escritaSessao.then(()=>SecureStore.setItemAsync('soma_sessao',JSON.stringify({token,usuario}))).catch(()=>{});
+  avisar();
+}
+export function atualizarUsuario(usuario:Usuario){guardarSessao(tokenAtual,{...pessoaAtual,...usuario});}
+export function limparSessao(){
+  tokenAtual='';pessoaAtual=null;
+  if(Platform.OS!=='web')escritaSessao=escritaSessao.then(()=>SecureStore.deleteItemAsync('soma_sessao')).catch(()=>{});
+  else if(typeof window!=='undefined'){try{window.sessionStorage.removeItem('soma_sessao');window.localStorage.removeItem('soma_sessao');}catch{}}
+  avisar();
 }
 
 // This is an operation identifier, not an authentication secret.
 export function criarChaveOperacao() { return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2) + '-' + Math.random().toString(36).slice(2); }
 export async function requisitar<T>(caminho: string, metodo = 'GET', dados?: unknown, chave?: string): Promise<T> {
-  recuperarSessao();
   const corpo = dados !== undefined ? JSON.stringify(dados) : undefined;
   let resumo = 2166136261;
   for (const letra of metodo + caminho + (corpo || '')) resumo = Math.imul(resumo ^ letra.charCodeAt(0), 16777619);

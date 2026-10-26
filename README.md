@@ -1,23 +1,18 @@
 # SOMA
 
-**Integração SOMA 2.0:** [regras e configuração atuais](docs/SOMA-2.md), [validação e limites](docs/SOMA-2-VALIDACAO.md). Preserva criação simplificada, calendário, Minhas rotas e estrada 3D. Acrescenta documentos privados, revisão antes da publicação, prioridade humana, projeções com histórico e fundo conciliado.
+## Experiência atual — solidariedade em azul
 
+O SOMA abre no acesso da conta, com fotografia acolhedora e identidade azul royal. A home reúne saudação, campanhas e três ações: doar, criar e convidar. O perfil organiza campanhas, participações, compartilhamentos e preferências. Claro, Escuro e Sistema continuam disponíveis.
 
-## Criar, ajudar e acompanhar
+Campanhas financeiras são criadas em **quatro etapas**: história, foto/documentos privados, meta e revisão. O rascunho permanece privado; a publicação depende de análise humana. Objetos, voluntariado, múltiplas metas, eventos e edição continuam nos fluxos complementares. A doação financeira é uma **simulação sem cobrança**, com escolha do valor e confirmação na mesma jornada.
 
-Novas vaquinhas são criadas em **três etapas**, com calendário visual, prazo opcional e foto preparada automaticamente. Objetos, voluntariado, múltiplos pedidos e edição continuam disponíveis. A **Rota Inteligente** aparece após criar a campanha, no painel do responsável e na aba **Minhas rotas**. A estrada principal tem cinco objetivos e câmera estável; os demais registros continuam acessíveis. O mapa e os filtros receberam controles mais simples.
+O acompanhamento agora usa uma **trilha 2D**. A estrada 3D, suas dependências e o áudio de introdução foram removidos. As rotas antigas de acompanhamento continuam compatíveis. Documentos privados, urgência revisada, mapa consentido, razão financeira e fundo publicitário 70/30 permanecem preservados. Compartilhar não garante receita.
 
-Veja [o refinamento de experiência e os testes](docs/EXPERIENCIA-SIMPLIFICADA.md). As contribuições financeiras permanecem demonstrações, sem cobrança real.
+A sessão web usa cookie HttpOnly de até 24 horas; o aplicativo nativo mantém SecureStore. O acesso Google usa OAuth oficial e fica desativado sem credenciais válidas. Nenhuma autenticação Google é simulada.
 
-## Rota Inteligente e atualização funcional
+Leia o [relatório desta reformulação](docs/REFORMULACAO-AZUL.md), o [plano anterior à implementação](docs/REFORMULACAO-AZUL-PLANO.md) e as [regras SOMA 2.0](docs/SOMA-2.md). Documentos visuais anteriores registram versões históricas.
 
-Campanhas agora abrem uma estrada 3D interativa na web (alternativa 2,5D no aplicativo), com marcos financeiros, simulações educativas explícitas e valores de teste vindos do MySQL. O início dá acesso ao mapa do Brasil; a gestão permite indicar UF, enviar foto e solicitar revisão humana de urgência. A administração reúne revisões auditáveis e distribuição simulada 70/30. Perfis recebem capa, foto, biografia e privacidade; o fluxo Google web está preparado e exige configuração externa e teste com credenciais válidas.
-
-Leia [o escopo, as regras e a configuração Google](docs/ATUALIZACAO-FUNCIONAL.md) e [a validação desta entrega](docs/VALIDACAO-FUNCIONAL.md). Pagamentos e anúncios continuam **simulações acadêmicas, sem dinheiro real**. Não foi realizado deploy.
-
-Identidade **Enlace + azul royal**, com fotografia editorial, histórias de campanhas e superfícies acolhedoras. Os temas **Claro, Escuro e Sistema** podem ser escolhidos no perfil e ficam salvos no dispositivo. O aplicativo preserva as rotas existentes, transições suaves e redução de movimento. Consulte a [direção visual](docs/REDESIGN.md) e a [repaginação JF](docs/REPAGINACAO-JF.md).
-
-Projeto acadêmico com front React Native/Expo e backend em **Node.js puro + MySQL**. Os nomes das variáveis, funções da API, tabelas e mensagens estão em português. O servidor usa `http`, funções e comandos SQL, sem Express ou ORM. A única dependência adicionada ao backend é `mysql2`, para conectar ao MySQL.
+Projeto acadêmico com React Native/Expo, Node HTTP e MySQL. Sem Express ou ORM. Não houve deploy nem integração financeira real.
 
 Este projeto foi integrado ao [fork da equipe](https://github.com/LIPE308/s0ma), derivado da [base do professor Rodrigo](https://github.com/profRodrigoSenac/projetoIntegrador2026). Os exemplos e serviços originais estão em `examples/`, fora das rotas ativas. Consulte o [relatório da integração](docs/INTEGRACAO.md).
 

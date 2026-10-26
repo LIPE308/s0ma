@@ -1,7 +1,19 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { lerData, escreverData, diasDoMes } = require('../src/data/calendario.ts');
-const { marcosDaEstrada, iconeDoObjetivo, indiceAtual } = require('../src/data/rota.ts');
+const { fotoGoogleSegura } = require('./experiencia');
+const {tokenDaRequisicao,gravarCookieSessao}=require('./sessao-web');
+
+test('foto Google só aceita HTTPS do domínio oficial sem aceitar domínios parecidos',()=>{
+  assert.equal(fotoGoogleSegura('https://lh3.googleusercontent.com/a/foto'),'https://lh3.googleusercontent.com/a/foto');
+  for(const u of ['http://lh3.googleusercontent.com/a','https://googleusercontent.com.example/foto','https://example.com/?googleusercontent.com','javascript:alert(1)',null,'x'.repeat(601)])assert.equal(fotoGoogleSegura(u),null);
+});
+test('cookie não sobrepõe Bearer explícito e mantém segurança e cookies existentes',()=>{
+  const token='a'.repeat(64),req={headers:{cookie:'outra=1; soma_sessao='+token},socket:{encrypted:true}};
+  assert.equal(tokenDaRequisicao(req),token);assert.equal(tokenDaRequisicao({...req,headers:{...req.headers,authorization:'Basic invalido'}}),'');
+  const headers={'Set-Cookie':['oauth=1']},res={getHeader:n=>headers[n],setHeader:(n,v)=>headers[n]=v};gravarCookieSessao(req,res,token);
+  assert.equal(headers['Set-Cookie'][0],'oauth=1');assert.match(headers['Set-Cookie'][1],/HttpOnly; SameSite=Lax; Max-Age=86400; Secure/);
+});
 test('calendário brasileiro valida dias, meses e anos bissextos sem normalizar datas inválidas', () => {
   assert.equal(lerData('31/04/2026'), null); assert.equal(lerData('29/02/2026'), null);
   assert.equal(lerData('01/13/2026'), null); assert.equal(lerData(''), null);
@@ -9,14 +21,4 @@ test('calendário brasileiro valida dias, meses e anos bissextos sem normalizar 
   assert.equal(diasDoMes(2028, 1).filter(Boolean).length, 29);
   assert.equal(diasDoMes(2026, 9).filter(Boolean).length, 31);
   assert.equal(diasDoMes(2026, 9)[4], 1);
-});
-test('rota mantém cinco marcos financeiros e representa a finalidade verdadeira', () => {
-  const originais = [0, 20000, 125000, 250000, 375000, 500000].map((valor, i) => ({ id: `financeiro-${i}`, titulo: `${i * 25}% da meta`, valor, concluido: valor <= 20000, data: null, icone: 'moedas' }));
-  originais.splice(2, 0, { id: 'anuncios', titulo: 'Anúncios', valor: 0, concluido: false, data: null, icone: 'anuncio' });
-  const m = marcosDaEstrada(originais, 'Meu PlayStation 5');
-  assert.equal(m.length, 5); assert.equal(m[4].titulo, 'Meu PlayStation 5'); assert.equal(m[4].valor, 500000); assert.equal(m[4].icone, 'console');
-  assert.equal(indiceAtual(m), 1); assert.equal(originais.length, 7);
-  assert.equal(originais.find(x => x.id === 'anuncios').concluido, false);
-  assert.equal(iconeDoObjetivo('Biblioteca para todos'), 'livro'); assert.equal(iconeDoObjetivo('Construir uma casa'), 'casa');
-  assert.equal(indiceAtual(m.map(x => ({ ...x, concluido: true }))), 4);
 });

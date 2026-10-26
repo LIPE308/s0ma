@@ -13,6 +13,8 @@ const { atenderSoma2, completarCampanhas, ordenarFeed, marcarEdicao, revisarPubl
 const { atenderGoogle } = require('./google');
 const { atenderExtensoes } = require('./extensoes');
 const { prepararArquivo } = require('./midias');
+const { tokenDaRequisicao, gravarCookieSessao } = require('./sessao-web');
+const { atenderExperiencia } = require('./experiencia');
 
 const categorias = ['Família', 'Saúde', 'Educação', 'Comunidade', 'Instituições', 'Proteção animal', 'Meio ambiente', 'Cultura', 'Necessidades pessoais', 'Objetivos individuais', 'Outras causas'];
 const consultaCampanhas = 'SELECT c.*, u.nome AS responsavel FROM campanhas c JOIN usuarios u ON u.id = c.usuario_id';
@@ -30,11 +32,11 @@ function responder(resposta, codigo, dados) {
 
 async function identificarUsuario(requisicao) {
   const cabecalho = requisicao.headers.authorization;
-  if (!cabecalho) return null;
-  const token = cabecalho.startsWith('Bearer ') ? cabecalho.slice(7) : '';
+  const token = tokenDaRequisicao(requisicao);
+  if (!cabecalho && !token) return null;
   if (!/^[a-f0-9]{64}$/.test(token)) erro('Faça login novamente.', 401);
   const [usuario] = await consultar('SELECT u.* FROM sessoes s JOIN usuarios u ON u.id = s.usuario_id WHERE s.resumo_token = ? AND s.expira_em > ?', [resumirToken(token), Date.now()]);
-  if (!usuario) erro('Sua sessão expirou. Faça login novamente.', 401);
+  if (!usuario && cabecalho) erro('Sua sessão expirou. Faça login novamente.', 401);
   return usuario;
 }
 function exigirLogin(usuario) { if (!usuario) erro('Entre na sua conta para continuar.', 401); }
@@ -136,8 +138,8 @@ async function atender(requisicao, resposta) {
   try {
     const origem = requisicao.headers.origin;
     const origemPermitida = origem && (/^http:\/\/(localhost|127\.0\.0\.1):(8081|8082|3001)$/.test(origem) || origem === process.env.ORIGEM_WEB);
-    if (origem && !origemPermitida) erro('Origem não permitida.', 403);
-    if (origemPermitida) { resposta.setHeader('Access-Control-Allow-Origin', origem); resposta.setHeader('Vary', 'Origin'); }
+    if (origem && !origemPermitida && origem !== (process.env.COOKIE_SEGURO==='1'?'https':'http')+'://'+requisicao.headers.host) erro('Origem não permitida.', 403);
+    if (origemPermitida) { resposta.setHeader('Access-Control-Allow-Origin', origem); resposta.setHeader('Vary', 'Origin'); resposta.setHeader('Access-Control-Allow-Credentials','true'); }
     resposta.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
     resposta.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Idempotency-Key');
     if (requisicao.method === 'OPTIONS') { resposta.writeHead(204); resposta.end(); return; }
@@ -150,10 +152,11 @@ async function atender(requisicao, resposta) {
     }
     if (caminho === '/api/saude' && metodo === 'GET') { await consultar('SELECT 1'); responder(resposta, 200, { mensagem: 'Servidor e MySQL funcionando.', banco: 'MySQL', financeiro: 'simulado' }); return; }
     const usuario = await identificarUsuario(requisicao);
+    if(usuario && !requisicao.headers.authorization && ['POST','PUT','PATCH','DELETE'].includes(metodo) && requisicao.headers['content-type']?.split(';')[0]!=='application/json')erro('Envie dados JSON.',415);
     if (caminho === '/api/arquivos' && requisicao.method === 'POST') exigirLogin(usuario);
     const dados = ['POST', 'PUT', 'PATCH'].includes(metodo) ? await lerCorpo(requisicao, caminho === '/api/arquivos' ? 2900000 : 100000) : {};
     const contexto = { caminho, metodo, usuario, dados, requisicao, resposta, consultar, transacao, obterCampanha, exigirLogin, exigirAdministrador, exigirResponsavel, conferirVisibilidade, calcularSaldo };
-    const nova = await atenderGoogle(contexto) || await atenderSoma2(contexto) || await atenderExtensoes(contexto);
+    const nova = await atenderGoogle(contexto) || await atenderExperiencia(contexto) || await atenderSoma2(contexto) || await atenderExtensoes(contexto);
     if (nova) { if (!nova.enviada) responder(resposta, nova.codigo || 200, nova.resultado); return; }
     let resultado;
     let codigo = 200;
@@ -177,10 +180,12 @@ async function atender(requisicao, resposta) {
       const token = randomBytes(32).toString('hex');
       await consultar('DELETE FROM sessoes WHERE expira_em <= ?', [Date.now()]);
       await consultar('INSERT INTO sessoes (resumo_token,usuario_id,expira_em) VALUES (?,?,?)', [resumirToken(token), pessoa.id, Date.now() + 86400000]);
+      gravarCookieSessao(requisicao,resposta,token);
       resultado = { token, usuario: usuarioPublico(pessoa) };
     } else if (caminho === '/api/sair' && metodo === 'POST') {
-      exigirLogin(usuario);
-      await consultar('DELETE FROM sessoes WHERE resumo_token=?', [resumirToken(requisicao.headers.authorization.slice(7))]);
+      const token = tokenDaRequisicao(requisicao);
+      if (token) await consultar('DELETE FROM sessoes WHERE resumo_token=?', [resumirToken(token)]);
+      gravarCookieSessao(requisicao,resposta,'');
       resultado = { mensagem: 'Você saiu da conta.' };
     } else if (caminho === '/api/perfil' && metodo === 'GET') {
       exigirLogin(usuario); resultado = usuarioPublico(usuario);
@@ -338,7 +343,7 @@ async function atender(requisicao, resposta) {
       const valor = inteiro(dados.valor, 'o valor em centavos', 1000);
       const taxaSoma = 0; const taxaProvedor = 0;
       const liquido = valor - taxaSoma - taxaProvedor;
-      const meio = opcao(dados.meio, ['Pix', 'Crédito', 'Débito'], 'meio');
+      const meio = opcao(dados.meio, ['Pix', 'Crédito', 'Débito', 'Simulação'], 'meio');
       resultado = await transacao(async consulta => umaVez(consulta, usuario.id, requisicao, dados, async () => {
         const pedido = await obterNecessidade(texto(dados.necessidade_id, 'a necessidade', 36), consulta);
         const campanha = await obterCampanha(pedido.campanha_id, consulta, true);

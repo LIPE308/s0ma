@@ -7,19 +7,23 @@
     <title>%WEB_TITLE% — Toda ajuda conta</title>
     <style id="expo-reset">
       /* Only startup background values mirror palette.bg; React owns all app tokens. */
-      html { background: #FAF7F1; color-scheme: light; }
-      @media (prefers-color-scheme: dark) { html:not([data-soma-theme="claro"]) { background: #171923; color-scheme: dark; } }
-      html[data-soma-theme="escuro"] { background: #171923; color-scheme: dark; }
+      html { background: #F7F9FC; color-scheme: light; }
+      html[data-soma-theme="escuro"] { background: #111B2B; color-scheme: dark; }
       html, body { height: 100%; margin: 0; }
       body { overflow: hidden; background: inherit; }
       #root { display: flex; height: 100%; flex: 1; }
+      [role=button]:focus-visible, [role=link]:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid #1748F5; outline-offset: 3px; }
+      [data-soma-theme=escuro] :focus-visible { outline-color: #97B5FF; }
+      [role=button], [role=link] { cursor: pointer; touch-action: manipulation; }
+      [aria-disabled=true] { cursor: default; }
+      input, textarea { scroll-margin-block: 32px; }
     </style>
     <script>
       // Set the persisted appearance before the bundle or first app frame is painted.
       (function () {
-        var preference = 'sistema';
+        var preference = 'claro';
         try { preference = localStorage.getItem('soma_tema') || preference; } catch (error) {}
-        var dark = preference === 'escuro' || (preference !== 'claro' && matchMedia('(prefers-color-scheme: dark)').matches);
+        var dark = preference === 'escuro' || (preference === 'sistema' && matchMedia('(prefers-color-scheme: dark)').matches);
         document.documentElement.dataset.somaTheme = dark ? 'escuro' : 'claro';
       })();
     </script>
