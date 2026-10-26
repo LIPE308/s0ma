@@ -9,8 +9,10 @@ if (existsSync(arquivoConfiguracao)) process.loadEnvFile(arquivoConfiguracao);
 const { banco, consultar, transacao, inicializarBanco } = require('./banco');
 const { erro, texto, inteiro, opcao, gerarSenha, conferirSenha, resumirToken, usuarioPublico, lerCorpo } = require('./auxiliares');
 const { umaVez } = require('./operacoes');
+const { atenderSoma2, completarCampanhas, ordenarFeed, marcarEdicao, revisarPublicacao, auditar, lancar } = require('./soma2');
+const { atenderGoogle } = require('./google');
 
-const categorias = ['Família', 'Saúde', 'Educação', 'Comunidade', 'Instituições', 'Proteção animal', 'Meio ambiente', 'Cultura'];
+const categorias = ['Família', 'Saúde', 'Educação', 'Comunidade', 'Instituições', 'Proteção animal', 'Meio ambiente', 'Cultura', 'Necessidades pessoais', 'Objetivos individuais', 'Outras causas'];
 const consultaCampanhas = 'SELECT c.*, u.nome AS responsavel FROM campanhas c JOIN usuarios u ON u.id = c.usuario_id';
 const consultaNecessidades = `SELECT n.*, c.titulo AS campanha, c.regiao, c.instrucoes, c.estado AS campanha_estado, c.usuario_id AS responsavel_id,
   COALESCE((SELECT SUM(a.quantidade - a.recebido) FROM ajudas a WHERE a.necessidade_id = n.id AND a.estado IN ('reservado','em_andamento')), 0) AS reservado
@@ -146,7 +148,11 @@ async function atender(requisicao, resposta) {
     }
     if (caminho === '/api/saude' && metodo === 'GET') { await consultar('SELECT 1'); responder(resposta, 200, { mensagem: 'Servidor e MySQL funcionando.', banco: 'MySQL', financeiro: 'simulado' }); return; }
     const usuario = await identificarUsuario(requisicao);
-    const dados = ['POST', 'PUT', 'PATCH'].includes(metodo) ? await lerCorpo(requisicao) : {};
+    if (caminho === '/api/arquivos' && requisicao.method === 'POST') exigirLogin(usuario);
+    const dados = ['POST', 'PUT', 'PATCH'].includes(metodo) ? await lerCorpo(requisicao, caminho === '/api/arquivos' ? 2900000 : 100000) : {};
+    const contexto = { caminho, metodo, usuario, dados, requisicao, resposta, consultar, transacao, obterCampanha, exigirLogin, exigirAdministrador, exigirResponsavel, conferirVisibilidade, calcularSaldo };
+    const nova = await atenderGoogle(contexto) || await atenderSoma2(contexto);
+    if (nova) { if (!nova.enviada) responder(resposta, nova.codigo || 200, nova.resultado); return; }
     let resultado;
     let codigo = 200;
     let partes;
@@ -187,8 +193,8 @@ async function atender(requisicao, resposta) {
 
     // 2. Campanhas e pedidos.
     } else if (caminho === '/api/campanhas' && metodo === 'GET') {
-      if (endereco.searchParams.get('minhas') === '1') { exigirLogin(usuario); resultado = await consultar(`${consultaCampanhas} WHERE c.usuario_id=? ORDER BY c.criada_em DESC`, [usuario.id]); }
-      else resultado = (await consultar(`${consultaCampanhas} WHERE c.estado IN ('ativa','encerrada') ORDER BY c.criada_em DESC`)).map(c => campanhaPublica(c, usuario));
+      if (endereco.searchParams.get('minhas') === '1') { exigirLogin(usuario); resultado = await completarCampanhas(consultar, await consultar(`${consultaCampanhas} WHERE c.usuario_id=? ORDER BY c.criada_em DESC`, [usuario.id])); }
+      else resultado = ordenarFeed(await completarCampanhas(consultar, (await consultar(`${consultaCampanhas} WHERE c.estado IN ('ativa','encerrada') ORDER BY c.criada_em DESC`)).map(c => campanhaPublica(c, usuario))));
     } else if ((caminho === '/api/campanhas' && metodo === 'POST') || ((partes = caminho.match(/^\/api\/campanhas\/([^/]+)$/)) && metodo === 'PUT') || ((partes = caminho.match(/^\/api\/campanhas\/([^/]+)\/reabrir$/)) && metodo === 'PATCH')) {
       exigirLogin(usuario);
       const id = partes ? partes[1] : randomUUID();
@@ -196,14 +202,16 @@ async function atender(requisicao, resposta) {
       const titulo = texto(dados.titulo, 'o título', 150);
       const descricao = texto(dados.descricao, 'a descrição', 10000);
       const categoria = opcao(dados.categoria, categorias, 'categoria');
-      const regiao = texto(dados.regiao, 'a região', 150);
-      const prazo = validarData(dados.prazo, 'o prazo');
+      const regiao = texto(dados.regiao || 'Região não informada', 'a região', 150);
+      const prazo = validarData(dados.prazo, 'o prazo', false);
       const instrucoes = texto(dados.instrucoes || '', 'as instruções', 2000, false);
       const evento = texto(dados.evento || '', 'a ação', 1000, false);
       if (!Array.isArray(dados.necessidades) || !dados.necessidades.length || dados.necessidades.length > 30) erro('Inclua de 1 a 30 necessidades.');
       const pedidos = dados.necessidades.map(validarPedido);
       if (new Set(pedidos.map(p => p.id)).size !== pedidos.length) erro('Há pedidos duplicados.');
-      const salvo = await transacao(async consulta => umaVez(consulta, usuario.id, requisicao, dados, async () => {
+      const salvo = await transacao(async consulta => {
+        if (metodo === 'POST') await consulta('SELECT id FROM usuarios WHERE id=? FOR UPDATE',[usuario.id]);
+        return umaVez(consulta, usuario.id, requisicao, dados, async () => {
         if (metodo !== 'POST') {
           const campanha = await obterCampanha(id, consulta, true); exigirResponsavel(usuario, campanha);
           if (reabrindo && campanha.estado !== 'encerrada') erro('Somente uma campanha encerrada pode ser reaberta.', 409);
@@ -211,22 +219,30 @@ async function atender(requisicao, resposta) {
           const anteriores = await consulta('SELECT id, recebido, meta FROM necessidades WHERE campanha_id=?', [id]);
           if (reabrindo && !pedidos.some(p => !anteriores.some(a => a.id === p.id && a.meta === p.meta))) erro('Atualize ao menos uma meta ou inclua uma necessidade antes de reabrir.', 409);
           await consulta('UPDATE campanhas SET titulo=?,descricao=?,categoria=?,regiao=?,prazo=?,instrucoes=?,evento=? WHERE id=?', [titulo, descricao, categoria, regiao, prazo, instrucoes, evento, id]);
-          if (reabrindo) await consulta("UPDATE campanhas SET estado='ativa',estado_antes_moderacao=NULL,motivo=? WHERE id=?", [motivo, id]);
+          await marcarEdicao(consulta, reabrindo ? { ...campanha, estado: 'ativa' } : campanha, usuario.id);
+          if (reabrindo) await consulta('UPDATE campanhas SET motivo=? WHERE id=?', [motivo, id]);
           for (const anterior of anteriores.filter(p => !pedidos.some(n => n.id === p.id))) {
             const [historico] = await consulta('SELECT (SELECT COUNT(*) FROM ajudas WHERE necessidade_id=?) + (SELECT COUNT(*) FROM pagamentos WHERE necessidade_id=?) AS total', [anterior.id, anterior.id]);
             if (Number(historico.total) || anterior.recebido) erro('Não remova um pedido que já tem histórico.', 409);
             await consulta('DELETE FROM necessidades WHERE id=?', [anterior.id]);
           }
-        } else await consulta('INSERT INTO campanhas (id,usuario_id,titulo,descricao,categoria,regiao,prazo,instrucoes,evento) VALUES (?,?,?,?,?,?,?,?,?)', [id, usuario.id, titulo, descricao, categoria, regiao, prazo, instrucoes, evento]);
+        } else {
+          const [duplicada] = await consulta("SELECT id FROM campanhas WHERE usuario_id=? AND LOWER(titulo)=LOWER(?) AND LOWER(descricao)=LOWER(?) AND estado IN ('ativa','rascunho','ajustes') FOR UPDATE", [usuario.id,titulo,descricao]);
+          if (duplicada) erro('Você já tem uma campanha com este título e história. Edite a campanha existente.',409);
+          await consulta("INSERT INTO campanhas (id,usuario_id,titulo,descricao,categoria,regiao,prazo,instrucoes,evento,estado) VALUES (?,?,?,?,?,?,?,?,?,'rascunho')", [id, usuario.id, titulo, descricao, categoria, regiao, prazo, instrucoes, evento]);
+          await auditar(consulta,usuario.id,id,'rascunho_criado');
+        }
         for (const pedido of pedidos) await salvarPedido(consulta, id, pedido);
         return { id };
-      }));
+        });
+      });
       const [campanha] = await consultar(`${consultaCampanhas} WHERE c.id=?`, [salvo.id]);
       resultado = { ...campanha, necessidades: await consultar(`${consultaNecessidades} WHERE n.campanha_id=?`, [salvo.id]) }; codigo = metodo === 'POST' ? 201 : 200;
     } else if ((partes = caminho.match(/^\/api\/campanhas\/([^/]+)$/)) && metodo === 'GET') {
       const campanha = await obterCampanha(partes[1]); conferirVisibilidade(campanha, usuario);
       const [comResponsavel] = await consultar(`${consultaCampanhas} WHERE c.id=?`, [campanha.id]);
-      resultado = { ...campanhaPublica(comResponsavel, usuario), necessidades: (await consultar(`${consultaNecessidades} WHERE n.campanha_id=?`, [campanha.id])).map(n => pedidoPublico(n, usuario)) };
+      const [completo] = await completarCampanhas(consultar,[campanhaPublica(comResponsavel, usuario)]);
+      resultado = { ...completo, necessidades: (await consultar(`${consultaNecessidades} WHERE n.campanha_id=?`, [campanha.id])).map(n => pedidoPublico(n, usuario)) };
     } else if ((partes = caminho.match(/^\/api\/campanhas\/([^/]+)(?:\/encerrar)?$/)) && (metodo === 'DELETE' || metodo === 'PATCH')) {
       resultado = await transacao(async consulta => {
         const campanha = await obterCampanha(partes[1], consulta, true); exigirResponsavel(usuario, campanha);
@@ -345,9 +361,13 @@ async function atender(requisicao, resposta) {
             const saldo = await calcularSaldo(pagamento.campanha_id, consulta);
             if (saldo.disponivel < atual.valor_liquido) erro('Não há saldo simulado disponível para devolver.', 409);
             await consulta('UPDATE necessidades SET recebido=recebido-? WHERE id=?', [atual.valor_liquido, atual.necessidade_id]);
+            await lancar(consulta,pagamento.campanha_id,atual.necessidade_id,'estorno','pagamento:'+atual.id+':reembolsado',-atual.valor_liquido);
           } else {
             if (atual.estado !== 'pendente') erro('O pagamento já foi finalizado.', 409);
-            if (estado === 'confirmado') await consulta('UPDATE necessidades SET recebido=recebido+? WHERE id=?', [atual.valor_liquido, atual.necessidade_id]);
+            if (estado === 'confirmado') {
+              await consulta('UPDATE necessidades SET recebido=recebido+? WHERE id=?', [atual.valor_liquido, atual.necessidade_id]);
+              await lancar(consulta,pagamento.campanha_id,atual.necessidade_id,'doacao','pagamento:'+atual.id+':confirmado',atual.valor_liquido);
+            }
           }
           await consulta('UPDATE pagamentos SET estado=? WHERE id=?', [estado, atual.id]);
           await avisar(consulta, atual.usuario_id, `Pagamento de teste ${atual.id}: ${estado}.`);
@@ -384,6 +404,7 @@ async function atender(requisicao, resposta) {
         if (atual.estado !== estado) {
           if (atual.estado !== 'solicitado') erro('O pedido já foi finalizado.', 409);
           await consulta('UPDATE repasses SET estado=?,motivo=? WHERE id=?', [estado, motivo, atual.id]);
+          if (estado === 'concluido') await lancar(consulta,campanha.id,null,'repasse','repasse:'+atual.id+':concluido',-atual.valor);
           await avisar(consulta, atual.usuario_id, `Repasse de teste ${atual.id}: ${estado}.`);
         }
         const [salvo] = await consulta('SELECT * FROM repasses WHERE id=?', [atual.id]); return { ...salvo, simulado: true };
@@ -413,12 +434,14 @@ async function atender(requisicao, resposta) {
         const campanha = await obterCampanha(partes[1], consulta, true);
         const decisao = opcao(dados.estado, ['ativa', 'suspensa', 'ajustes'], 'decisão');
         if (campanha.usuario_id === usuario.id) erro('Não analise a própria campanha.', 403);
+        if (decisao === 'ativa') await revisarPublicacao(consulta,campanha,usuario);
         const motivo = texto(dados.motivo, 'a justificativa', 1000);
         // Old hidden records have no previous state: restore closed, never reopen by guessing.
         const publicoAnterior = campanha.estado_antes_moderacao || (['ativa', 'rascunho'].includes(campanha.estado) ? 'ativa' : 'encerrada');
         const estado = decisao === 'ativa' ? publicoAnterior : decisao;
         const anterior = decisao === 'ativa' ? null : publicoAnterior;
         await consulta('UPDATE campanhas SET estado=?,motivo=?,estado_antes_moderacao=? WHERE id=?', [estado, motivo, anterior, campanha.id]);
+        await auditar(consulta,usuario.id,campanha.id,'moderacao',{ estado,motivo,estado_anterior:campanha.estado });
         await avisar(consulta, campanha.usuario_id, `Sua campanha está ${estado}: ${motivo}`);
         return { mensagem: 'Decisão registrada.', estado };
       });

@@ -37,12 +37,12 @@ function usuarioPublico(usuario) {
   return { id: usuario.id, nome: usuario.nome, email: usuario.email, telefone: usuario.telefone, regiao: usuario.regiao, novidades: Boolean(usuario.novidades), administrador: Boolean(usuario.administrador) };
 }
 
-async function lerCorpo(requisicao) {
+async function lerCorpo(requisicao, limite = 100000) {
   let tamanho = 0;
   const partes = [];
   for await (const parte of requisicao) {
     tamanho += parte.length;
-    if (tamanho > 100000) erro('O formulário excedeu o limite de 100 KB.', 413);
+    if (tamanho > limite) erro('O formulário excedeu o limite permitido.', 413);
     partes.push(parte);
   }
   try {

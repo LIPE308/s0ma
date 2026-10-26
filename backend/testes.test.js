@@ -15,6 +15,8 @@ const configuracao = {
   password: process.env.MYSQL_TESTE_SENHA ?? 'raiz_local_123',
 };
 let conexao, processo, endereco;
+let moderadorTeste;
+const publicacoesEmAndamento = new Map();
 async function iniciarServidor() {
   processo = spawn(process.execPath, ['backend/servidor.js'], { env: { ...process.env, MYSQL_HOST: configuracao.host, MYSQL_PORTA: String(configuracao.port), MYSQL_USUARIO: configuracao.user, MYSQL_SENHA: configuracao.password, MYSQL_BANCO: nomeBanco, PORTA: '0', ENDERECO: '127.0.0.1' }, stdio: ['ignore', 'pipe', 'pipe'] });
   await new Promise((concluir, rejeitar) => {
@@ -33,6 +35,18 @@ async function chamar(caminho, { metodo = 'GET', dados, token, codigo = 200, cha
   const resposta = await fetch(endereco + caminho, { method: metodo, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(chave ? { 'Idempotency-Key': chave } : {}) }, ...(dados !== undefined ? { body: JSON.stringify(dados) } : {}) });
   const resultado = await resposta.json();
   assert.equal(resposta.status, codigo, `${metodo} ${caminho}: ${JSON.stringify(resultado)}`);
+  // Os cenários legados usam campanhas aprovadas; a nova revisão é exercida explicitamente.
+  if (moderadorTeste && resultado.estado === 'rascunho' && ['POST','PUT','PATCH'].includes(metodo) && /^\/campanhas(?:\/[^/]+(?:\/reabrir)?)?$/.test(caminho)) {
+    if (!publicacoesEmAndamento.has(resultado.id)) publicacoesEmAndamento.set(resultado.id, (async () => {
+      const atual = await chamar('/campanhas/'+resultado.id,{token});
+      if (atual.estado !== 'rascunho') return atual;
+      await chamar('/perfil-ampliado',{metodo:'PUT',token,dados:{tipo:'pessoa',adulto:true,publico:false,local_publico:false,apoios_publicos:false}});
+      await chamar('/campanhas/'+resultado.id+'/enviar',{metodo:'POST',token});
+      await chamar('/administracao/campanhas/'+resultado.id,{metodo:'PATCH',token:moderadorTeste,dados:{estado:'ativa',motivo:'Aprovação explícita da fixture de regressão'}});
+      return chamar('/campanhas/'+resultado.id,{token});
+    })());
+    try { return await publicacoesEmAndamento.get(resultado.id); } finally { publicacoesEmAndamento.delete(resultado.id); }
+  }
   return resultado;
 }
 async function entrar(email, senha = 'academico123') { return chamar('/login', { metodo: 'POST', dados: { email, senha } }); }
@@ -71,6 +85,7 @@ test('API Node + MySQL: fluxos completos e persistência', { timeout: 90000 }, a
       assert.equal(usuario.administrador, false); assert.equal(usuario.nome, "D'Ávila"); assert.equal(usuario.senha_resumo, undefined);
       await chamar('/cadastro', { metodo: 'POST', dados: { nome: 'Duplicado', email: 'teste@exemplo.com', senha: 'academico123' }, codigo: 409 });
       novo = await entrar('teste@exemplo.com'); ana = await entrar('ana@exemplo.com'); lucas = await entrar('lucas@exemplo.com'); marina = await entrar('marina@exemplo.com'); administrador = await entrar('admin-teste@exemplo.com');
+      moderadorTeste = administrador.token;
       await chamar('/perfil', { token: sessaoAntesDaPromocao.token, codigo: 401 });
       assert.equal(administrador.usuario.administrador, true);
       await chamar('/login', { metodo: 'POST', dados: { email: 'admin@exemplo.com', senha: 'academico123' }, codigo: 401 });

@@ -3,6 +3,7 @@ const { readFileSync } = require('node:fs');
 const { join } = require('node:path');
 const { gerarSenha } = require('./auxiliares');
 const { randomBytes } = require('node:crypto');
+const { migrarSoma2 } = require('./migrar-soma2');
 
 const banco = mysql.createPool({
   host: process.env.MYSQL_HOST || '127.0.0.1',
@@ -21,7 +22,7 @@ async function consultar(comando, valores = []) {
 }
 
 // Tudo é confirmado junto ou desfeito junto: uma transação não deixa metade salva.
-async function transacao(operacao) {
+async function executarTransacao(operacao) {
   const conexao = await banco.getConnection();
   try {
     // Depois de esperar o lock, a consulta deve enxergar a reserva mais recente.
@@ -40,6 +41,16 @@ async function transacao(operacao) {
   } finally { conexao.release(); }
 }
 
+async function transacao(operacao) {
+  for (let tentativa = 0; ; tentativa++) {
+    try { return await executarTransacao(operacao); }
+    catch (problema) {
+      if (tentativa >= 2 || !['ER_LOCK_DEADLOCK','ER_LOCK_WAIT_TIMEOUT'].includes(problema.code)) throw problema;
+      await new Promise(concluir => setTimeout(concluir, 25 * (tentativa + 1)));
+    }
+  }
+}
+
 async function inicializarBanco() {
   // Cada comando é executado separado; não permitimos multipleStatements.
   const esquema = readFileSync(join(__dirname, 'esquema.sql'), 'utf8');
@@ -50,7 +61,7 @@ async function inicializarBanco() {
   // Keep the account, password, campaign history and ordinary access; revoke only this legacy role.
   await consultar("UPDATE usuarios SET administrador=0 WHERE email='admin@exemplo.com' AND administrador=1");
   const [contagem] = await consultar('SELECT COUNT(*) AS total FROM usuarios');
-  if (Number(contagem.total) > 0) return;
+  if (Number(contagem.total) > 0) { await migrarSoma2(consultar, banco, transacao); return; }
   // Exemplos apenas no banco vazio. Reiniciar não apaga o trabalho da turma.
   await transacao(async consultar => {
     for (const [nome, email, regiao, administrador] of [
@@ -79,5 +90,6 @@ async function inicializarBanco() {
     await consultar("INSERT INTO atualizacoes (campanha_id, usuario_id, titulo, relato) VALUES ('biblioteca', 1, 'Doze novos livros recebidos', 'Os livros já estão na biblioteca. Ainda faltam oito livros infantis.')");
     await consultar("INSERT INTO atualizacoes (campanha_id, usuario_id, titulo, relato) VALUES ('familia', 2, 'Oito cobertores recebidos', 'As primeiras entregas chegaram. Ainda faltam dois cobertores.')");
   });
+  await migrarSoma2(consultar, banco, transacao);
 }
 module.exports = { banco, consultar, transacao, inicializarBanco };

@@ -1,18 +1,19 @@
-# Roteiro de demonstração do SOMA
+# Roteiro de demonstração do SOMA 2.0
 
-Use dados fictícios identificados como teste, sem documentos, endereço residencial ou contato de beneficiários. As campanhas ilustrativas de um banco vazio não representam entregas reais.
+Use somente dados fictícios identificados como demonstração. Não use documentos pessoais, endereços residenciais ou dados de beneficiários. Não apague dados existentes.
 
-1. Execute os comandos do README. Abra http://localhost:3001. Confira GET /api/saude. Não apague dados para preparar a apresentação.
-2. Sem entrar, explore campanhas e necessidades. Abra uma campanha; instruções privadas e telefone não devem aparecer.
-3. Cadastre duas contas próprias, uma organizadora e uma doadora. Na organizadora, preencha seu telefone no perfil se desejar demonstrar contato. Não use telefone de outra pessoa.
-4. Crie uma campanha: história, cidade/bairro, prazo válido. Acrescente, por exemplo, livros (10 unidades), cobertores (5 unidades), tarefa (2 vagas) e dinheiro (R$ 100,00 simulado). Pode publicar apenas um tipo; pedidos do mesmo tipo têm metas separadas. Não é necessário documento do beneficiário.
-5. Entre como doador. Escolha livros, registre intenção de 3 unidades e confirme que leu as instruções. A ajuda deve aparecer reservada, com 0 recebido. O contato e as orientações privadas aparecem nesta ajuda; a entrega é combinada fora do aplicativo. Não é necessário abrir WhatsApp nem ligar durante a apresentação.
-6. Como organizador, entre em Gerenciar > Ajudas > Confirmar. Informe o total acumulado de 2 recebidos, mantendo 1 pendente. O progresso dos livros deve ficar 2/10; os outros pedidos não mudam. Repetir a confirmação de 2 não deve somar mais 2.
-7. Como doador, escolha o pedido de dinheiro, informe R$ 20,00 e crie o pagamento de teste. Só depois de confirmar o teste o progresso muda para R$ 20,00. Não há cobrança ou taxa nova. Não apresente saldo como dinheiro disponível no mundo real.
-8. Como organizador, encerre a campanha mesmo sem completar as metas. Seu histórico continua visível; uma tentativa nova de ajuda é recusada.
-9. Para reabrir, escolha Revisar metas e reabrir, atualize uma meta (por exemplo livros para 12), mantenha as demais necessidades e informe um motivo na revisão. O recebido permanece 2.
-10. Cadastre uma terceira conta para administração. O operador local executa `npm run admin:configurar -- email-da-conta`. A conta deve entrar novamente, sendo encaminhada à administração. Contas comuns não recebem esse acesso.
-11. Faça uma denúncia de teste como doador. A denúncia não oculta automaticamente a campanha. Como administrador, analise a campanha e registre motivo ao suspender/pedir ajustes. Visitantes deixam de acessar os detalhes. Marque o relato como analisado; ele permanece no histórico administrativo, sem revelar o autor publicamente.
-12. Se publicar novamente uma campanha encerrada, ela continua encerrada. Só a revisão de metas e o motivo autorizam a reabertura pelo responsável.
+1. Siga o README, abra http://localhost:3001 e verifique /api/saude. Cadastre uma conta organizadora, uma doadora e uma administrativa. Autorize só a última pelo comando local descrito no README e entre novamente.
+2. Na organizadora, abra Perfil → Personalizar. Escolha pessoa/instituição, biografia e privacidade. A declaração de maioridade é necessária para enviar campanhas; não é comprovação independente.
+3. Crie a campanha em etapas, com história, categoria, prazo/região opcionais e necessidades separadas. Pode ser só de objetos, dinheiro ou tarefas; duas necessidades do mesmo tipo continuam independentes.
+4. Salve o rascunho e continue a preparação. Foto é opcional. Documentos são privados e acessíveis apenas ao responsável e à administração. Autorize UF/município somente se quiser aparecer no mapa. Revogar essa opção retira a campanha do mapa.
+5. Se necessário, solicite urgência com natureza, consequências, prazo e recursos atuais. A pontuação é recomendação: não concede prioridade. Envie a campanha para revisão.
+6. Sem sessão ou como doador, confirme que o rascunho não aparece. Como administrador, consulte evidências e registre a decisão. Prioridade moderada/crítica exige documento, verificação humana, prazo/validade e justificativa; não aprove urgência própria. Publique a campanha enviada ou peça ajustes.
+7. Explore a campanha no mapa, selecione UF/município e teste zoom e categorias. Abra Descoberta para filtros por urgência, categoria, estado, meta, prazo e ordenação. O indicador do mapa mede somente o cadastro consentido.
+8. Como doador, reserve 3 unidades de um pedido de objetos. O recebido deve continuar 0. Como organizador, confirme o total acumulado de 2 e mantenha 1 pendente. Repetir 2 não soma mais 2; os outros pedidos não mudam.
+9. Simule uma doação financeira e confirme-a. Abra a Rota Inteligente: origem, saldo e marcos devem refletir a confirmação. Reserva, projeção e impressão publicitária não contam como doação. Com pouco histórico, a projeção fica indisponível.
+10. No painel do fundo, registre receita publicitária de teste com referência única, valores e justificativa. Antes da conciliação, não há crédito. Concilie explicitamente e distribua: 70% do líquido vão ao fundo e 30% à operação; teto de 35% por responsável, proporcionalidade e lacuna restante limitam a alocação. Sem elegíveis, o fundo fica retido. Reenvio não pode duplicar créditos.
+11. Confira transparência pública, lançamentos, auditoria e Rota. Não existem anúncios reais, rendimentos ou movimentação bancária nesta entrega. O cenário de rendimento é exercício hipotético e fica bloqueado em urgência crítica/uso imediato.
+12. Faça denúncia de teste e revise na administração. Uma denúncia não suspende automaticamente a campanha. Encerrar preserva o histórico e impede novas contribuições; editar/reabrir exige nova revisão antes de arrecadar. Urgência pode ser recorrida e reavaliada, com histórico.
+13. Confira perfil público somente com consentimento; informações financeiras detalhadas, contato e documentos continuam privados. Google fica desativado até configurar credenciais oficiais e testar o retorno real.
 
-O registro de recebimento é uma declaração do responsável. O roteiro demonstra consistência e autorização, sem comprovar entrega, legitimidade ou impacto social. Consulte [limites do produto](LIMITES-DO-PRODUTO.md) e [resultados de validação](AUDITORIA-ENTREGA.md).
+Consulte [regras e configuração](SOMA-2.md) e [testes e limites reais](SOMA-2-VALIDACAO.md). Confirmações simuladas demonstram consistência, não comprovam entrega, necessidade ou impacto social.

@@ -17,8 +17,11 @@ export function Manage() {
   }
   return <Screen variant="ledger" title="Gerenciar campanha" heading={campanha?.titulo} subtitle="Painel do responsável" onBack={salvo ? () => roteador.dismissTo('/') : undefined}><EstadoConexao {...consulta}/>
     {!pessoa ? <PedirLogin/> : campanha && !permitido ? <Notice>Você não é responsável por esta campanha.</Notice> : campanha ? <>
-      {['criada', 'atualizada', 'reaberta'].includes(salvo || '') ? <Notice success>{salvo === 'criada' ? 'Campanha publicada! Agora você pode acompanhar as ajudas por aqui.' : salvo === 'reaberta' ? 'Campanha reaberta. As metas foram atualizadas e o histórico foi preservado.' : 'Alterações salvas na campanha.'}</Notice> : null}
+      {['criada', 'atualizada', 'reaberta'].includes(salvo || '') ? <Notice success>Alterações salvas. Confira a situação da campanha e a revisão antes de receber novas ajudas.</Notice> : null}
       <Tag>{campanha.estado.toLocaleUpperCase()}</Tag>
+      {['rascunho','ajustes'].includes(campanha.estado) ? <><Notice>{salvo === 'enviada' || campanha.submetida ? 'Campanha enviada para revisão. Ela só será pública após aprovação.' : 'Complete a preparação e envie sua campanha para análise.'}</Notice><Button title="Preparar publicação e evidências" onPress={() => roteador.push({ pathname: '/preparar-campanha', params: { id: campanha.id } })}/></> : null}
+      {campanha.necessidades.some(n => n.tipo === 'dinheiro') ? <Button title="Abrir Rota Inteligente" onPress={() => roteador.push({ pathname: '/rota', params: { id: campanha.id } })}/> : null}
+      <Button secondary title="Solicitação de urgência" onPress={() => roteador.push({ pathname: '/urgencia', params: { id: campanha.id } })}/>
       <Button secondary title="Ver página da campanha" onPress={() => roteador.push({ pathname: '/campanha', params: { id: campanha.id } })}/>
       <Heading>Necessidades da campanha</Heading>
       {campanha.necessidades.map(pedido => <Card variant="row" key={pedido.id} title={pedido.nome} subtitle={pedido.tipo === 'dinheiro' ? `${formatarDinheiro(pedido.recebido / 100)} recebidos · meta ${formatarDinheiro(pedido.meta / 100)}` : `${pedido.recebido} ${pedido.tipo === 'tarefa' ? 'participações confirmadas' : 'unidades recebidas'} · ${pedido.reservado} ${pedido.tipo === 'tarefa' ? 'vagas reservadas' : 'unidades reservadas'}`}/>)}
@@ -29,7 +32,7 @@ export function Manage() {
       {campanha.necessidades.some(p => p.tipo === 'dinheiro') ? <Card title="Registros financeiros simulados" icon="wallet-outline" onPress={() => roteador.push({ pathname: '/saldo', params: { campanha: campanha.id } })}/> : null}
       <Button secondary title="Resultado e impacto" onPress={() => roteador.push({ pathname: '/resultado', params: { id: campanha.id } })}/>
       <Button secondary title="Adicionar necessidade" onPress={() => roteador.push({ pathname: '/editar-necessidade', params: parametrosDaCampanha(campanha) })}/>
-      {campanha.estado === 'ativa' ? <Button danger title="Encerrar campanha" onPress={() => definirJanela(true)}/> : campanha.estado === 'encerrada' ? <><Notice>Campanha encerrada. O histórico permanece disponível.</Notice><Button title="Revisar metas e reabrir" onPress={() => roteador.push({ pathname: '/criar', params: { ...parametrosDaCampanha(campanha), reabrir: '1' } })}/></> : <Notice>Campanha oculta por moderação. Ela não recebe novas ajudas. Consulte a justificativa e aguarde a revisão administrativa.</Notice>}
+      {campanha.estado === 'ativa' ? <Button danger title="Encerrar campanha" onPress={() => definirJanela(true)}/> : campanha.estado === 'encerrada' ? <><Notice>Campanha encerrada. O histórico permanece disponível.</Notice><Button title="Revisar metas e reabrir" onPress={() => roteador.push({ pathname: '/criar', params: { ...parametrosDaCampanha(campanha), reabrir: '1' } })}/></> : campanha.estado === 'rascunho' ? <Copy muted>O rascunho não está disponível para contribuições públicas.</Copy> : <Notice>Campanha oculta por moderação. Ela não recebe novas ajudas. Consulte a justificativa e aguarde a revisão administrativa.</Notice>}
       {campanha.motivo ? <Copy muted>{campanha.motivo}</Copy> : null}
       {!pessoa.telefone ? <Notice>Para combinar entregas por telefone ou WhatsApp, preencha seu telefone no perfil. Ele será mostrado apenas nas ajudas registradas.</Notice> : null}
     </> : null}

@@ -7,6 +7,7 @@ import { requisitar, guardarSessao, limparSessao, atualizarUsuario, usuarioLogad
 import { destinoAposLogin } from '../servicos/navegacao';
 import type { ThemePreference } from '../design/theme';
 import { CartaoCampanha } from '../components/campanhas';
+import { BotaoGoogle, RetratoPerfil } from './perfil-social';
 
 export function Login() {
   const roteador = useRouter(); const { retorno } = useLocalSearchParams<{ retorno?: string }>();
@@ -25,6 +26,7 @@ export function Login() {
     <Field label="Senha" secret value={senha} onChangeText={definirSenha} placeholder="Digite sua senha"/>
     {erro ? <Notice error>{erro}</Notice> : null}
     <Button title={ocupado ? 'Entrando...' : 'Entrar'} disabled={ocupado} onPress={entrar}/>
+    <BotaoGoogle/>
     <Button secondary title="Criar conta" onPress={() => roteador.push({ pathname: '/criar-conta', params: { retorno } })}/>
     <Button secondary title="Explorar sem entrar" onPress={() => roteador.replace('/')}/>
     <Copy muted>Use sua própria conta. O acesso administrativo é configurado pela equipe responsável.</Copy>
@@ -85,6 +87,7 @@ export function Profile() {
   }
   async function sair() { try { await requisitar('/sair', 'POST'); } catch { /* A sessão local também pode ser encerrada sem conexão. */ } finally { limparSessao(); roteador.replace('/entrar'); } }
   return <Screen variant="form" title="Perfil" heading="Seu lugar na comunidade." subtitle={consulta.dados?.email} back={false}>
+    {pessoa ? <RetratoPerfil/> : null}
     <Heading>Aparência</Heading><Copy muted>Escolha o que fica melhor para você. Sistema acompanha a aparência do dispositivo.</Copy>
     <Choices options={['Sistema', 'Claro', 'Escuro']} selected={temas[preferencia]} onSelect={tema => definirTema(tema === 'Claro' ? 'claro' : tema === 'Escuro' ? 'escuro' : 'sistema')}/>
     {erroTema ? <Notice error>{erroTema}</Notice> : <Copy muted>A preferência fica salva neste dispositivo.</Copy>}

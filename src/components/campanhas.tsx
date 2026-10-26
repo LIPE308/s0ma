@@ -7,6 +7,7 @@ import { radius } from '../design/theme';
 import { formatarDinheiro } from '../data/formatacao';
 import type { Campanha, Necessidade } from '../servicos/api';
 import { lerEvento } from '../data/eventos';
+import { ImagemPublica } from './arquivos';
 
 export function CartaoCampanha({ campanha, pedido, evento = false, cta, aoAbrir }: { campanha: Campanha; pedido?: Necessidade; evento?: boolean; cta?: string; aoAbrir: () => void }) {
   const { s, colors, fontsReady } = useTheme();
@@ -14,10 +15,11 @@ export function CartaoCampanha({ campanha, pedido, evento = false, cta, aoAbrir 
   const titulo = evento ? detalhes?.nome || campanha.evento : campanha.titulo;
   const acao = cta || (evento ? 'Ver evento' : campanha.estado === 'ativa' ? 'Ajudar agora' : 'Conhecer a causa');
   return <MotionPressable accessibilityRole="button" accessibilityLabel={acao + ': ' + titulo} accessibilityHint="Conhecer a história, os detalhes e como participar" onPress={aoAbrir} style={({ pressed }) => [{ overflow: 'hidden', borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line }, pressed && s.pressed]}>
-    <FotoDeCampanha campanhaId={campanha.id} categoria={campanha.categoria}/>
+    {campanha.imagem_id ? <ImagemPublica id={campanha.imagem_id} altura={200}/> : <FotoDeCampanha campanhaId={campanha.id} categoria={campanha.categoria}/>}
     <View style={{ padding: 18, gap: 10 }}>
       <Text style={{ fontSize: 11, lineHeight: 16, fontFamily: fontsReady ? 'Manrope-SemiBold' : undefined, letterSpacing: .4, color: colors.accent }}>{campanha.categoria.toLocaleUpperCase()}</Text>
       {campanha.estado !== 'ativa' ? <Tag>{campanha.estado.toLocaleUpperCase()}</Tag> : null}
+      {campanha.urgencia?.revisada ? <Tag>Urgência {campanha.urgencia.classe === 'critica' ? 'crítica' : 'moderada'} revisada</Tag> : null}
       <Text accessibilityRole="header" numberOfLines={2} style={[s.cardTitle, { flex: 0, fontSize: 19, lineHeight: 27 }]}>{titulo}</Text>
       <Text numberOfLines={2} style={s.cardSubtitle}>{evento ? campanha.titulo : campanha.descricao}</Text>
       {detalhes ? <Text style={s.cardSubtitle}>{detalhes.data + ' · ' + detalhes.horario}</Text> : null}

@@ -1,5 +1,7 @@
 # Confiança e limites do produto
 
+> Atualização SOMA 2.0 (22/10/2026): consulte [o guia atual](SOMA-2.md) e [a validação da entrega](SOMA-2-VALIDACAO.md). Este documento registra a base anterior; publicação direta, ausência de mapa/rota e contagens antigas foram substituídas pelo fluxo de revisão e extensões descritos no guia atual.
+
 O SOMA escolar organiza necessidades, intenções e recebimentos declarados. Não certifica pessoas, campanhas ou resultados. As respostas abaixo distinguem o código entregue de hipóteses que ainda exigem pesquisa e operação.
 
 | Questão do briefing | Resposta baseada na versão atual |

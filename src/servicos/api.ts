@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 
 export type Usuario = { id: number; nome: string; email: string; telefone: string; regiao: string; novidades: boolean; administrador: boolean };
 export type Necessidade = { id: string; campanha_id: string; responsavel_id?: number; nome: string; tipo: 'objeto' | 'tarefa' | 'dinheiro'; meta: number; recebido: number; reservado: number; tipo_meta: string; prioridade: string; prazo: string; descricao: string; campanha: string; regiao: string; instrucoes: string; campanha_estado: string };
-export type Campanha = { id: string; usuario_id: number; titulo: string; descricao: string; categoria: string; regiao: string; prazo: string; instrucoes: string; evento: string; estado: string; motivo: string; responsavel: string; necessidades: Necessidade[] };
+export type Campanha = { id: string; usuario_id: number; titulo: string; descricao: string; categoria: string; regiao: string; prazo: string; instrucoes: string; evento: string; estado: string; motivo: string; responsavel: string; necessidades: Necessidade[]; uf?: string; municipio?: string; imagem_id?: string | null; urgencia?: { classe: string; revisada: boolean }; visualizacoes?: number; meta_financeira?: number; recebido_financeiro?: number; submetida?: boolean };
 export type Ajuda = { id: number; usuario_id: number; campanha_id: string; necessidade_id: string; tipo: string; quantidade: number; recebido: number; necessidade: string; campanha: string; pessoa: string; estado: string; entrega: string; horario: string; instrucoes: string; observacao: string; telefone_responsavel?: string };
 export type Pagamento = { id: number; necessidade_id: string; campanha: string; necessidade: string; valor: number; taxa_soma: number; taxa_provedor: number; valor_liquido: number; meio: string; estado: string };
 export type Repasse = { id: number; campanha_id: string; campanha: string; valor: number; finalidade: string; estado: string; motivo: string };
@@ -29,6 +29,7 @@ function recuperarSessao() {
   } catch { /* Se o navegador bloquear o armazenamento, mantém a sessão em memória. */ }
 }
 export function usuarioLogado() { recuperarSessao(); return pessoaAtual; }
+export function urlApi() { return enderecoApi; }
 export function guardarSessao(token: string, usuario: Usuario) {
   tokenAtual = token; pessoaAtual = usuario;
   if (Platform.OS === 'web' && typeof window !== 'undefined') {

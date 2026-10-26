@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { FlatList, Text, View, useWindowDimensions } from 'react-native';
+import { FlatList, Share, Text, View, useWindowDimensions } from 'react-native';
 import { Button, Card, Choices, Copy, Dialog, EmptyState, Field, Heading, Logo, Notice, Progress, Screen, Tag, useTheme } from '../components/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EstadoConexao } from '../components/conexao';
@@ -11,6 +11,8 @@ import { FotoDeAcolhimento, FotoDeCampanha } from '../components/fotos';
 import { CartaoCampanha } from '../components/campanhas';
 import { ContentMotion, MotionPressable } from '../design/motion';
 import { radius } from '../design/theme';
+import { ImagemPublica } from '../components/arquivos';
+import { requisitar, urlApi } from '../servicos/api';
 
 export function CartaoNecessidade({ pedido, aoAbrir }: { pedido: Necessidade; aoAbrir: () => void }) {
   const restante = Math.max(0, pedido.meta - pedido.recebido - Number(pedido.reservado));
@@ -33,6 +35,8 @@ export function Home() {
     { titulo: 'Ser voluntário', icon: 'people-outline' as const, onPress: () => explorar('Voluntariado', 'Tempo') },
     { titulo: 'Eventos sociais', icon: 'calendar-outline' as const, onPress: () => explorar('Eventos') },
     { titulo: 'Criar campanha', icon: 'add-circle-outline' as const, onPress: () => roteador.push('/criar') },
+    { titulo: 'Rota Inteligente', icon: 'footsteps-outline' as const, onPress: () => roteador.push('/rota') },
+    { titulo: 'Mapa Solidário', icon: 'map-outline' as const, onPress: () => roteador.push('/mapa') },
   ];
   return <Screen title="soma" back={false} action={<Button title="Região" secondary onPress={() => roteador.push({ pathname: '/explorar', params: { secao: 'Campanhas', regiao: 'abrir', entrada: String(Date.now()) } })}/>}>
     <FotoDeAcolhimento aoEncontrar={() => explorar('Campanhas')}/>
@@ -77,6 +81,7 @@ export function Explore() {
   return <ContentMotion style={s.screen}><FlatList<ItemExplorar> keyboardShouldPersistTaps="handled" data={itens} keyExtractor={item => item.tipo + ':' + item.dados.id} contentContainerStyle={[s.content, { paddingTop: Math.max(24, insets.top + 12), paddingBottom: Math.max(32, insets.bottom + 20) }]} ItemSeparatorComponent={() => <View style={{ height: 16 }}/>}
     ListHeaderComponent={<View style={{ gap: 16, marginBottom: 20 }}><Text style={s.demoText}>AMBIENTE ACADÊMICO · DADOS LOCAIS</Text><Logo/><Text accessibilityRole="header" style={[s.heading, { marginBottom: 0 }]}>Explorar</Text><Copy muted>Uma causa, muitas formas de fazer parte.</Copy>
       <Field label="Buscar campanhas ou necessidades" value={busca} onChangeText={definirBusca} placeholder="Uma causa, um objeto, uma ação..."/>
+      <Button secondary title="Descoberta avançada e urgências" onPress={() => roteador.push('/descoberta')}/>
       <Choices options={['Campanhas', 'Necessidades', 'Voluntariado', 'Eventos']} selected={secao} onSelect={definirSecao}/>
       <Button secondary title={'Região: ' + regiao} onPress={() => { definirRegiaoEscolhida(regiao); definirCategoriaEscolhida(categoria); definirJanela(true); }}/>
       {secao === 'Necessidades' ? <Choices options={['Todos', 'Objetos', 'Tempo', 'R$']} selected={tipo} onSelect={definirTipo}/> : null}
@@ -92,18 +97,26 @@ export function Explore() {
 export function Campaign() {
   const roteador = useRouter(); const { s, colors } = useTheme(); const { id } = useLocalSearchParams<{ id?: string }>();
   const consulta = useDados<Campanha>('/campanhas/' + (id || 'familia')); const campanha = consulta.dados;
+  const [erroCompartilhar, definirErroCompartilhar] = useState('');
+  useEffect(() => { if (id) void requisitar('/campanhas/'+id+'/visualizacao','POST').catch(() => {}); }, [id]);
+  async function compartilhar() { try { await Share.share({ message: (campanha?.titulo || 'SOMA')+' '+urlApi().replace(/\/api\/?$/,'')+'/campanha?id='+encodeURIComponent(id || 'familia') }); } catch { definirErroCompartilhar('Não foi possível compartilhar. Tente novamente.'); } }
   const primeiro = campanha?.necessidades.find(pedido => pedido.tipo === 'dinheiro' && pedido.tipo_meta === 'aberta' || pedido.meta > pedido.recebido + Number(pedido.reservado));
   return <Screen variant="detail" title="Campanha"><EstadoConexao {...consulta}/>{campanha ? <>
     <View style={{ overflow: 'hidden', borderRadius: radius.hero, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface }}>
-      <FotoDeCampanha campanhaId={campanha.id} categoria={campanha.categoria} height={230}/>
+      {campanha.imagem_id ? <ImagemPublica id={campanha.imagem_id} altura={230}/> : <FotoDeCampanha campanhaId={campanha.id} categoria={campanha.categoria} height={230}/>}
       <View style={{ padding: 20, gap: 10 }}><Tag>{campanha.categoria + ' · ' + campanha.estado.toLocaleUpperCase()}</Tag><Text accessibilityRole="header" style={[s.heading, { marginBottom: 0 }]}>{campanha.titulo}</Text><Copy muted>{campanha.regiao}</Copy></View>
     </View>
     <Card title="A história desta causa" icon="people-outline"><Copy>{campanha.descricao}</Copy></Card>
+    {campanha.urgencia?.revisada ? <Tag>Urgência {campanha.urgencia.classe === 'critica' ? 'crítica' : 'moderada'} com revisão humana vigente</Tag> : null}
+    {campanha.necessidades.some(n => n.tipo === 'dinheiro') ? <Button secondary title="Acompanhar a Rota Inteligente" onPress={() => roteador.push({ pathname: '/rota', params: { id: campanha.id } })}/> : null}
+    <Button secondary title="Compartilhar campanha" disabled={!['ativa','encerrada'].includes(campanha.estado)} onPress={compartilhar}/>
+    {erroCompartilhar ? <Notice error>{erroCompartilhar}</Notice> : null}
     {primeiro && campanha.estado === 'ativa' ? <Button title="Ajudar agora" onPress={() => roteador.push({ pathname: '/necessidade', params: { id: primeiro.id } })}/> : <Notice>Esta causa não tem necessidades disponíveis agora. O histórico continua acessível.</Notice>}
     <Heading>Como você pode ajudar</Heading>
     {campanha.necessidades.map(pedido => <CartaoNecessidade key={pedido.id} pedido={pedido} aoAbrir={() => roteador.push({ pathname: '/necessidade', params: { id: pedido.id } })}/>)}
     {campanha.evento ? <Card title="Um encontro para somar" subtitle={campanha.evento} icon="calendar-outline" onPress={() => roteador.push({ pathname: '/acao', params: { id: campanha.id } })}/> : null}
     <Card title={campanha.responsavel} subtitle="Responsável pela campanha" icon="person-outline"><Copy muted>{campanha.regiao + ' · prazo: ' + campanha.prazo}</Copy>{campanha.instrucoes ? <Copy>{campanha.instrucoes}</Copy> : null}</Card>
+    {'perfil_publico' in campanha && campanha.perfil_publico ? <Button secondary title="Perfil público do responsável" onPress={() => roteador.push({ pathname: '/perfil-publico', params: { id: String(campanha.usuario_id) } })}/> : null}
     <Heading>Transparência, passo a passo</Heading><Copy muted>Veja as atualizações do responsável e as contribuições que já foram confirmadas.</Copy>
     <Button secondary title="Atualizações da campanha" onPress={() => roteador.push({ pathname: '/atualizacoes', params: { campanha: campanha.id } })}/>
     <Button secondary title="Resultado e impacto" onPress={() => roteador.push({ pathname: '/resultado', params: { id: campanha.id } })}/>

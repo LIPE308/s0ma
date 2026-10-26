@@ -1,5 +1,7 @@
 # Soma / Pulso — front acadêmico
 
+> Atualização SOMA 2.0 (22/10/2026): consulte [o guia atual](SOMA-2.md) e [a validação da entrega](SOMA-2-VALIDACAO.md). Este documento registra a base anterior; publicação direta, ausência de mapa/rota e contagens antigas foram substituídas pelo fluxo de revisão e extensões descritos no guia atual.
+
 Para o comportamento atual de administração, simulação financeira, entrega combinada externamente, reabertura e privacidade, consulte a [auditoria de entrega](AUDITORIA-ENTREGA.md) e o [roteiro de demonstração](DEMONSTRACAO.md). A identidade visual e as rotas existentes foram preservadas.
 
 As 35 rotas foram adaptadas dos arquivos de referência e dos cinco slides enviados. A interface usa View, Text, ScrollView, TextInput, TouchableOpacity, FlatList, StyleSheet, Switch, Modal, Stack, Tabs, Ionicons e componentes com props. O front inicial era uma demonstração local; a solicitação posterior autorizou o backend Node.js e o banco MySQL.
