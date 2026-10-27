@@ -12,7 +12,7 @@ O nome do cadastro de exemplo ana@exemplo.com será João em bancos novos e nest
 
 ## Implementação e critérios
 
-- `src/screens/mapa.tsx`: mapa em azul com legenda, chamadas externas para UFs pequenas, ranking regional e filtros por região, categoria e doações em aberto/todas as ajudas. Selecionar uma UF abre uma janela com valores e campanhas; a campanha verdadeira continua abrindo sua página. Zoom, arraste opcional, setas e centralização permanecem disponíveis.
+- `src/screens/mapa.tsx`: mapa em azul com legenda, chamadas externas para UFs pequenas, ranking regional e filtros por região, categoria e doações em aberto/todas as ajudas. Selecionar uma UF abre uma janela com valores e campanhas; a campanha verdadeira continua abrindo sua página. Zoom, arraste direto, setas e centralização permanecem disponíveis.
 - `src/data/prioridade-mapa.ts`: agregação somente de leitura. Conta urgências críticas revisadas antes das moderadas; desempata pelo indicador de urgência, lacuna e prazo já adotado pelo mapa. Lacuna alta sozinha não vira urgência. O grupo de maior lacuna usa a mediana dos valores estaduais em aberto, incluindo empates. A escala se mantém ao filtrar uma região.
 - `src/data/mapa-demonstracao.ts`: nove registros fictícios, isolados da API e identificados no topo, no mapa, nas prioridades e nas campanhas. Não há botão de doação para esses registros. O modo padrão continua usando os dados do aplicativo.
 - `backend/banco.js`: novo nome do cadastro inicial, João. A conta local correspondente foi atualizada de forma pontual, sem alterar a credencial ou outros usuários. Instalações existentes com nomes personalizados não são sobrescritas.
@@ -32,3 +32,16 @@ O mapa não mede pobreza, população, desastres ou necessidade social de todos 
 ![Mapa com dados ilustrativos em desktop](images/mapa-regional-desktop.png)
 
 ![Mapa com dados ilustrativos em celular](images/mapa-regional-mobile.png)
+
+## Atualização de gestos, voluntariado e compartilhamento
+
+- Arraste direto com mouse ou dedo; roda do mouse/trackpad e pinça com dois dedos ampliam de 100% a 400%. A câmera mantém o ponto de referência, respeita os limites do Brasil e desconta as margens do SVG. Mover o desenho não abre a janela de uma UF. Botões de zoom, centralização, setas e lista continuam disponíveis como alternativas aos gestos.
+- Web usa Pointer Events com captura durante o arraste e listener de roda não passivo apenas sobre o mapa. Native usa PanResponder, separando toque de arraste e pinça. A página continua rolando fora do desenho.
+- Cada conta pode reservar uma vaga por oportunidade de voluntariado. O servidor valida quantidade, consulta a inscrição dentro da transação e bloqueia concorrência. Participações concluídas também impedem duplicação. Cancelamento sem realização permite voltar a se inscrever; participações em outras oportunidades continuam permitidas. Histórico antigo com mais de uma vaga é preservado.
+- A tela de voluntariado consulta a atividade, mostra a inscrição existente e oferece acesso a ela. A proteção do servidor vale também para links diretos ou dois envios simultâneos.
+- Antes da confirmação da doação há um lembrete discreto; depois dela há um convite para compartilhar o aplicativo. O mesmo convite aparece ao registrar uma ajuda e em Convidar amigos. O texto explica a possibilidade de ampliar a audiência e a receita elegível para emergências revisadas, preservando a indicação de simulação e a ausência de receita garantida. Compartilhar não lança dinheiro no fundo.
+- `metro.config.js` inclui explicitamente o diretório do CLI no índice: o crawler estava interpretando esse diretório como reparse point do OneDrive e falhando ao calcular o SHA-1 do runtime. A configuração mantém os padrões do Expo.
+
+Validação adicional: 47 testes de backend em MySQL descartável, cinco testes de mapa/câmera, TypeScript, lint e exportações web/Android/iOS aprovados. No navegador foram exercidos arraste com mouse (viewBox alterado e zero janelas abertas), roda (zoom alterado), botões, inscrição, bloqueio ao retornar à oportunidade e conclusão da doação simulada com convite. Layouts de 375 × 812 e 844 × 390 sem transbordamento horizontal nas telas conferidas. A matemática da pinça foi testada automaticamente; gestos em aparelho físico ainda não foram exercidos.
+
+![Convite após uma doação de teste em banco descartável](images/compartilhar-pos-doacao.png)

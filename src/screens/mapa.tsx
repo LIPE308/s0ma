@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { PanResponder, Pressable, Switch, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, Text, View, useWindowDimensions } from 'react-native';
 import Svg, { Circle, G, Line as SvgLine, Path, Text as SvgText } from 'react-native-svg';
 import { Button, Card, Choices, Copy, Dialog, Disclosure, EmptyState, Heading, Screen, useTheme } from '../components/ui';
 import { EstadoConexao } from '../components/conexao';
@@ -11,6 +11,8 @@ import { descricaoNivel, regioesBrasil, resumirMapa } from '../data/prioridade-m
 import { mapaDemonstracao } from '../data/mapa-demonstracao';
 import type { MapaDados } from '../servicos/soma2';
 import cartografia from '../data/mapa-brasil.json';
+import { MapaInterativo } from '../components/mapa-interativo';
+import { ampliarCamera, cameraInicial, limitarCamera, zoomMaximo } from '../data/camera-mapa';
 
 const geografia = new Map(cartografia.estados.map(e => [e.uf, e]));
 const chamadas: Record<string, { x: number; y: number }> = {
@@ -37,7 +39,8 @@ export function MapaSolidario() {
   const router = useRouter(), { colors, dark, fontsReady } = useTheme(), { width } = useWindowDimensions();
   const [uf, setUf] = useState(''), [categoria, setCategoria] = useState('Todas'), [cidade, setCidade] = useState('Todos');
   const [regiao, setRegiao] = useState('Todas'), [apenasDinheiro, setApenasDinheiro] = useState(true), [demo, setDemo] = useState(false);
-  const [filtros, setFiltros] = useState(false), [zoom, setZoom] = useState(1), [pan, setPan] = useState({ x: 0, y: 0 }), [arrastar, setArrastar] = useState(false);
+  const [filtros, setFiltros] = useState(false), [camera, setCamera] = useState(cameraInicial);
+  const { zoom } = camera;
   const consulta = useDados<MapaDados>(demo ? null : '/mapa' + (categoria === 'Todas' ? '' : '?categoria=' + encodeURIComponent(categoria)));
   const fonte = useMemo(() => demo ? mapaDemonstracao.map(e => ({ ...e, campanhas: e.campanhas.filter(c => categoria === 'Todas' || c.categoria === categoria) })) : consulta.dados?.estados || [], [demo, categoria, consulta.dados]);
   const resumo = useMemo(() => resumirMapa(fonte, cartografia.estados, apenasDinheiro), [fonte, apenasDinheiro]);
@@ -51,21 +54,12 @@ export function MapaSolidario() {
   const destaque = resumo.regioes.find(e => e.campanhas > 0), largo = width >= 900;
   const tintas = dark ? [colors.soft, '#304C72', '#436496', '#84A7FF', '#B6CEFF'] : [colors.soft, '#DCE6FF', '#A6BEFF', '#3157C8', '#1748F5'];
   const fonteForte = fontsReady ? 'Manrope-SemiBold' : undefined;
-  const posicao = useRef(pan), inicio = useRef(pan);
-  useEffect(() => { posicao.current = pan; }, [pan]);
-  const mover = (x: number, y: number) => setPan(p => ({ x: Math.max(-220, Math.min(220, p.x + x)), y: Math.max(-220, Math.min(220, p.y + y)) }));
-  const gesto = useMemo(() => PanResponder.create({
-    onMoveShouldSetPanResponder: (_, g) => arrastar && zoom > 1 && (Math.abs(g.dx) > 10 || Math.abs(g.dy) > 10),
-    onPanResponderGrant: () => { inicio.current = posicao.current; },
-    onPanResponderMove: (_, g) => setPan({ x: Math.max(-220, Math.min(220, inicio.current.x + g.dx)), y: Math.max(-220, Math.min(220, inicio.current.y + g.dy)) }),
-  }), [arrastar, zoom]);
+  const mover = (x: number, y: number) => setCamera(c => limitarCamera({ ...c, x: c.x - x / c.zoom, y: c.y - y / c.zoom }));
   function selecionar(valor: string) { setUf(valor); setCidade('Todos'); }
   function selecionarRegiao(valor: string) { setRegiao(valor); selecionar(''); }
   function modo(valor: string) { setDemo(valor === 'Exemplo visual'); setCategoria('Todas'); selecionarRegiao('Todas'); }
-  function centralizar() { setZoom(1); setPan({ x: 0, y: 0 }); selecionarRegiao('Todas'); }
-  const mapaLargura = 600 / zoom, mapaAltura = 580 / zoom;
-  const origemX = zoom > 1 && geoSelecionada ? Math.max(0, Math.min(600 - mapaLargura, geoSelecionada.x - mapaLargura / 2)) : (600 - mapaLargura) / 2;
-  const origemY = zoom > 1 && geoSelecionada ? Math.max(0, Math.min(580 - mapaAltura, geoSelecionada.y - mapaAltura / 2)) : (580 - mapaAltura) / 2;
+  function centralizar() { setCamera(cameraInicial); selecionarRegiao('Todas'); }
+  const alturaMapa = largo ? 480 : Math.max(270, Math.min(420, (width - 40) * .96));
   const vazio = !consulta.carregando && !consulta.erro && !demo && !!consulta.dados && !total;
 
   return <Screen title="Mapa Solidário" heading="Onde sua ajuda faz falta." subtitle="Encontre campanhas por região e entenda o que ainda falta para cada causa.">
@@ -94,9 +88,9 @@ export function MapaSolidario() {
             <Text style={{ color: colors.muted, fontSize: 13, lineHeight: 21 }}>{total ? contagemCampanhas(total) + ' nesta seleção · ' + moeda(restante) + ' em aberto' : 'Aguardando campanhas com localização autorizada'}</Text>
             {demo ? <Text style={{ color: colors.primary, fontSize: 12, lineHeight: 20 }}>Cenário ilustrativo · valores simulados</Text> : null}
           </View>
-          <View {...gesto.panHandlers} style={{ backgroundColor: colors.surface }}>
-            <Svg viewBox={[origemX - pan.x, origemY - pan.y, mapaLargura, mapaAltura].join(' ')}
-              width="100%" height={largo ? 480 : Math.max(270, Math.min(420, (width - 40) * .96))}
+          <MapaInterativo camera={camera} onChange={setCamera} altura={alturaMapa}>
+            <Svg viewBox={[camera.x, camera.y, 600 / zoom, 580 / zoom].join(' ')}
+              width="100%" height={alturaMapa}
               accessibilityLabel="Mapa de campanhas por estado. A legenda e a lista abaixo descrevem os mesmos dados.">
               {cartografia.estados.map(e => {
                 const ativo = regiao === 'Todas' || e.regiao === regiao, dados = porUF.get(e.uf), nivel = dados?.nivel || 0;
@@ -114,14 +108,14 @@ export function MapaSolidario() {
                 </G>;
               })}
             </Svg>
-          </View>
+          </MapaInterativo>
           <View style={{ padding: 16, gap: 14 }}>
             <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'space-between' }}>
-              <ControleMapa titulo="Afastar mapa" icone="remove" desabilitado={zoom <= 1} onPress={() => { setZoom(z => Math.max(1, z - .25)); setPan({ x: 0, y: 0 }); }}/>
+              <ControleMapa titulo="Afastar mapa" icone="remove" desabilitado={zoom <= 1} onPress={() => setCamera(c => ampliarCamera(c, c.zoom - .25))}/>
               <View style={{ flex: 1 }}><Button secondary title="Brasil inteiro" onPress={centralizar}/></View>
-              <ControleMapa titulo="Aproximar mapa" icone="add" desabilitado={zoom >= 2.5} onPress={() => setZoom(z => Math.min(2.5, z + .25))}/>
+              <ControleMapa titulo="Aproximar mapa" icone="add" desabilitado={zoom >= zoomMaximo} onPress={() => setCamera(c => ampliarCamera(c, c.zoom + .25))}/>
             </View>
-            <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 19 }}>Toque em uma UF ou use a lista de estados. Zoom: {Math.round(zoom * 100)}%.</Text>
+            <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 19 }}>Arraste com o dedo ou mouse. Use dois dedos ou a roda do mouse para ampliar. Zoom: {Math.round(zoom * 100)}%.</Text>
             <View style={{ gap: 9 }}>
               {[4, 3, 2, 1, 0].map(nivel => <View key={nivel} style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
                 <View style={{ width: 14, height: 14, borderRadius: 4, backgroundColor: tintas[nivel], borderWidth: 1, borderColor: colors.line }}/>
@@ -129,7 +123,7 @@ export function MapaSolidario() {
               </View>)}
             </View>
             <Disclosure title="Mover o mapa ampliado">
-              <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}><Switch accessibilityLabel="Ativar movimentação do mapa" value={arrastar} onValueChange={setArrastar}/><Copy>Arrastar quando ampliado</Copy></View>
+              <Copy muted>Você também pode usar os botões para navegar, sem precisar arrastar.</Copy>
               <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
                 {([{ titulo: 'Mover mapa para a esquerda', icone: 'arrow-back', x: 60, y: 0 }, { titulo: 'Mover mapa para cima', icone: 'arrow-up', x: 0, y: 60 }, { titulo: 'Mover mapa para baixo', icone: 'arrow-down', x: 0, y: -60 }, { titulo: 'Mover mapa para a direita', icone: 'arrow-forward', x: -60, y: 0 }] as const).map(c => <ControleMapa key={c.titulo} titulo={c.titulo} icone={c.icone} desabilitado={zoom <= 1} onPress={() => mover(c.x, c.y)}/>)}
               </View>

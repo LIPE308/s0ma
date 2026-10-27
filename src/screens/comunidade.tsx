@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, Text, View } from 'react-native';
 import { Button, Card, Choices, Copy, Disclosure, EmptyState, Field, Heading, Notice, Screen, useTheme } from '../components/ui';
 import { EstadoConexao, PedirLogin } from '../components/conexao';
-import { BotaoCompartilhar } from '../components/solidariedade';
+import { ConviteCompartilharApp } from '../components/solidariedade';
 import { ImagemPrivada } from '../components/arquivos';
 import { useDados, useSessao, usuarioLogado, requisitar, atualizarUsuario, limparSessao, mensagemErro, type Usuario, type Campanha } from '../servicos/api';
 import type { PerfilAmpliado } from '../servicos/soma2';
@@ -34,7 +34,7 @@ export function MinhasCampanhas(){
  const r=useRouter(),q=useDados<Campanha[]>(usuarioLogado()?'/campanhas?minhas=1':null);return <Screen title="Minhas campanhas" heading="Cuide das suas histórias.">{!usuarioLogado()?<PedirLogin/>:<><EstadoConexao {...q}/>{q.dados?.map(c=><Card key={c.id} title={c.titulo} subtitle={c.estado==='rascunho'?c.submetida?'Em análise':'Em preparação':c.estado==='ativa'?'Publicada':c.estado==='encerrada'?'Encerrada':c.estado} onPress={()=>r.push({pathname:'/gerenciar',params:{id:c.id}})}/>)}{q.dados?.length===0?<EmptyState title="Sua primeira história pode começar aqui.">Conte o que precisa e convide sua comunidade a somar.</EmptyState>:null}<Button title="Criar uma campanha" onPress={()=>r.push('/criar')}/></>}</Screen>;
 }
 export function Convidar(){
- const {colors}=useTheme();return <Screen title="Convidar amigos" heading="Mais pessoas. Mais possibilidades."><View style={{height:160,backgroundColor:colors.brandSoft,borderRadius:28,alignItems:'center',justifyContent:'center'}}><Ionicons aria-hidden accessible={false} name="people-outline" size={64} color={colors.primary}/><Ionicons aria-hidden accessible={false} name="heart" size={24} color={colors.primary}/></View><Copy>Uma causa pode encontrar ajuda na conversa com alguém que você conhece.</Copy><BotaoCompartilhar titulo="Conheça o SOMA. Toda ajuda conta." principal/><Copy muted>Compartilhar amplia o alcance. Não garante doações nem receita de anúncios.</Copy></Screen>;
+ const {colors}=useTheme();return <Screen title="Convidar amigos" heading="Mais pessoas. Mais possibilidades."><View style={{height:160,backgroundColor:colors.brandSoft,borderRadius:28,alignItems:'center',justifyContent:'center'}}><Ionicons aria-hidden accessible={false} name="people-outline" size={64} color={colors.primary}/><Ionicons aria-hidden accessible={false} name="heart" size={24} color={colors.primary}/></View><ConviteCompartilharApp/></Screen>;
 }
 export function Compartilhamentos(){
  const r=useRouter(),q=useDados<{id:string;titulo:string;registros:number;compartilhado_em:string}[]>(usuarioLogado()?'/meus-compartilhamentos':null);return <Screen title="Meus compartilhamentos" heading="Histórias que você levou adiante.">{!usuarioLogado()?<PedirLogin/>:<><EstadoConexao {...q}/>{q.dados?.map(c=><Card key={c.id} title={c.titulo} subtitle="Link copiado ou compartilhamento iniciado pelo aplicativo" onPress={()=>r.push({pathname:'/campanha',params:{id:c.id}})}/>)}{q.dados?.length===0?<EmptyState title="Uma conversa já pode ajudar." action="Encontrar uma campanha" onPress={()=>r.push('/explorar')}>Os links de campanhas que você copiar ou compartilhar aparecerão aqui.</EmptyState>:null}<Copy muted>O SOMA registra a ação no aplicativo. Não confirma quem recebeu o link e não gera receita por esse registro.</Copy></>}</Screen>;

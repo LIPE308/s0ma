@@ -131,9 +131,32 @@ test('API Node + MySQL: fluxos completos e persistência', { timeout: 90000 }, a
       await chamar(`/campanhas/${campanha.id}`, { metodo: 'PUT', token: novo.token, dados: rascunho('Não apagar histórico', campanha.necessidades.filter(item => item.id !== necessidade.id)), codigo: 409 });
       assert.equal((await chamar(`/campanhas/${campanha.id}`)).titulo, 'Título atualizado');
     });
-    await turma.test('recebimento parcial, cancelamento, ação, atualizações e avisos', async () => {
+    await turma.test('voluntariado: uma vaga por pessoa, concorrência, realização e reinscrição após cancelamento', async () => {
+      const c = await chamar('/campanhas', { metodo: 'POST', token: novo.token, dados: rascunho('Voluntariado único', [pedido('Mutirão A', 'tarefa', 4), pedido('Mutirão B', 'tarefa', 4)]), codigo: 201 });
+      const [a, b] = c.necessidades;
+      await chamar('/ajudas', { metodo: 'POST', token: lucas.token, dados: { tipo: 'tarefa', necessidade_id: a.id, quantidade: 2 }, codigo: 400 });
+      const respostas = await Promise.all([1, 2].map(() => fetch(endereco + '/ajudas', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${lucas.token}` }, body: JSON.stringify({ tipo: 'tarefa', necessidade_id: a.id, quantidade: 1 }) })));
+      assert.deepEqual(respostas.map(r => r.status).sort(), [201, 409]);
+      const inscricao = await respostas.find(r => r.status === 201).json();
+      assert.equal(Number((await chamar('/necessidades/' + a.id)).reservado), 1);
+      const outraPessoa = await chamar('/ajudas', { metodo: 'POST', token: marina.token, dados: { tipo: 'tarefa', necessidade_id: a.id, quantidade: 1 }, codigo: 201 });
+      // Outra oportunidade continua disponível para a mesma pessoa.
+      const dados = { tipo: 'tarefa', necessidade_id: b.id, quantidade: 1 };
+      const outra = await chamar('/ajudas', { metodo: 'POST', token: lucas.token, dados, chave: 'voluntariado-unico-0001', codigo: 201 });
+      assert.equal((await chamar('/ajudas', { metodo: 'POST', token: lucas.token, dados, chave: 'voluntariado-unico-0001', codigo: 201 })).id, outra.id);
+      await chamar('/ajudas/' + inscricao.id + '/confirmar', { metodo: 'PATCH', token: novo.token, dados: { recebido: 1 } });
+      await chamar('/ajudas', { metodo: 'POST', token: lucas.token, dados: { tipo: 'tarefa', necessidade_id: a.id }, codigo: 409 });
+      await chamar('/ajudas/' + outraPessoa.id + '/cancelar', { metodo: 'PATCH', token: marina.token });
+      await chamar('/ajudas', { metodo: 'POST', token: marina.token, dados: { tipo: 'tarefa', necessidade_id: a.id }, codigo: 201 });
+      // Mesmo um registro legado cancelado depois de realização não abre uma segunda vaga.
+      await conexao.query("UPDATE ajudas SET estado='cancelado' WHERE id=?", [inscricao.id]);
+      await chamar('/ajudas', { metodo: 'POST', token: lucas.token, dados: { tipo: 'tarefa', necessidade_id: a.id }, codigo: 409 });
+    });
+    await turma.test('recebimento parcial legado, cancelamento, ação, atualizações e avisos', async () => {
       const tarefa = campanha.necessidades.find(item => item.tipo === 'tarefa');
-      const reserva = await chamar('/ajudas', { metodo: 'POST', token: lucas.token, dados: { tipo: 'tarefa', necessidade_id: tarefa.id, quantidade: 2 }, codigo: 201 });
+      // Histórico anterior à regra de uma vaga: deve continuar confirmável sem reescrever dados.
+      const [legada] = await conexao.query("INSERT INTO ajudas (usuario_id,campanha_id,necessidade_id,tipo,quantidade) VALUES (?,?,?,'tarefa',2)", [lucas.usuario.id, campanha.id, tarefa.id]);
+      const reserva = { id: legada.insertId };
       await chamar(`/ajudas/${reserva.id}/confirmar`, { metodo: 'PATCH', token: novo.token, dados: { recebido: 1 } });
       assert.equal((await chamar(`/necessidades/${tarefa.id}`)).reservado, 1);
       await chamar(`/ajudas/${reserva.id}/cancelar`, { metodo: 'PATCH', token: lucas.token });

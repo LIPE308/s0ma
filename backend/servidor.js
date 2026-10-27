@@ -292,6 +292,13 @@ async function atender(requisicao, resposta) {
           await consulta('SELECT id FROM necessidades WHERE id=? FOR UPDATE', [pedido.id]);
           const atual = await obterNecessidade(pedido.id, consulta);
           if (atual.tipo !== tipo) erro('O tipo de ajuda não corresponde ao pedido.');
+          if (tipo === 'tarefa') {
+            if (quantidade !== 1) erro('Cada pessoa pode ocupar somente uma vaga de voluntariado por oportunidade.');
+            // O bloqueio da campanha acima serializa inclusive dois envios simultâneos.
+            // Cancelamento sem realização libera nova inscrição; histórico realizado permanece único.
+            const [existente] = await consulta("SELECT id FROM ajudas WHERE necessidade_id=? AND usuario_id=? AND tipo='tarefa' AND (estado<>'cancelado' OR recebido>0) FOR UPDATE", [pedido.id, usuario.id]);
+            if (existente) erro('Você já se voluntariou nesta oportunidade. Acompanhe sua participação em Minha atividade.', 409);
+          }
           if (quantidade > atual.meta - atual.recebido - atual.reservado) erro('Não há quantidade ou vagas suficientes.', 409);
         } else {
           if (!campanha.evento) erro('Esta campanha não tem uma ação.');

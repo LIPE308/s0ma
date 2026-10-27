@@ -5,6 +5,7 @@ import { Button, Card, Choices, Copy, Dialog, EmptyState, Field, Heading, Line, 
 import { EstadoConexao, PedirLogin } from '../components/conexao';
 import { requisitar, useDados, usuarioLogado, mensagemErro, criarChaveOperacao, type Necessidade, type Campanha, type Ajuda, type Atividade } from '../servicos/api';
 import { formatarDinheiro } from '../data/formatacao';
+import { ConviteCompartilharApp } from '../components/solidariedade';
 import { FotoDeVoluntariado } from '../components/fotos';
 import { CartaoCampanha } from '../components/campanhas';
 import { lerEvento } from '../data/eventos';
@@ -28,10 +29,13 @@ export function Volunteer() {
   const [observacao, definirObservacao] = useState('');
   const pedido = consulta.dados; const livre = pedido ? Math.max(0, pedido.meta - pedido.recebido - Number(pedido.reservado)) : 0;
   const propria = !!usuarioLogado() && pedido?.responsavel_id === usuarioLogado()?.id;
+  const atividade = useDados<Atividade>(usuarioLogado() ? '/atividade' : null);
+  const inscricao = atividade.dados?.ajudas.find(a => a.necessidade_id === pedido?.id && a.tipo === 'tarefa' && (a.estado !== 'cancelado' || a.recebido > 0));
   return <Screen variant="detail" title="Voluntariado" heading={pedido?.nome || 'Seu tempo faz diferença.'} subtitle={pedido?.campanha}>
     <EstadoConexao {...consulta}/>{pedido ? <><FotoDeVoluntariado/><Heading>O que vamos fazer juntos</Heading><Copy>{pedido.descricao}</Copy><Heading>Onde e até quando</Heading><Copy>{pedido.instrucoes + '\n' + pedido.regiao + '\nPrazo: ' + pedido.prazo}</Copy><Copy muted>{livre} vagas livres</Copy>
       {propria ? <Notice>Você organiza esta campanha. Acompanhe as participações na gestão da causa.</Notice> : null}
-      {!usuarioLogado() ? <PedirLogin/> : <><Field label="Observação (opcional)" multiline value={observacao} onChangeText={definirObservacao}/><Button title="Revisar minha participação" disabled={livre <= 0 || propria || pedido.campanha_estado !== 'ativa' || pedido.tipo !== 'tarefa'} onPress={() => roteador.push({ pathname: '/revisar-ajuda', params: { id: pedido.id, modo: 'tarefa', observacao, quantidade: '1' } })}/></>}
+      <Copy muted>Uma pessoa, uma vaga por oportunidade. Você pode participar de outras oportunidades também.</Copy>
+      {!usuarioLogado() ? <PedirLogin/> : <><EstadoConexao {...atividade}/>{inscricao ? <><Notice success>{inscricao.estado === 'realizado' || inscricao.recebido > 0 ? 'Você já participou desta oportunidade.' : 'Você já está inscrito nesta oportunidade.'}</Notice><Button secondary title="Ver minha participação" onPress={() => roteador.push({ pathname: '/ajuda', params: { id: String(inscricao.id) } })}/></> : null}<Field label="Observação (opcional)" multiline value={observacao} onChangeText={definirObservacao}/><Button title="Revisar minha participação" disabled={!!inscricao || atividade.carregando || !!atividade.erro || !atividade.dados || livre <= 0 || propria || pedido.campanha_estado !== 'ativa' || pedido.tipo !== 'tarefa'} onPress={() => roteador.push({ pathname: '/revisar-ajuda', params: { id: pedido.id, modo: 'tarefa', observacao, quantidade: '1' } })}/></>}
     </> : null}
   </Screen>;
 }
@@ -98,6 +102,7 @@ export function HelpDetails() {
   return <Screen variant="detail" title="Minha ajuda" heading={ajuda ? `${ajuda.quantidade} · ${ajuda.necessidade}` : 'Minha ajuda'} subtitle={ajuda?.campanha}>
     {!usuarioLogado() ? <PedirLogin/> : <><EstadoConexao {...consulta}/>{ajuda ? <>
       {novo === '1' && ajuda.estado !== 'cancelado' ? <Notice success>Seu compromisso foi registrado. Confira as instruções e acompanhe o status por aqui.</Notice> : null}
+      {novo === '1' && ajuda.estado !== 'cancelado' ? <ConviteCompartilharApp/> : null}
       <Tag>{ajuda.estado.toLocaleUpperCase()}</Tag><Copy>Realizado: {ajuda.recebido} de {ajuda.quantidade}</Copy><Heading>{ajuda.tipo === 'acao' ? 'Detalhes do encontro' : 'Instruções da participação'}</Heading><EstadoConexao {...(ajuda.tipo === 'acao' ? evento : pedido)}/><Copy>{ajuda.tipo === 'acao' ? evento.dados?.evento : pedido.dados?.descricao}{'\n'}{ajuda.tipo === 'acao' ? evento.dados?.regiao : ajuda.instrucoes}{'\n'}{ajuda.entrega}{'\n'}{ajuda.horario}</Copy>
       {ajuda.necessidade_id ? <Button secondary title="Ver necessidade" onPress={() => roteador.push({ pathname: '/necessidade', params: { id: ajuda.necessidade_id } })}/> : null}
       {telefone ? <><Button secondary title="Combinar por WhatsApp" onPress={() => { void Linking.openURL('https://wa.me/' + telefone).catch(() => definirErro('Não foi possível abrir o WhatsApp. Tente ligar para o responsável.')); }}/><Button secondary title="Ligar para o responsável" onPress={() => { void Linking.openURL('tel:+' + telefone).catch(() => definirErro('Não foi possível abrir o telefone neste dispositivo.')); }}/></> : ajuda.tipo === 'objeto' ? <Copy muted>O responsável ainda não informou telefone no perfil. Consulte as orientações da ajuda para combinar a entrega.</Copy> : null}
