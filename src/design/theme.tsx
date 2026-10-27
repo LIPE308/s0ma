@@ -16,7 +16,7 @@ function initialPreference(): ThemePreference {
 }
 type Design = { colors: Colors; dark: boolean; fontsReady: boolean; temaPronto: boolean; preferencia: ThemePreference; definirTema: (value: ThemePreference) => void; erroTema: string };
 const DesignContext = createContext<Design>({ colors: palette.light, dark: false, fontsReady: false, temaPronto: false, preferencia: 'sistema', definirTema: () => {}, erroTema: '' });
-// Serialize native writes so quick changes cannot persist in the wrong order.
+
 let themeWrite = Promise.resolve();
 export function DesignProvider({ fontsReady, children }: { fontsReady: boolean; children: ReactNode }) {
   const system = useColorScheme();

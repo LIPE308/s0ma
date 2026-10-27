@@ -1,9 +1,9 @@
-// Node puro: servidor HTTP, JSON, SQL e funções. Sem Express e sem ORM.
+// Node puro galera
 const http = require('node:http');
 const { randomBytes, randomUUID } = require('node:crypto');
 const { existsSync, readFileSync, statSync } = require('node:fs');
 const { resolve, join, extname, sep } = require('node:path');
-// O .env é opcional, mas precisa ser lido antes de criar a conexão com o banco.
+
 const arquivoConfiguracao = join(__dirname, '.env');
 if (existsSync(arquivoConfiguracao)) process.loadEnvFile(arquivoConfiguracao);
 const { banco, consultar, transacao, inicializarBanco } = require('./banco');
@@ -94,7 +94,6 @@ async function calcularSaldo(campanhaId, consulta = consultar) {
   return { confirmado, reservado, repassado, disponivel: confirmado - reservado - repassado, simulado: true };
 }
 
-// Também serve o front compilado: um único endereço para apresentar em sala.
 function servirFront(caminho, resposta) {
   const pasta = resolve(__dirname, '..', 'dist');
   let arquivo = resolve(pasta, '.' + caminho);
@@ -132,7 +131,7 @@ async function atender(requisicao, resposta) {
     let codigo = 200;
     let partes;
 
-    // 1. Conta e sessão. Nunca guardamos a senha original no banco.
+    // 1. conta e sessao aq
     if (caminho === '/api/cadastro' && metodo === 'POST') {
       const nome = texto(dados.nome, 'o nome', 150);
       const email = texto(dados.email, 'o e-mail', 150).toLowerCase();
@@ -166,7 +165,7 @@ async function atender(requisicao, resposta) {
       await consultar('UPDATE usuarios SET nome=?,telefone=?,regiao=?,novidades=? WHERE id=?', [nome, telefone, regiao, Number(dados.novidades ?? usuario.novidades), usuario.id]);
       const [pessoa] = await consultar('SELECT * FROM usuarios WHERE id=?', [usuario.id]); resultado = usuarioPublico(pessoa);
 
-    // 2. Campanhas e pedidos.
+    // 2. campanhas e pedidos
     } else if (caminho === '/api/campanhas' && metodo === 'GET') {
       if (endereco.searchParams.get('minhas') === '1') { exigirLogin(usuario); resultado = await consultar(`${consultaCampanhas} WHERE c.usuario_id=? ORDER BY c.criada_em DESC`, [usuario.id]); }
       else resultado = await consultar(`${consultaCampanhas} WHERE c.estado IN ('ativa','encerrada') ORDER BY c.criada_em DESC`);
@@ -221,7 +220,7 @@ async function atender(requisicao, resposta) {
       else if (metodo === 'POST') { exigirResponsavel(usuario, campanha); const insercao = await consultar('INSERT INTO atualizacoes (campanha_id,usuario_id,titulo,relato) VALUES (?,?,?,?)', [campanha.id, usuario.id, texto(dados.titulo, 'o título', 150), texto(dados.relato, 'o relato', 10000)]); resultado = { id: insercao.insertId }; codigo = 201; }
       else erro('Método não permitido.', 405);
 
-    // 3. Ajudas: reservar, acompanhar, cancelar e confirmar.
+    // 3. ajudas: reservar, acompanhar, cancelar e confirmar
     } else if (caminho === '/api/ajudas' && metodo === 'POST') {
       exigirLogin(usuario);
       const tipo = opcao(dados.tipo, ['objeto', 'tarefa', 'acao'], 'tipo de ajuda');
@@ -280,7 +279,7 @@ async function atender(requisicao, resposta) {
       exigirLogin(usuario);
       resultado = { ajudas: await consultar(`${consultaAjudas} WHERE a.usuario_id=? ORDER BY a.id DESC`, [usuario.id]), campanhas: await consultar(`${consultaCampanhas} WHERE c.usuario_id=? ORDER BY c.criada_em DESC`, [usuario.id]), pagamentos: await consultar('SELECT p.*,n.nome AS necessidade,c.titulo AS campanha FROM pagamentos p JOIN necessidades n ON n.id=p.necessidade_id JOIN campanhas c ON c.id=n.campanha_id WHERE p.usuario_id=? ORDER BY p.id DESC', [usuario.id]) };
 
-    // 4. Dinheiro de apresentação. Nenhuma chamada a banco ou provedor financeiro.
+    // 4. fake money de apresentaçao
     } else if (caminho === '/api/pagamentos' && metodo === 'POST') {
       exigirLogin(usuario);
       const valor = inteiro(dados.valor, 'o valor em centavos', 1000);
@@ -360,7 +359,7 @@ async function atender(requisicao, resposta) {
       });
       else erro('Método não permitido.', 405);
 
-    // 5. Denúncias, avisos e administração.
+    // 5. denuncias, avisos e administraçao
     } else if (caminho === '/api/denuncias' && metodo === 'POST') {
       exigirLogin(usuario); const campanha = await obterCampanha(texto(dados.campanha_id, 'a campanha', 36));
       const insercao = await consultar('INSERT INTO denuncias (campanha_id,usuario_id,motivo,relato) VALUES (?,?,?,?)', [campanha.id, usuario.id, texto(dados.motivo, 'o motivo', 150), texto(dados.relato, 'o relato', 5000)]);

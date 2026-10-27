@@ -4,7 +4,6 @@ import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import { motion, useDesign } from './theme';
 import { nativeDriver, useReducedMotion } from './motion';
 
-// The same 100-unit geometry is used by the exported SVG and Expo icons.
 export function BrandMark({ size = 40, color, construction }: { size?: number; color?: string; construction?: Animated.Value }) {
   const { colors, dark } = useDesign(); const unit = size / 100; const fill = color || colors.hero;
   const rectangles = [[20, 20, 44, 18], [20, 38, 18, 26], [36, 62, 44, 18], [62, 36, 18, 26]];

@@ -15,7 +15,7 @@ export type Aviso = { id: number; mensagem: string; lido: boolean; criado_em: st
 export type Denuncia = { id: number; campanha_id: string; campanha: string; motivo: string; relato: string };
 export type Administracao = { campanhas: Campanha[]; denuncias: Denuncia[]; repasses: Repasse[]; pagamentos: Pagamento[] };
 
-// No navegador usa o mesmo computador. No celular configure o IP do computador.
+// no navegador usa o mesmo pc / no celular tem que configurar o IP do pc
 const enderecoPadrao = Platform.OS === 'web' && typeof window !== 'undefined' ? (['8081', '8082'].includes(window.location.port) ? `${window.location.protocol}//${window.location.hostname}:3001/api` : `${window.location.origin}/api`) : 'http://localhost:3001/api';
 const enderecoApi = process.env.EXPO_PUBLIC_URL_BACKEND || enderecoPadrao;
 let tokenAtual = '';
@@ -55,7 +55,6 @@ export async function requisitar<T>(caminho: string, metodo = 'GET', dados?: unk
   return resultado as T;
 }
 
-// Reconsulta ao voltar à tela; abas fora de foco não fazem requisições em segundo plano.
 export function useDados<T>(caminho: string | null) {
   const emFoco = useIsFocused();
   const [dados, definirDados] = useState<T | null>(null);

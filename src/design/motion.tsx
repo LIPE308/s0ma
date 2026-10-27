@@ -3,7 +3,6 @@ import { useFocusEffect } from 'expo-router';
 import { AccessibilityInfo, Animated, Easing, Platform, Pressable, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { motion } from './theme';
 
-// Start static until the system preference is known; never assume animation is allowed.
 const MotionContext = createContext(true);
 export function MotionProvider({ children }: { children: ReactNode }) {
   const [reduced, setReduced] = useState(true);

@@ -1,4 +1,3 @@
-// A05, slide 17: Tabs com Ionicons, adaptadas às cinco abas do Pulso.
 import { Tabs } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { Animated } from 'react-native';

@@ -1,4 +1,4 @@
-// Testes de integração: usam um banco separado, nunca apagam o banco soma.
+// sao so testes de integraçao e usam um banco separado
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { spawn } = require('node:child_process');
@@ -11,7 +11,7 @@ const configuracao = {
   host: process.env.MYSQL_HOST || '127.0.0.1',
   port: Number(process.env.MYSQL_PORTA || 3306),
   user: process.env.MYSQL_TESTE_USUARIO || 'root',
-  password: process.env.MYSQL_TESTE_SENHA ?? 'raiz_local_123',
+  password: process.env.MYSQL_TESTE_SENHA ?? '',
 };
 let conexao, processo, endereco;
 async function iniciarServidor() {

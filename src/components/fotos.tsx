@@ -12,7 +12,7 @@ const imagens = {
   comunidade: require('../../assets/photos/comunidade-unsplash.jpg'),
 };
 
-// Uma foto editorial por campanha de exemplo. Novas campanhas não herdam fotos de outras causas.
+// Uma foto editorial por campanha de exemplo
 const fotosDeCampanhas: Record<string, { source: number; descricao: string }> = {
   familia: { source: imagens.familia, descricao: 'Família reunida ao entardecer' },
   biblioteca: { source: imagens.educacao, descricao: 'Crianças entre livros em uma atividade de educação' },
