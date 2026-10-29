@@ -5,7 +5,8 @@ const { gerarSenha } = require('./auxiliares');
 const { randomBytes } = require('node:crypto');
 const { migrarSoma2 } = require('./migrar-soma2');
 
-const banco = mysql.createPool({
+const usarPostgres = process.env.BANCO_TIPO === 'postgres' || Boolean(process.env.DATABASE_URL);
+const banco = usarPostgres ? require('./postgres').criarBancoPostgres() : mysql.createPool({
   host: process.env.MYSQL_HOST || '127.0.0.1',
   port: Number(process.env.MYSQL_PORTA || 3306),
   user: process.env.MYSQL_USUARIO || 'soma',
@@ -26,7 +27,7 @@ async function executarTransacao(operacao) {
   const conexao = await banco.getConnection();
   try {
     // Depois de esperar o lock, a consulta deve enxergar a reserva mais recente.
-    await conexao.query('SET TRANSACTION ISOLATION LEVEL READ COMMITTED');
+    if (!banco.postgres) await conexao.query('SET TRANSACTION ISOLATION LEVEL READ COMMITTED');
     await conexao.beginTransaction();
     const consultarNaTransacao = async (comando, valores = []) => {
       const [resultado] = await conexao.execute(comando, valores);
@@ -52,6 +53,11 @@ async function transacao(operacao) {
 }
 
 async function inicializarBanco() {
+  if (banco.postgres) {
+    const [marcador] = await consultar("SELECT chave FROM soma_migracoes WHERE chave='005-supabase'");
+    if (!marcador) throw new Error('Aplique backend/esquema-postgres.sql no projeto SOMA antes de iniciar.');
+    return;
+  }
   // Cada comando é executado separado; não permitimos multipleStatements.
   const esquema = readFileSync(join(__dirname, 'esquema.sql'), 'utf8');
   for (const comando of esquema.split(';').filter(comando => comando.trim())) await banco.query(comando);

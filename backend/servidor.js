@@ -480,13 +480,15 @@ const servidor = http.createServer(atender);
 servidor.requestTimeout = 30000;
 async function iniciar() {
   await inicializarBanco();
-  servidor.listen(Number(process.env.PORTA || 3001), process.env.ENDERECO || '127.0.0.1', () => console.log(`Soma: API e front compilado na porta ${servidor.address().port}. MySQL conectado.`));
+  servidor.listen(Number(process.env.PORTA || 3001), process.env.ENDERECO || '127.0.0.1', () => console.log(`Soma: API e front compilado na porta ${servidor.address().port}. ${banco.postgres ? 'Supabase/PostgreSQL' : 'MySQL'} conectado.`));
 }
 function encerrar() { servidor.close(() => banco.end().then(() => process.exit(0))); }
 process.on('SIGTERM', encerrar); process.on('SIGINT', encerrar);
 iniciar().catch(problema => {
   console.error('Não foi possível iniciar. Código:', problema.code || problema.message);
-  if (problema.code === 'ER_ACCESS_DENIED_ERROR') {
+  if (banco.postgres) {
+    console.error('Confira DATABASE_URL, o certificado PGSSLROOTCERT e a aplicação do esquema PostgreSQL. Veja docs/SUPABASE.md.');
+  } else if (problema.code === 'ER_ACCESS_DENIED_ERROR') {
     console.error('O MySQL respondeu, mas recusou o usuário ou a senha.');
     console.error('Se usa MySQL instalado, execute backend/criar-banco.sql no Workbench com uma conta administradora.');
     console.error('Confira MYSQL_USUARIO e MYSQL_SENHA em backend/.env. A senha do exemplo só funciona com o usuário criado para este projeto.');

@@ -101,7 +101,7 @@ async function atenderSoma2(ctx) {
         await auditar(consulta, usuario.id, null, 'perfil_atualizado', { tipo, publico });
         if (!dados.adulto) {
           await consulta("UPDATE campanhas SET estado='rascunho',estado_antes_moderacao='ativa' WHERE usuario_id=? AND estado='ativa'",[usuario.id]);
-          await consulta("UPDATE urgencias u JOIN campanhas c ON c.id=u.campanha_id SET u.estado='pendente',u.evidencia_verificada=0 WHERE c.usuario_id=?",[usuario.id]);
+          await consulta("UPDATE urgencias SET estado='pendente',evidencia_verificada=0 WHERE campanha_id IN (SELECT id FROM campanhas WHERE usuario_id=?)",[usuario.id]);
         }
       });
       return ok({ mensagem: dados.adulto ? 'Perfil salvo.' : 'Perfil salvo em modo privado para proteger menores de idade.' });
