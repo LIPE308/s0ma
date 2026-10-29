@@ -48,7 +48,7 @@ async function processarEmails({ consultar, transacao, enviar, agora = Date.now(
     } catch (e) {
       // Nunca persiste tokens, credenciais ou a resposta bruta do provedor.
       const codigo = /^[A-Z0-9_]{1,60}$/.test(e.code || '') ? e.code : 'ENVIO_FALHOU';
-      await consultar("UPDATE email_entregas SET estado='falhou',bloqueada_em=NULL,erro_codigo=?,proxima_em=?,tentativas=IF(?,6,tentativas) WHERE id=?", [codigo, agora + Math.min(3600000, 60000 * 2 ** registro.tentativas), !!e.definitivo, registro.id]);
+      await consultar("UPDATE email_entregas SET estado='falhou',bloqueada_em=NULL,erro_codigo=?,proxima_em=?,tentativas=CASE WHEN ? THEN 6 ELSE tentativas END WHERE id=?", [codigo, agora + Math.min(3600000, 60000 * 2 ** registro.tentativas), !!e.definitivo, registro.id]);
     }
   }
   return enviados;

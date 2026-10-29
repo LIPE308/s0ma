@@ -152,7 +152,7 @@ async function atender(requisicao, resposta) {
       if (metodo !== 'GET') erro('Rota não encontrada.', 404);
       servirFront(caminho, resposta); return;
     }
-    if (caminho === '/api/saude' && metodo === 'GET') { await consultar('SELECT 1'); responder(resposta, 200, { mensagem: 'Servidor e MySQL funcionando.', banco: 'MySQL', financeiro: 'simulado' }); return; }
+    if (caminho === '/api/saude' && metodo === 'GET') { await consultar('SELECT 1'); responder(resposta, 200, { mensagem: 'Servidor e banco funcionando.', banco: banco.postgres ? 'Supabase/PostgreSQL' : 'MySQL', financeiro: 'simulado' }); return; }
     const usuario = await identificarUsuario(requisicao);
     if(usuario && !requisicao.headers.authorization && ['POST','PUT','PATCH','DELETE'].includes(metodo) && requisicao.headers['content-type']?.split(';')[0]!=='application/json')erro('Envie dados JSON.',415);
     if (caminho === '/api/arquivos' && requisicao.method === 'POST') exigirLogin(usuario);
@@ -485,13 +485,15 @@ let pararEmail = async () => {};
 async function iniciar() {
   await inicializarBanco();
   pararEmail = iniciarFilaEmail({ consultar, transacao });
-  servidor.listen(Number(process.env.PORTA || 3001), process.env.ENDERECO || '127.0.0.1', () => console.log(`Soma: API e front compilado na porta ${servidor.address().port}. MySQL conectado.`));
+  servidor.listen(Number(process.env.PORT || process.env.PORTA || 3001), process.env.ENDERECO || '127.0.0.1', () => console.log(`Soma: API e front compilado na porta ${servidor.address().port}. ${banco.postgres ? 'Supabase/PostgreSQL' : 'MySQL'} conectado.`));
 }
 function encerrar() { servidor.close(() => Promise.resolve(pararEmail()).then(() => banco.end()).then(() => process.exit(0))); }
 process.on('SIGTERM', encerrar); process.on('SIGINT', encerrar);
 iniciar().catch(problema => {
   console.error('Não foi possível iniciar. Código:', problema.code || problema.message);
-  if (problema.code === 'ER_ACCESS_DENIED_ERROR') {
+  if (banco.postgres) {
+    console.error('Confira DATABASE_URL, o certificado PGSSLROOTCERT e a aplicação do esquema PostgreSQL. Veja docs/SUPABASE.md.');
+  } else if (problema.code === 'ER_ACCESS_DENIED_ERROR') {
     console.error('O MySQL respondeu, mas recusou o usuário ou a senha.');
     console.error('Se usa MySQL instalado, execute backend/criar-banco.sql no Workbench com uma conta administradora.');
     console.error('Confira MYSQL_USUARIO e MYSQL_SENHA em backend/.env. A senha do exemplo só funciona com o usuário criado para este projeto.');

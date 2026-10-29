@@ -2,7 +2,7 @@
   "expo": {
     "name": "SOMA",
     "slug": "soma-pulso",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/brand/icon.png",
     "scheme": "soma",
@@ -19,7 +19,8 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.soma.pulso"
+      "package": "com.soma.pulso",
+      "versionCode": 2
     },
     "web": {
       "output": "single",

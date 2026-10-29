@@ -102,3 +102,7 @@ Ao iniciar, a API aplica automaticamente a atualização aditiva do esquema: tab
 ### Código e teste Android
 
 O [guia do layout baseado nas aulas](docs/LAYOUT-AULAS.md) explica a organização do JSX, estados e StyleSheet. Consulte também [administração](docs/ADMINISTRACAO.md) e [APK Android](docs/APK-ANDROID.md). A main inclui o código do cliente e do servidor, mas cada instalação precisa configurar seu próprio MySQL e suas credenciais privadas.
+
+## Banco na nuvem
+
+Para usar PostgreSQL no Supabase, siga [a configuração do Supabase](docs/SUPABASE.md). A opção mantém as contas e regras do servidor SOMA e instala um banco novo sem dados de demonstração.

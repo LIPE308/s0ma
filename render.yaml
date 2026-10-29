@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: soma-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run compilar:web
+    startCommand: npm run servidor
+    healthCheckPath: /api/saude
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: NODE_ENV
+        value: production
+      - key: ENDERECO
+        value: 0.0.0.0
+      - key: BANCO_TIPO
+        value: postgres
+      - key: COOKIE_SEGURO
+        value: "1"
+      - key: DATABASE_URL
+        sync: false
+      - key: APP_URL
+        sync: false
