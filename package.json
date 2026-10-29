@@ -11,6 +11,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "servidor": "node backend/servidor.js",
+    "servidor:rede-local": "node scripts/servidor-rede-local.js",
     "admin:configurar": "node backend/configurar-admin.js",
     "banco:iniciar": "docker compose up -d --wait banco",
     "banco:local": "node backend/mysql-local.js iniciar",

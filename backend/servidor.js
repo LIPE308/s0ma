@@ -150,7 +150,7 @@ async function atender(requisicao, resposta) {
       if (metodo !== 'GET') erro('Rota não encontrada.', 404);
       servirFront(caminho, resposta); return;
     }
-    if (caminho === '/api/saude' && metodo === 'GET') { await consultar('SELECT 1'); responder(resposta, 200, { mensagem: 'Servidor e MySQL funcionando.', banco: 'MySQL', financeiro: 'simulado' }); return; }
+    if (caminho === '/api/saude' && metodo === 'GET') { await consultar('SELECT 1'); const nomeBanco = banco.postgres ? 'PostgreSQL' : 'MySQL'; responder(resposta, 200, { mensagem: `Servidor e ${nomeBanco} funcionando.`, banco: nomeBanco, financeiro: 'simulado' }); return; }
     const usuario = await identificarUsuario(requisicao);
     if(usuario && !requisicao.headers.authorization && ['POST','PUT','PATCH','DELETE'].includes(metodo) && requisicao.headers['content-type']?.split(';')[0]!=='application/json')erro('Envie dados JSON.',415);
     if (caminho === '/api/arquivos' && requisicao.method === 'POST') exigirLogin(usuario);

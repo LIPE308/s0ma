@@ -23,6 +23,14 @@ O esquema habilita RLS e retira acesso das funções `anon` e `authenticated` em
 
 Para deixar também a API disponível fora do computador, hospede o servidor Node e configure a URL pública no aplicativo. Colocar o banco no Supabase não hospeda automaticamente a API nem o frontend. Use HTTPS e `COOKIE_SEGURO=1` na hospedagem.
 
+## Testar no celular com Expo Go
+
+No computador configurado com o Supabase, inicie `npm run servidor:rede-local` e, em outro terminal, `npx expo start --lan --clear`. Conecte celular e computador à mesma rede Wi-Fi confiável e abra o QR code no Expo Go. O app de desenvolvimento tenta usar o endereço local do computador informado pelo Expo. A porta 3001 deve estar acessível na rede; firewall, rede de convidados ou isolamento de clientes podem bloqueá-la. Um túnel do Expo disponibiliza o JavaScript, mas não cria um túnel para a API.
+
+Este teste usa HTTP na rede local: use apenas contas e senhas de teste e não o execute em redes públicas. O servidor fica acessível a outros dispositivos na rede enquanto o comando estiver aberto; encerre-o ao terminar.
+
+Um APK independente precisa de um servidor HTTPS acessível e de `EXPO_PUBLIC_URL_BACKEND=https://endereco-da-api/api` configurado antes de gerar o APK. Variáveis Expo públicas ficam dentro do aplicativo: não coloque senhas nem chaves secretas nelas. Alterar o código ou a variável depois de gerar um APK não corrige o APK já instalado. Se o dispositivo estiver usando 4G/5G ou outra rede, o endereço local do computador não funcionará.
+
 ## Verificação
 
 `npm run testar:postgres` valida o esquema em PostgreSQL embarcado, reaplicação, consultas estáticas da API, upserts, restrições, rollback e bloqueio de leitura pelo papel `anon`. Não usa nem modifica o projeto remoto. Os testes antigos `testar:backend` continuam exigindo MySQL; não devem apontar para o Supabase.

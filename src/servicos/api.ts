@@ -2,6 +2,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useIsFocused } from '@react-navigation/native';
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
+import Constants from 'expo-constants';
 
 export type Usuario = { id: number; nome: string; email: string; telefone: string; regiao: string; novidades: boolean; administrador: boolean; perfil_completo?:boolean };
 export type Necessidade = { id: string; campanha_id: string; responsavel_id?: number; nome: string; tipo: 'objeto' | 'tarefa' | 'dinheiro'; meta: number; recebido: number; reservado: number; tipo_meta: string; prioridade: string; prazo: string; descricao: string; campanha: string; regiao: string; instrucoes: string; campanha_estado: string };
@@ -16,8 +17,11 @@ export type Aviso = { id: number; mensagem: string; lido: boolean; criado_em: st
 export type Denuncia = { id: number; campanha_id: string; campanha: string; motivo: string; relato: string; estado: string };
 export type Administracao = { campanhas: Campanha[]; denuncias: Denuncia[]; repasses: Repasse[]; pagamentos: Pagamento[] };
 
-// No navegador usa o mesmo computador. No celular configure o IP do computador.
-const enderecoPadrao = Platform.OS === 'web' && typeof window !== 'undefined' ? (['8081', '8082'].includes(window.location.port) ? `${window.location.protocol}//${window.location.hostname}:3001/api` : `${window.location.origin}/api`) : 'http://localhost:3001/api';
+// No Expo Go em rede local, o host do Metro também pode hospedar a API.
+// Em APK independente, informe explicitamente uma URL HTTPS acessível.
+const hostExpo = __DEV__ ? Constants.expoConfig?.hostUri?.split(':')[0] : undefined;
+const ipLocal = hostExpo && /^(10\.\d+\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)\d+\.\d+$/.test(hostExpo) ? hostExpo : '';
+const enderecoPadrao = Platform.OS === 'web' && typeof window !== 'undefined' ? (['8081', '8082'].includes(window.location.port) ? `${window.location.protocol}//${window.location.hostname}:3001/api` : `${window.location.origin}/api`) : ipLocal ? `http://${ipLocal}:3001/api` : '';
 const enderecoApi = process.env.EXPO_PUBLIC_URL_BACKEND || enderecoPadrao;
 export function urlApi() { return enderecoApi; }
 let tokenAtual = '';
@@ -54,6 +58,7 @@ export function limparSessao(){
 // This is an operation identifier, not an authentication secret.
 export function criarChaveOperacao() { return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2) + '-' + Math.random().toString(36).slice(2); }
 export async function requisitar<T>(caminho: string, metodo = 'GET', dados?: unknown, chave?: string): Promise<T> {
+  if (!enderecoApi) throw new Error('Servidor não configurado. Configure o endereço da API para usar o SOMA neste celular.');
   const corpo = dados !== undefined ? JSON.stringify(dados) : undefined;
   let resumo = 2166136261;
   for (const letra of metodo + caminho + (corpo || '')) resumo = Math.imul(resumo ^ letra.charCodeAt(0), 16777619);
