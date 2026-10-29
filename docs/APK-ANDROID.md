@@ -21,4 +21,3 @@ Configurar EXPO_PUBLIC_URL_BACKEND no perfil grupo de eas.json e executar npm ru
 O perfil preview antigo aponta para o IP da rede local e só serve para testes com PC ligado na mesma rede. Para compartilhar com o grupo, usar o perfil grupo.
 
 .easignore exclui o backend, os arquivos privados e experimentos locais; nenhuma senha do banco faz parte do APK.
-
