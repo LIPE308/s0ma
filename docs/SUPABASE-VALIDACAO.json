@@ -1,0 +1,13 @@
+{
+  "data": "2026-10-29",
+  "projeto": "yahvoqitjxgrlndtaciu",
+  "conexaoTLS": true,
+  "saude": "Supabase/PostgreSQL",
+  "apiCampanhas": 200,
+  "gravacaoELeitura": true,
+  "rollbackConfirmado": true,
+  "registrosDeTestePermanentes": 0,
+  "dadosPreexistentesPreservados": true,
+  "apiPublicada": false,
+  "apkSupabaseGerado": false
+}

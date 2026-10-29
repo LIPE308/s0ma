@@ -16,6 +16,8 @@ services:
         value: 0.0.0.0
       - key: BANCO_TIPO
         value: postgres
+      - key: PGSSLROOTCERT
+        value: backend/certs/prod-ca-2021.crt
       - key: COOKIE_SEGURO
         value: "1"
       - key: DATABASE_URL

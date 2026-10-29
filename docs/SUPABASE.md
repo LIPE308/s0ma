@@ -54,3 +54,11 @@ O teste PostgreSQL agora inclui as consultas dinâmicas do painel e falha/reenvi
 render.yaml prepara um serviço Node gratuito de demonstração. Configure DATABASE_URL somente nos segredos do servidor e APP_URL com a URL HTTPS atribuída. Se necessário, adicione o certificado raiz como arquivo secreto e PGSSLROOTCERT com o caminho desse arquivo. Não substitua a validação TLS por rejectUnauthorized=false. O plano gratuito pode dormir quando ocioso e bloqueia SMTP nas portas 465/587; os avisos internos continuam disponíveis e o envio externo precisa de um provedor HTTP ou hospedagem compatível.
 
 Depois da API publicada, configure EXPO_PUBLIC_URL_BACKEND no ambiente EAS usado pelo perfil grupo, com a URL HTTPS da API seguida de /api. Execute npm run apk:grupo com a mesma variável local. O comando verifica /saude e exige Supabase/PostgreSQL antes de iniciar a compilação. A versão Android preparada é 1.0.1, versionCode 2. Não foi gerado APK nem QR code atualizado enquanto a API pública não estiver confirmada.
+
+## Conexão remota validada em 29/10/2026
+
+O servidor local foi configurado para o projeto yahvoqitjxgrlndtaciu via Session pooler, com verificação TLS e certificado raiz oficial. O endpoint /api/saude confirmou Supabase/PostgreSQL. Uma transação inseriu e leu usuário/campanha temporários e confirmou rollback sem resíduos; GET /api/campanhas retornou HTTP 200. As 2 contas e 8 campanhas previamente existentes foram preservadas.
+
+O utilitário backend/configurar-supabase-local.js usa backend/.env.supabase.local (ignorado pelo Git), verifica o projeto esperado, aplica a atualização aditiva e só então altera backend/.env. O certificado público está em backend/certs/prod-ca-2021.crt. As senhas não são distribuídas. Esses passos não importam automaticamente o histórico do MySQL local.
+
+A API pública ainda precisa ser publicada antes da compilação do APK do grupo. Render exige login/autorização do proprietário e DATABASE_URL configurada como segredo de servidor.
