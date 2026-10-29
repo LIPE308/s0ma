@@ -11,6 +11,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "servidor": "node backend/servidor.js",
+    "servidor:rede-local": "node scripts/servidor-rede-local.js",
     "admin:configurar": "node backend/configurar-admin.js",
     "admin:local": "node backend/criar-admin-local.js",
     "google:importar": "node backend/importar-google.js",

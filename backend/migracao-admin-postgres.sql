@@ -37,9 +37,9 @@ CREATE TABLE IF NOT EXISTS relatorios_anuncios (
  UNIQUE (provedor,conta,inicio,fim,moeda)
 );
 CREATE INDEX IF NOT EXISTS email_fila ON email_entregas(estado,proxima_em);
-CREATE INDEX IF NOT EXISTS email_usuario ON email_entregas(usuario_id);
-CREATE INDEX IF NOT EXISTS email_campanha ON email_entregas(campanha_id);
-CREATE INDEX IF NOT EXISTS relatorio_usuario ON relatorios_anuncios(usuario_id);
+CREATE INDEX IF NOT EXISTS email_entregas_usuario_idx ON email_entregas(usuario_id);
+CREATE INDEX IF NOT EXISTS email_entregas_campanha_idx ON email_entregas(campanha_id);
+CREATE INDEX IF NOT EXISTS relatorios_anuncios_usuario_idx ON relatorios_anuncios(usuario_id);
 ALTER TABLE administradores_locais ENABLE ROW LEVEL SECURITY;
 ALTER TABLE email_entregas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE relatorios_anuncios ENABLE ROW LEVEL SECURITY;

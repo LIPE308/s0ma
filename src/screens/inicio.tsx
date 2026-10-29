@@ -39,7 +39,7 @@ export function Inicio() {
       nome: "Doar",
       icone: "heart-outline" as const,
       acao: () =>
-        router.push({ pathname: "/explorar", params: { dinheiro: "1" } }),
+        router.push("/explorar"),
     },
     {
       nome: "Criar campanha",

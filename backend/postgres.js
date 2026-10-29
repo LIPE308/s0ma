@@ -25,6 +25,7 @@ function converterSQL(sql) {
   texto = texto.replace(/\bDATABASE\(\)/gi, 'current_database()');
   let indice = 0;
   texto = texto.replace(/\?/g, () => '$' + (++indice));
+  texto = texto.replace(/IF\(\$(\d+),6,tentativas\)/gi, (_, n) => 'CASE WHEN $' + n + ' THEN 6 ELSE tentativas END');
   texto = texto.replace(/UTC_DATE\(\)/gi, "(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::date");
   const ignorar = /^\s*INSERT IGNORE INTO /i.test(texto);
   texto = texto.replace(/INSERT IGNORE INTO /i, 'INSERT INTO ');

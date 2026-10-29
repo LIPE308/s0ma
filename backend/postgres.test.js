@@ -78,3 +78,5 @@ test('PostgreSQL: esquema, consultas existentes, upserts, restrições e rollbac
 test('placeholders preservam interrogação e apóstrofos dentro de texto SQL', () => {
   assert.equal(converterSQL("SELECT 'como? ''sim''' AS texto WHERE id=?"), "SELECT 'como? ''sim''' AS texto WHERE id=$1");
 });
+
+test('nome do banco PostgreSQL não é traduzido duas vezes',()=>{assert.equal(converterSQL('SELECT current_database()'), 'SELECT current_database()');assert.equal(converterSQL('SELECT DATABASE()'), 'SELECT current_database()');});
