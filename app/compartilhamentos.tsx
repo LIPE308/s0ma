@@ -1,1 +1,1 @@
-export { Compartilhamentos as default } from '../src/screens/comunidade';
+export { Compartilhamentos as default } from "../src/screens/comunidade";

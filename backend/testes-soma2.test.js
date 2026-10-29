@@ -6,7 +6,7 @@ const {once}=require('node:events');
 const mysql=require('mysql2/promise');
 const nomeBanco='soma_teste_2_'+process.pid+'_'+Date.now();
 const config={host:process.env.MYSQL_HOST||'127.0.0.1',port:Number(process.env.MYSQL_PORTA||3306),user:process.env.MYSQL_TESTE_USUARIO||'root',password:process.env.MYSQL_TESTE_SENHA??'raiz_local_123'};
-const env={...process.env,MYSQL_HOST:config.host,MYSQL_PORTA:String(config.port),MYSQL_USUARIO:config.user,MYSQL_SENHA:config.password,MYSQL_BANCO:nomeBanco,PORTA:'0',ENDERECO:'127.0.0.1',GOOGLE_CLIENT_ID:'',GOOGLE_CLIENT_SECRET:'',GOOGLE_REDIRECT_URI:''};
+const env={...process.env,MYSQL_HOST:config.host,MYSQL_PORTA:String(config.port),MYSQL_USUARIO:config.user,MYSQL_SENHA:config.password,MYSQL_BANCO:nomeBanco,PORTA:'0',ENDERECO:'127.0.0.1',GOOGLE_CLIENT_ID:'',GOOGLE_CLIENT_SECRET:'',GOOGLE_REDIRECT_URI:'',EMAIL_WORKER_DESATIVADO:'1',PUBLICIDADE_PROVEDOR:'',SMTP_HOST:''};
 let db,servidor,url,erros='';
 async function iniciar(){
   servidor=spawn(process.execPath,['backend/servidor.js'],{env,stdio:['ignore','pipe','pipe'],windowsHide:true});
@@ -211,6 +211,67 @@ test('SOMA 2.0: revisão, urgência, anúncios, rota, mapa, perfil e privacidade
       assert.equal((await chamar('/configuracao')).google,false);
       await chamar('/auth/google/iniciar',{status:503});await chamar('/auth/google/trocar',{method:'POST',status:503});
       await chamar('/perfil-ampliado',{status:401});await chamar('/administracao/soma2',{status:401});
+    });
+    await suite.test('painel administrativo protege dados, pagina, filtra e impede elevação pública',async()=>{
+      for(const p of ['/administracao/painel','/administracao/painel/lista?tipo=usuarios','/administracao/painel/integracoes']){
+        await chamar(p,{status:401});await chamar(p,{token:d.token,status:403});
+      }
+      const painel=await chamar('/administracao/painel',{token:admin.token});assert.ok(painel.pessoas.total>=8);assert.ok(Number(painel.financeiro.distribuido)>0);
+      for(const tipo of ['campanhas','urgencias','usuarios','receitas','distribuicoes','relatorios','emails','auditoria','denuncias','repasses','pagamentos']){
+        const lista=await chamar('/administracao/painel/lista?tipo='+tipo,{token:admin.token});assert.ok(Array.isArray(lista.itens));assert.ok(lista.itens.length<=20);assert.ok(!JSON.stringify(lista).includes('senha_resumo'));assert.ok(!JSON.stringify(lista).includes('senha_sal'));
+      }
+      const lista=await chamar('/administracao/painel/lista?tipo=campanhas&busca='+encodeURIComponent("' OR 1=1 --"),{token:admin.token});assert.equal(lista.total,0);
+      await chamar('/administracao/painel/lista?tipo=usuarios&pagina=-1',{token:admin.token,status:400});
+      const config=await chamar('/administracao/painel/integracoes',{token:admin.token});assert.equal(config.banco.nome,nomeBanco);assert.equal(config.google.configurado,false);assert.equal(config.email.configurado,false);assert.ok(!JSON.stringify(config).includes('senha'));
+      await chamar('/administracao/painel/anuncios/importar',{method:'POST',token:admin.token,body:{inicio:data(-1),fim:data(0)},status:409});
+      await chamar('/administracao/painel/email/verificar',{method:'POST',token:admin.token,status:409});
+      await chamar('/administracao/painel/usuarios/'+admin.usuario.id,{method:'PATCH',token:admin.token,body:{bloqueado:true,motivo:'Não pode bloquear o próprio administrador'},status:403});
+    });
+    await suite.test('bloqueio encerra sessões, recusa login e preserva histórico do usuário',async()=>{
+      const x=await conta('bloqueio@teste.example','Pessoa para teste de acesso');
+      const alvo='/administracao/painel/usuarios/'+x.usuario.id;
+      await chamar(alvo,{method:'PATCH',token:d.token,body:{bloqueado:true,motivo:'Não autorizado'},status:403});
+      await chamar(alvo,{method:'PATCH',token:admin.token,body:{bloqueado:true,motivo:'Suspensão administrativa de fixture'} });
+      await chamar('/perfil',{token:x.token,status:401});await chamar('/login',{method:'POST',body:{email:'bloqueio@teste.example',senha:'SenhaTeste_2026!'},status:401});
+      await chamar(alvo,{method:'PATCH',token:admin.token,body:{bloqueado:false,motivo:'Acesso restaurado após revisão'} });
+      await chamar('/login',{method:'POST',body:{email:'bloqueio@teste.example',senha:'SenhaTeste_2026!'}});
+    });
+    await suite.test('decisão de urgência cria aviso e email atomicamente, sem duplicar reenvio',async()=>{
+      const body={classe:'regular',validade:data(1),evidencia_verificada:false,justificativa:'Revisão adicional fictícia, sem concessão de prioridade.'};
+      const antes=await chamar('/avisos',{token:a.token});
+      const decidir=()=>chamar('/administracao/urgencias/'+rascunho.id,{method:'PATCH',token:admin.token,body,key:'decisao-notificada-unica'});
+      await Promise.all([decidir(),decidir()]);
+      const depois=await chamar('/avisos',{token:a.token});assert.equal(depois.length,antes.length+1);assert.equal(depois[0].destino,'/urgencia?id='+rascunho.id);
+      assert.ok((await chamar('/avisos/resumo',{token:a.token})).nao_lidos>0);
+      const emails=await chamar('/administracao/painel/lista?tipo=emails',{token:admin.token});assert.ok(emails.itens.some(e=>e.destinatario==='a@teste.example'));
+      await chamar('/administracao/painel/emails/'+emails.itens[0].id+'/repetir',{method:'POST',token:admin.token,status:409});
+    });
+    await suite.test('fila de emails tolera falha e reinício e evita envio concorrente duplicado',async()=>{
+      const {processarEmails}=require('./notificacoes'),pool=mysql.createPool({...config,database:nomeBanco,connectionLimit:3});
+      const consultar=async(sql,args=[])=>{const[r]=await pool.execute(sql,args);return r;};
+      const transacao=async f=>{const c=await pool.getConnection();try{await c.beginTransaction();const r=await f(async(sql,args=[])=>{const[v]=await c.execute(sql,args);return v;});await c.commit();return r;}catch(e){await c.rollback();throw e;}finally{c.release();}};
+      const enviados=new Set();let falhou=false;
+      try{
+        const enviar=async r=>{if(!falhou){falhou=true;const e=Error('conteúdo privado não deve persistir');e.code='ECONNECTION';throw e;}assert.ok(!enviados.has(r.id));enviados.add(r.id);await new Promise(r=>setTimeout(r,5));return{messageId:'teste-'+r.id};};
+        await Promise.all([processarEmails({consultar,transacao,enviar}),processarEmails({consultar,transacao,enviar})]);
+        const [falha]=await consultar("SELECT * FROM email_entregas WHERE estado='falhou'");assert.equal(falha.erro_codigo,'ECONNECTION');assert.equal(falha.tentativas,1);
+        await processarEmails({consultar,transacao,enviar,agora:Date.now()+120000});
+        const [pendentes]=await consultar("SELECT COUNT(*) AS total FROM email_entregas WHERE estado<>'enviado'");assert.equal(pendentes.total,0);
+        const total=enviados.size;await processarEmails({consultar,transacao,enviar});assert.equal(enviados.size,total);
+      }finally{await pool.end();}
+    });
+    await suite.test('OAuth Web guarda PKCE de 128 caracteres, usa origem canônica e consome cancelamento uma vez',async()=>{
+      await parar();Object.assign(env,{GOOGLE_CLIENT_ID:'cliente-de-teste.apps.googleusercontent.com',GOOGLE_CLIENT_SECRET:'segredo-apenas-fixture',GOOGLE_REDIRECT_URI:'http://localhost:3001/api/auth/google/callback'});await iniciar();
+      const canonico=await fetch(url+'/auth/google/iniciar',{redirect:'manual'});assert.equal(canonico.status,302);assert.equal(canonico.headers.get('location'),'http://localhost:3001/api/auth/google/iniciar');
+      const pedirOAuth=(caminho,cabecalhos={})=>new Promise((resolve,reject)=>{require('node:http').get(url+caminho,{headers:{Host:'localhost:3001',...cabecalhos}},res=>{res.resume();resolve({status:res.statusCode,headers:new Headers(res.headers)});}).on('error',reject);});
+      const r=await pedirOAuth('/auth/google/iniciar');assert.equal(r.status,302);
+      const location=new URL(r.headers.get('location'));assert.equal(location.hostname,'accounts.google.com');assert.equal(location.searchParams.get('code_challenge_method'),'S256');
+      const estado=location.searchParams.get('state');assert.match(estado,/^[a-f0-9]{64}$/);
+      const [fluxos]=await db.query('SELECT LENGTH(verificador) AS tamanho FROM '+nomeBanco+'.oauth_fluxos');assert.ok(fluxos.some(x=>x.tamanho===128));
+      const cookie=r.headers.get('set-cookie').split(';')[0];
+      const cancelar=()=>pedirOAuth('/auth/google/callback?error=access_denied&state='+estado,{Cookie:cookie});
+      assert.match((await cancelar()).headers.get('location'),/google_cancelado/);assert.match((await cancelar()).headers.get('location'),/google_erro/);
+      await parar();Object.assign(env,{GOOGLE_CLIENT_ID:'',GOOGLE_CLIENT_SECRET:'',GOOGLE_REDIRECT_URI:''});await iniciar();
     });
     await suite.test('reinício mantém migração, ledger, arquivos e distribuições sem repetir créditos',async()=>{
       const [antes]=await db.query('SELECT COUNT(*) AS total,SUM(valor) AS valor FROM '+nomeBanco+'.lancamentos');

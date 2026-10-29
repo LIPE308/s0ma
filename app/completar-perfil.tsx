@@ -1,1 +1,1 @@
-export { CompletarPerfil as default } from '../src/screens/boas-vindas';
+export { CompletarPerfil as default } from "../src/screens/boas-vindas";

@@ -1,1 +1,1 @@
-export { Action as default } from '../src/screens/contributions';
+export { Action as default } from "../src/screens/contributions";

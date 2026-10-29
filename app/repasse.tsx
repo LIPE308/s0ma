@@ -1,1 +1,1 @@
-export { TransferDetails as default } from '../src/screens/finance';
+export { TransferDetails as default } from "../src/screens/finance";

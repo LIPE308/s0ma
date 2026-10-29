@@ -1,1 +1,1 @@
-export { ObjectContribution as default } from '../src/screens/contributions';
+export { ObjectContribution as default } from "../src/screens/contributions";

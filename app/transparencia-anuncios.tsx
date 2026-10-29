@@ -1,1 +1,1 @@
-export { TransparenciaAnuncios as default } from '../src/screens/fundo';
+export { TransparenciaAnuncios as default } from "../src/screens/fundo";

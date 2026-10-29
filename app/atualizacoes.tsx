@@ -1,1 +1,1 @@
-export { Updates as default } from '../src/screens/discovery';
+export { Updates as default } from "../src/screens/discovery";

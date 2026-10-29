@@ -1,1 +1,1 @@
-export { Convidar as default } from '../src/screens/comunidade';
+export { Convidar as default } from "../src/screens/comunidade";

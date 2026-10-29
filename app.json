@@ -18,7 +18,8 @@
         "monochromeImage": "./assets/brand/adaptive-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.soma.pulso"
     },
     "web": {
       "output": "single",
@@ -48,11 +49,19 @@
           "microphonePermission": false
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-build-properties"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "90068c5e-1b11-40f7-b9ee-2b0bb8d6061d"
+      }
+    },
+    "owner": "studio308"
   }
 }

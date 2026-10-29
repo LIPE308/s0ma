@@ -2,6 +2,7 @@ const { randomUUID, randomBytes, createHash } = require('node:crypto');
 const { erro, texto, inteiro, opcao, usuarioPublico } = require('./auxiliares');
 const { avaliarUrgencia, urgenciaPublica, dataISO, diasAte, naturezas } = require('./urgencia');
 const { distribuirFundo, dividirReceita } = require('./distribuicao');
+const { notificarUrgencia } = require('./notificacoes');
 const { criarProjecao } = require('./projecao');
 const { prepararArquivo, nomeSeguro } = require('./midias');
 const { umaVez } = require('./operacoes');
@@ -232,7 +233,7 @@ async function atenderSoma2(ctx) {
   }
   if ((partes = caminho.match(/^\/api\/administracao\/urgencias\/([^/]+)$/)) && metodo === 'PATCH') {
     exigirAdministrador(usuario);
-    return ok(await transacao(async consulta => {
+    return ok(await transacao(async consulta => umaVez(consulta,usuario.id,requisicao,dados,async()=>{
       const campanha = await obterCampanha(partes[1],consulta,true);
       if (campanha.usuario_id === usuario.id) erro('Não avalie sua própria campanha.',403);
       const [u] = await consulta('SELECT * FROM urgencias WHERE campanha_id=? FOR UPDATE',[campanha.id]);
@@ -249,10 +250,11 @@ async function atenderSoma2(ctx) {
       if (classe === 'critica' && avaliacao.recomendacao !== 'critica') erro('Os critérios objetivos ainda não sustentam uma classificação crítica.',409);
       if (classe === 'moderada' && avaliacao.pontos < 40) erro('Os critérios objetivos ainda não sustentam uma classificação moderada.',409);
       await consulta("UPDATE urgencias SET classe=?,estado='revisada',pontos=?,recomendacao=?,evidencia_verificada=?,evidencia_valida_ate=?,revisado_por=?,justificativa=?,revisada_em=CURRENT_TIMESTAMP WHERE campanha_id=?", [classe,avaliacao.pontos,avaliacao.recomendacao,Number(verificada),validade,usuario.id,justificativa,campanha.id]);
-      await consulta("INSERT INTO urgencia_historico (campanha_id,usuario_id,acao,dados) VALUES (?,?,'decisao',?)",[campanha.id,usuario.id,JSON.stringify({ ...avaliacao,classe,justificativa,validade })]);
+      const historico = await consulta("INSERT INTO urgencia_historico (campanha_id,usuario_id,acao,dados) VALUES (?,?,'decisao',?)",[campanha.id,usuario.id,JSON.stringify({ ...avaliacao,classe,justificativa,validade })]);
+      await notificarUrgencia(consulta, campanha, { classe }, historico.insertId);
       await auditar(consulta,usuario.id,campanha.id,'urgencia_revisada',{ classe,pontos:avaliacao.pontos,validade });
-      return { mensagem:'Revisão humana registrada.',classe,pontos:avaliacao.pontos };
-    }));
+      return { mensagem:'Revisão registrada. Aviso no aplicativo criado e e-mail colocado na fila de envio.',classe,pontos:avaliacao.pontos };
+    })));
   }
   if (caminho === '/api/descoberta' && metodo === 'GET') {
     const params = new URL(requisicao.url,'http://localhost').searchParams;
@@ -330,7 +332,7 @@ async function atenderSoma2(ctx) {
       consultar('SELECT id,usuario_id,campanha_id,acao,dados,criado_em FROM auditoria ORDER BY id DESC LIMIT 100'),
       consultar('SELECT l.*,c.titulo AS campanha FROM lancamentos l JOIN campanhas c ON c.id=l.campanha_id ORDER BY l.id DESC LIMIT 100'),
     ]);
-    return ok({simulado:true,receitas:receitas.map(r=>({...r,...dividirReceita(r.bruto,r.tributos,r.custos),distribuido:Number(r.distribuido),retido:Math.floor((r.bruto-r.tributos-r.custos)*.7)-Number(r.distribuido)})),distribuicoes,urgencias,auditoria,lancamentos});
+    return ok({simulado:true,receitas:receitas.map(r=>({...r,...dividirReceita(r.bruto,r.tributos,r.custos),distribuido:Number(r.distribuido),retido:dividirReceita(r.bruto,r.tributos,r.custos).fundo-Number(r.distribuido)})),distribuicoes,urgencias,auditoria,lancamentos});
   }
   if (caminho==='/api/fundo' && metodo==='GET'){
     const [totais]=await consultar("SELECT COALESCE(SUM(bruto-tributos-custos),0) AS liquido,COALESCE(SUM(FLOOR((bruto-tributos-custos)*70/100)),0) AS fundo FROM receitas_publicitarias WHERE estado IN ('confirmada','distribuida')");

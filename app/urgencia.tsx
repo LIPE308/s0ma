@@ -1,1 +1,1 @@
-export { SolicitarUrgencia as default } from '../src/screens/preparacao';
+export { SolicitarUrgencia as default } from "../src/screens/preparacao";

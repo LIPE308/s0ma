@@ -1,1 +1,1 @@
-export { Impact as default } from '../src/screens/discovery';
+export { Impact as default } from "../src/screens/discovery";

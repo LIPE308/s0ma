@@ -1,1 +1,1 @@
-export { HelpDetails as default } from '../src/screens/contributions';
+export { HelpDetails as default } from "../src/screens/contributions";

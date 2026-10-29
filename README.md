@@ -98,3 +98,7 @@ Se escolheu o MySQL próprio no Windows, use **`npm run testar:backend:local`**.
 Os testes de backend precisam do MySQL ligado. Criam e removem um banco separado chamado `soma_teste_...`; não alteram o banco `soma`. Verificam cadastro, permissões, migração do esquema anterior, reservas concorrentes, confirmação parcial, financeiro simulado, moderação, privacidade, reabertura e persistência após reiniciar o Node.
 
 Ao iniciar, a API aplica automaticamente a atualização aditiva do esquema: tabela `operacoes` e coluna `campanhas.estado_antes_moderacao`. Não é necessário recriar o banco nem apagar dados. Veja o [relatório de auditoria e validação](docs/AUDITORIA-ENTREGA.md), o [roteiro de demonstração](docs/DEMONSTRACAO.md) e as [respostas sobre confiança e limites do produto](docs/LIMITES-DO-PRODUTO.md).
+
+### Código e teste Android
+
+O [guia do layout baseado nas aulas](docs/LAYOUT-AULAS.md) explica a organização do JSX, estados e StyleSheet. Consulte também [administração](docs/ADMINISTRACAO.md) e [APK Android](docs/APK-ANDROID.md). A main inclui o código do cliente e do servidor, mas cada instalação precisa configurar seu próprio MySQL e suas credenciais privadas.

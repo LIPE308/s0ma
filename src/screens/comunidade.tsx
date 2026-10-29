@@ -1,44 +1,649 @@
-import { useEffect, useState } from 'react';
-import { useRouter } from 'expo-router';
-import { Image } from 'expo-image';
-import { Ionicons } from '@expo/vector-icons';
-import { Pressable, Text, View } from 'react-native';
-import { Button, Card, Choices, Copy, Disclosure, EmptyState, Field, Heading, Notice, Screen, useTheme } from '../components/ui';
-import { EstadoConexao, PedirLogin } from '../components/conexao';
-import { ConviteCompartilharApp } from '../components/solidariedade';
-import { ImagemPrivada } from '../components/arquivos';
-import { useDados, useSessao, usuarioLogado, requisitar, atualizarUsuario, limparSessao, mensagemErro, type Usuario, type Campanha } from '../servicos/api';
-import type { PerfilAmpliado } from '../servicos/soma2';
-function ItemMenu({titulo,icone,onPress,perigo=false}:{titulo:string;icone:keyof typeof Ionicons.glyphMap;onPress:()=>void;perigo?:boolean}){
- const {colors,fontsReady}=useTheme();return <Pressable accessibilityRole="button" accessibilityLabel={titulo} onPress={onPress} style={({pressed})=>({minHeight:60,flexDirection:'row',alignItems:'center',gap:14,paddingVertical:15,borderBottomWidth:1,borderColor:colors.line,opacity:pressed?.7:1})}><Ionicons aria-hidden accessible={false} name={icone} size={22} color={perigo?colors.error:colors.primary}/><Text style={{flex:1,fontSize:15,lineHeight:23,color:perigo?colors.error:colors.ink,fontFamily:fontsReady?'Manrope-SemiBold':undefined}}>{titulo}</Text><Ionicons aria-hidden accessible={false} name="chevron-forward" size={18} color={colors.muted}/></Pressable>;
+import { StyleSheet, Pressable, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { useRouter } from "expo-router";
+import { Image } from "expo-image";
+import { Ionicons } from "@expo/vector-icons";
+import {
+  Button,
+  Card,
+  Choices,
+  Copy,
+  Disclosure,
+  EmptyState,
+  Field,
+  Heading,
+  Notice,
+  Screen,
+  useTheme,
+} from "../components/ui";
+import { EstadoConexao, PedirLogin } from "../components/conexao";
+import { ConviteCompartilharApp } from "../components/solidariedade";
+import { ImagemPrivada } from "../components/arquivos";
+import {
+  useDados,
+  useSessao,
+  usuarioLogado,
+  requisitar,
+  atualizarUsuario,
+  limparSessao,
+  mensagemErro,
+  type Usuario,
+  type Campanha,
+} from "../servicos/api";
+import type { PerfilAmpliado } from "../servicos/soma2";
+function ItemMenu({
+  titulo,
+  icone,
+  onPress,
+  perigo = false,
+}: {
+  titulo: string;
+  icone: keyof typeof Ionicons.glyphMap;
+  onPress: () => void;
+  perigo?: boolean;
+}) {
+  const { colors, fontsReady } = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={titulo}
+      onPress={onPress}
+      style={({ pressed }) => ({
+        minHeight: 60,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 14,
+        paddingVertical: 15,
+        borderBottomWidth: 1,
+        borderColor: colors.line,
+        opacity: pressed ? 0.7 : 1,
+      })}
+    >
+      <Ionicons
+        aria-hidden
+        accessible={false}
+        name={icone}
+        size={22}
+        color={perigo ? colors.error : colors.primary}
+      />
+      <Text
+        style={{
+          flex: 1,
+          fontSize: 15,
+          lineHeight: 23,
+          color: perigo ? colors.error : colors.ink,
+          fontFamily: fontsReady ? "Manrope-SemiBold" : undefined,
+        }}
+      >
+        {titulo}
+      </Text>
+      <Ionicons
+        aria-hidden
+        accessible={false}
+        name="chevron-forward"
+        size={18}
+        color={colors.muted}
+      />
+    </Pressable>
+  );
 }
-export function PerfilComunidade(){
- const r=useRouter(),p=useSessao(),q=useDados<PerfilAmpliado>(p?'/perfil-ampliado':null),{colors,fontsReady}=useTheme();
- const [erro,setErro]=useState(''),[saindo,setSaindo]=useState(false);
- async function sair(){setSaindo(true);setErro('');try{await requisitar('/sair','POST');limparSessao();r.replace('/entrar');}catch(e){setErro('Não foi possível encerrar a sessão no servidor. Confira a conexão e tente novamente. '+mensagemErro(e));}finally{setSaindo(false);}}
- return <Screen title="Meu perfil" back={false} action={<Pressable accessibilityRole="button" accessibilityLabel="Configurações" onPress={()=>r.push('/configuracoes')} style={{width:44,height:44,alignItems:'center',justifyContent:'center'}}><Ionicons aria-hidden accessible={false} name="settings-outline" size={23} color={colors.primary}/></Pressable>}>
- {!p?<PedirLogin/>:<><View style={{flexDirection:'row',alignItems:'center',gap:18,paddingVertical:12}}><View style={{width:76,height:76,borderRadius:38,backgroundColor:colors.brandSoft,overflow:'hidden',alignItems:'center',justifyContent:'center'}}>{q.dados?.avatar_id?<ImagemPrivada id={q.dados.avatar_id} altura={76}/>:q.dados?.usar_foto_google&&q.dados.foto_google?<Image source={{uri:q.dados.foto_google}} accessibilityLabel="Sua foto autorizada do Google" style={{width:76,height:76}}/>:<Text style={{fontSize:28,color:colors.primary,fontFamily:fontsReady?'Sora-SemiBold':undefined}}>{p.nome[0]?.toUpperCase()}</Text>}</View><View style={{flex:1,minWidth:0,gap:6}}><Text accessibilityRole="header" style={{fontSize:22,lineHeight:30,fontFamily:fontsReady?'Sora-SemiBold':undefined,color:colors.ink}}>{q.dados?.tipo==='instituicao'?q.dados.nome_instituicao||p.nome:p.nome}</Text><Text style={{fontSize:13,lineHeight:21,color:colors.muted}}>{p.email}</Text><Pressable accessibilityRole="button" onPress={()=>r.push('/meus-dados')} style={{minHeight:44,justifyContent:'center'}}><Text style={{fontSize:14,color:colors.primary}}>Editar meus dados</Text></Pressable></View></View><EstadoConexao {...q}/>
- <View><ItemMenu titulo="Minhas campanhas" icone="albums-outline" onPress={()=>r.push('/minhas-campanhas')}/><ItemMenu titulo="Minhas doações e participações" icone="heart-outline" onPress={()=>r.push('/atividade')}/><ItemMenu titulo="Meus compartilhamentos" icone="share-social-outline" onPress={()=>r.push('/compartilhamentos')}/><ItemMenu titulo="Convidar amigos" icone="people-outline" onPress={()=>r.push('/convidar')}/><ItemMenu titulo="Personalizar perfil e privacidade" icone="person-circle-outline" onPress={()=>r.push('/personalizar-perfil')}/><ItemMenu titulo="Configurações" icone="settings-outline" onPress={()=>r.push('/configuracoes')}/><ItemMenu titulo="Ajuda e transparência" icone="help-circle-outline" onPress={()=>r.push('/sobre')}/>{p.administrador?<ItemMenu titulo="Administração" icone="shield-checkmark-outline" onPress={()=>r.push('/administracao')}/>:null}<ItemMenu titulo={saindo?'Saindo…':'Sair da conta'} icone="log-out-outline" perigo onPress={()=>{if(!saindo)void sair();}}/></View>{erro?<Notice error>{erro}</Notice>:null}</>}
- </Screen>;
+export function PerfilComunidade() {
+  const r = useRouter();
+  const p = useSessao();
+  const q = useDados<PerfilAmpliado>(p ? "/perfil-ampliado" : null);
+  const { colors, fontsReady } = useTheme();
+  const [erro, setErro] = useState("");
+  const [saindo, setSaindo] = useState(false);
+  async function sair() {
+    setSaindo(true);
+    setErro("");
+    try {
+      await requisitar("/sair", "POST");
+      limparSessao();
+      r.replace("/entrar");
+    } catch (e) {
+      setErro(
+        "Não foi possível encerrar a sessão no servidor. Confira a conexão e tente novamente. " +
+          mensagemErro(e),
+      );
+    } finally {
+      setSaindo(false);
+    }
+  }
+  return (
+    <Screen
+      title="Meu perfil"
+      back={false}
+      action={
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Configurações"
+          onPress={() => r.push("/configuracoes")}
+          style={estilosFixos.area1}
+        >
+          <Ionicons
+            aria-hidden
+            accessible={false}
+            name="settings-outline"
+            size={23}
+            color={colors.primary}
+          />
+        </Pressable>
+      }
+    >
+      {!p ? (
+        <PedirLogin />
+      ) : (
+        <>
+          <View style={estilosFixos.linha1}>
+            <View
+              style={{
+                width: 76,
+                height: 76,
+                borderRadius: 38,
+                backgroundColor: colors.brandSoft,
+                overflow: "hidden",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {q.dados?.avatar_id ? (
+                <ImagemPrivada id={q.dados.avatar_id} altura={76} />
+              ) : q.dados?.usar_foto_google && q.dados.foto_google ? (
+                <Image
+                  source={{ uri: q.dados.foto_google }}
+                  accessibilityLabel="Sua foto autorizada do Google"
+                  style={estilosFixos.area2}
+                />
+              ) : (
+                <Text
+                  style={{
+                    fontSize: 28,
+                    color: colors.primary,
+                    fontFamily: fontsReady ? "Sora-SemiBold" : undefined,
+                  }}
+                >
+                  {p.nome[0]?.toUpperCase()}
+                </Text>
+              )}
+            </View>
+            <View style={estilosFixos.grupo1}>
+              <Text
+                accessibilityRole="header"
+                style={{
+                  fontSize: 22,
+                  lineHeight: 30,
+                  fontFamily: fontsReady ? "Sora-SemiBold" : undefined,
+                  color: colors.ink,
+                }}
+              >
+                {q.dados?.tipo === "instituicao"
+                  ? q.dados.nome_instituicao || p.nome
+                  : p.nome}
+              </Text>
+              <Text
+                style={{ fontSize: 13, lineHeight: 21, color: colors.muted }}
+              >
+                {p.email}
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => r.push("/meus-dados")}
+                style={estilosFixos.area3}
+              >
+                <Text style={{ fontSize: 14, color: colors.primary }}>
+                  Editar meus dados
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+          <EstadoConexao {...q} />
+          <View>
+            <ItemMenu
+              titulo="Minhas campanhas"
+              icone="albums-outline"
+              onPress={() => r.push("/minhas-campanhas")}
+            />
+            <ItemMenu
+              titulo="Minhas doações e participações"
+              icone="heart-outline"
+              onPress={() => r.push("/atividade")}
+            />
+            <ItemMenu
+              titulo="Meus compartilhamentos"
+              icone="share-social-outline"
+              onPress={() => r.push("/compartilhamentos")}
+            />
+            <ItemMenu
+              titulo="Convidar amigos"
+              icone="people-outline"
+              onPress={() => r.push("/convidar")}
+            />
+            <ItemMenu
+              titulo="Personalizar perfil e privacidade"
+              icone="person-circle-outline"
+              onPress={() => r.push("/personalizar-perfil")}
+            />
+            <ItemMenu
+              titulo="Configurações"
+              icone="settings-outline"
+              onPress={() => r.push("/configuracoes")}
+            />
+            <ItemMenu
+              titulo="Ajuda e transparência"
+              icone="help-circle-outline"
+              onPress={() => r.push("/sobre")}
+            />
+            {p.administrador ? (
+              <ItemMenu
+                titulo="Administração"
+                icone="shield-checkmark-outline"
+                onPress={() => r.push("/administracao")}
+              />
+            ) : null}
+            <ItemMenu
+              titulo={saindo ? "Saindo…" : "Sair da conta"}
+              icone="log-out-outline"
+              perigo
+              onPress={() => {
+                if (!saindo) void sair();
+              }}
+            />
+          </View>
+          {erro ? <Notice error>{erro}</Notice> : null}
+        </>
+      )}
+    </Screen>
+  );
 }
-export function MeusDados(){
- const q=useDados<Usuario>(usuarioLogado()?'/perfil':null),[nome,setNome]=useState(''),[cidade,setCidade]=useState(''),[telefone,setTelefone]=useState(''),[mensagem,setMensagem]=useState(''),[erro,setErro]=useState(''),[ocupado,setOcupado]=useState(false);
- useEffect(()=>{if(q.dados){setNome(q.dados.nome);setCidade(q.dados.regiao);setTelefone(q.dados.telefone);}},[q.dados]);
- async function salvar(){setOcupado(true);setErro('');try{atualizarUsuario(await requisitar<Usuario>('/perfil','PUT',{nome,regiao:cidade,telefone}));setMensagem('Seus dados foram atualizados.');}catch(e){setErro(mensagemErro(e));}finally{setOcupado(false);}}
- return <Screen variant="form" title="Meus dados" heading="Do seu jeito."><EstadoConexao {...q}/>{!usuarioLogado()?<PedirLogin/>:q.dados?<><Field label="Seu nome" value={nome} onChangeText={setNome}/><Field label="Cidade (opcional)" value={cidade} onChangeText={setCidade}/><Field label="Telefone (opcional)" value={telefone} onChangeText={setTelefone}/><Copy muted>Seu telefone só aparece nas ajudas registradas para combinar a entrega. Não é mostrado no perfil público.</Copy>{erro?<Notice error>{erro}</Notice>:mensagem?<Notice success>{mensagem}</Notice>:null}<Button title={ocupado?'Salvando…':'Salvar meus dados'} disabled={ocupado||!nome.trim()} onPress={salvar}/></>:null}</Screen>;
+export function MeusDados() {
+  const q = useDados<Usuario>(usuarioLogado() ? "/perfil" : null);
+  const [nome, setNome] = useState("");
+  const [cidade, setCidade] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [mensagem, setMensagem] = useState("");
+  const [erro, setErro] = useState("");
+  const [ocupado, setOcupado] = useState(false);
+  useEffect(() => {
+    if (q.dados) {
+      setNome(q.dados.nome);
+      setCidade(q.dados.regiao);
+      setTelefone(q.dados.telefone);
+    }
+  }, [q.dados]);
+  async function salvar() {
+    setOcupado(true);
+    setErro("");
+    try {
+      atualizarUsuario(
+        await requisitar<Usuario>("/perfil", "PUT", {
+          nome,
+          regiao: cidade,
+          telefone,
+        }),
+      );
+      setMensagem("Seus dados foram atualizados.");
+    } catch (e) {
+      setErro(mensagemErro(e));
+    } finally {
+      setOcupado(false);
+    }
+  }
+  return (
+    <Screen variant="form" title="Meus dados" heading="Do seu jeito.">
+      <EstadoConexao {...q} />
+      {!usuarioLogado() ? (
+        <PedirLogin />
+      ) : q.dados ? (
+        <>
+          <Field label="Seu nome" value={nome} onChangeText={setNome} />
+          <Field
+            label="Cidade (opcional)"
+            value={cidade}
+            onChangeText={setCidade}
+          />
+          <Field
+            label="Telefone (opcional)"
+            value={telefone}
+            onChangeText={setTelefone}
+          />
+          <Copy muted>
+            Seu telefone só aparece nas ajudas registradas para combinar a
+            entrega. Não é mostrado no perfil público.
+          </Copy>
+          {erro ? (
+            <Notice error>{erro}</Notice>
+          ) : mensagem ? (
+            <Notice success>{mensagem}</Notice>
+          ) : null}
+          <Button
+            title={ocupado ? "Salvando…" : "Salvar meus dados"}
+            disabled={ocupado || !nome.trim()}
+            onPress={salvar}
+          />
+        </>
+      ) : null}
+    </Screen>
+  );
 }
-export function Configuracoes(){
- const r=useRouter(),{preferencia,definirTema,erroTema}=useTheme();return <Screen title="Configurações" heading="Uma experiência confortável."><Heading>Aparência</Heading><Choices label="Tema" options={['Claro','Escuro','Sistema']} selected={preferencia==='claro'?'Claro':preferencia==='escuro'?'Escuro':'Sistema'} onSelect={v=>definirTema(v==='Claro'?'claro':v==='Escuro'?'escuro':'sistema')}/>{erroTema?<Notice error>{erroTema}</Notice>:null}<Copy muted>O movimento acompanha a preferência de acessibilidade do seu dispositivo.</Copy><Button secondary title="Avisos e preferências" onPress={()=>r.push('/avisos')}/><Button secondary title="Privacidade do meu perfil" onPress={()=>r.push('/personalizar-perfil')}/><Button secondary title="Política de Privacidade" onPress={()=>r.push('/privacidade')}/><Button secondary title="Termos de Uso" onPress={()=>r.push('/termos')}/></Screen>;
+export function Configuracoes() {
+  const r = useRouter();
+  const { preferencia, definirTema, erroTema } = useTheme();
+  return (
+    <Screen title="Configurações" heading="Uma experiência confortável.">
+      <Heading>Aparência</Heading>
+      <Choices
+        label="Tema"
+        options={["Claro", "Escuro", "Sistema"]}
+        selected={
+          preferencia === "claro"
+            ? "Claro"
+            : preferencia === "escuro"
+              ? "Escuro"
+              : "Sistema"
+        }
+        onSelect={(v) =>
+          definirTema(
+            v === "Claro" ? "claro" : v === "Escuro" ? "escuro" : "sistema",
+          )
+        }
+      />
+      {erroTema ? <Notice error>{erroTema}</Notice> : null}
+      <Copy muted>
+        O movimento acompanha a preferência de acessibilidade do seu
+        dispositivo.
+      </Copy>
+      <Button
+        secondary
+        title="Avisos e preferências"
+        onPress={() => r.push("/avisos")}
+      />
+      <Button
+        secondary
+        title="Privacidade do meu perfil"
+        onPress={() => r.push("/personalizar-perfil")}
+      />
+      <Button
+        secondary
+        title="Política de Privacidade"
+        onPress={() => r.push("/privacidade")}
+      />
+      <Button
+        secondary
+        title="Termos de Uso"
+        onPress={() => r.push("/termos")}
+      />
+    </Screen>
+  );
 }
-export function MinhasCampanhas(){
- const r=useRouter(),q=useDados<Campanha[]>(usuarioLogado()?'/campanhas?minhas=1':null);return <Screen title="Minhas campanhas" heading="Cuide das suas histórias.">{!usuarioLogado()?<PedirLogin/>:<><EstadoConexao {...q}/>{q.dados?.map(c=><Card key={c.id} title={c.titulo} subtitle={c.estado==='rascunho'?c.submetida?'Em análise':'Em preparação':c.estado==='ativa'?'Publicada':c.estado==='encerrada'?'Encerrada':c.estado} onPress={()=>r.push({pathname:'/gerenciar',params:{id:c.id}})}/>)}{q.dados?.length===0?<EmptyState title="Sua primeira história pode começar aqui.">Conte o que precisa e convide sua comunidade a somar.</EmptyState>:null}<Button title="Criar uma campanha" onPress={()=>r.push('/criar')}/></>}</Screen>;
+export function MinhasCampanhas() {
+  const r = useRouter();
+  const q = useDados<Campanha[]>(
+    usuarioLogado() ? "/campanhas?minhas=1" : null,
+  );
+  return (
+    <Screen title="Minhas campanhas" heading="Cuide das suas histórias.">
+      {!usuarioLogado() ? (
+        <PedirLogin />
+      ) : (
+        <>
+          <EstadoConexao {...q} />
+          {q.dados?.map((c) => (
+            <Card
+              key={c.id}
+              title={c.titulo}
+              subtitle={
+                c.estado === "rascunho"
+                  ? c.submetida
+                    ? "Em análise"
+                    : "Em preparação"
+                  : c.estado === "ativa"
+                    ? "Publicada"
+                    : c.estado === "encerrada"
+                      ? "Encerrada"
+                      : c.estado
+              }
+              onPress={() =>
+                r.push({ pathname: "/gerenciar", params: { id: c.id } })
+              }
+            />
+          ))}
+          {q.dados?.length === 0 ? (
+            <EmptyState title="Sua primeira história pode começar aqui.">
+              Conte o que precisa e convide sua comunidade a somar.
+            </EmptyState>
+          ) : null}
+          <Button title="Criar uma campanha" onPress={() => r.push("/criar")} />
+        </>
+      )}
+    </Screen>
+  );
 }
-export function Convidar(){
- const {colors}=useTheme();return <Screen title="Convidar amigos" heading="Mais pessoas. Mais possibilidades."><View style={{height:160,backgroundColor:colors.brandSoft,borderRadius:28,alignItems:'center',justifyContent:'center'}}><Ionicons aria-hidden accessible={false} name="people-outline" size={64} color={colors.primary}/><Ionicons aria-hidden accessible={false} name="heart" size={24} color={colors.primary}/></View><ConviteCompartilharApp/></Screen>;
+export function Convidar() {
+  const { colors } = useTheme();
+  return (
+    <Screen
+      title="Convidar amigos"
+      heading="Mais pessoas. Mais possibilidades."
+    >
+      <View
+        style={{
+          height: 160,
+          backgroundColor: colors.brandSoft,
+          borderRadius: 28,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Ionicons
+          aria-hidden
+          accessible={false}
+          name="people-outline"
+          size={64}
+          color={colors.primary}
+        />
+        <Ionicons
+          aria-hidden
+          accessible={false}
+          name="heart"
+          size={24}
+          color={colors.primary}
+        />
+      </View>
+      <ConviteCompartilharApp />
+    </Screen>
+  );
 }
-export function Compartilhamentos(){
- const r=useRouter(),q=useDados<{id:string;titulo:string;registros:number;compartilhado_em:string}[]>(usuarioLogado()?'/meus-compartilhamentos':null);return <Screen title="Meus compartilhamentos" heading="Histórias que você levou adiante.">{!usuarioLogado()?<PedirLogin/>:<><EstadoConexao {...q}/>{q.dados?.map(c=><Card key={c.id} title={c.titulo} subtitle="Link copiado ou compartilhamento iniciado pelo aplicativo" onPress={()=>r.push({pathname:'/campanha',params:{id:c.id}})}/>)}{q.dados?.length===0?<EmptyState title="Uma conversa já pode ajudar." action="Encontrar uma campanha" onPress={()=>r.push('/explorar')}>Os links de campanhas que você copiar ou compartilhar aparecerão aqui.</EmptyState>:null}<Copy muted>O SOMA registra a ação no aplicativo. Não confirma quem recebeu o link e não gera receita por esse registro.</Copy></>}</Screen>;
+export function Compartilhamentos() {
+  const r = useRouter();
+  const q = useDados<
+    {
+      id: string;
+      titulo: string;
+      registros: number;
+      compartilhado_em: string;
+    }[]
+  >(usuarioLogado() ? "/meus-compartilhamentos" : null);
+  return (
+    <Screen
+      title="Meus compartilhamentos"
+      heading="Histórias que você levou adiante."
+    >
+      {!usuarioLogado() ? (
+        <PedirLogin />
+      ) : (
+        <>
+          <EstadoConexao {...q} />
+          {q.dados?.map((c) => (
+            <Card
+              key={c.id}
+              title={c.titulo}
+              subtitle="Link copiado ou compartilhamento iniciado pelo aplicativo"
+              onPress={() =>
+                r.push({ pathname: "/campanha", params: { id: c.id } })
+              }
+            />
+          ))}
+          {q.dados?.length === 0 ? (
+            <EmptyState
+              title="Uma conversa já pode ajudar."
+              action="Encontrar uma campanha"
+              onPress={() => r.push("/explorar")}
+            >
+              Os links de campanhas que você copiar ou compartilhar aparecerão
+              aqui.
+            </EmptyState>
+          ) : null}
+          <Copy muted>
+            O SOMA registra a ação no aplicativo. Não confirma quem recebeu o
+            link e não gera receita por esse registro.
+          </Copy>
+        </>
+      )}
+    </Screen>
+  );
 }
-export function Termos(){return <Screen title="Termos de Uso" heading="Solidariedade com responsabilidade."><Copy>O SOMA é um projeto acadêmico. As campanhas podem pedir dinheiro, objetos ou tempo. Doações financeiras, anúncios e repasses desta versão são simulações; não há cobrança, transferência ou investimento real.</Copy><Heading>Ao participar</Heading><Copy>Use informações verdadeiras sobre suas próprias campanhas, imagens autorizadas e linguagem respeitosa. Não publique documentos pessoais, endereço residencial, conteúdo sexual explícito, perigoso, fraudulento ou proibido.</Copy><Heading>Revisão e prioridade</Heading><Copy>Campanhas novas passam por revisão. A urgência depende de evidências e decisão humana; não é definida pelo criador, por popularidade ou por compartilhamentos. Uma aprovação não garante a veracidade de todos os fatos nem o resultado da campanha.</Copy><Heading>Proteção e limites</Heading><Copy>Menores precisam de um responsável adulto para publicar campanhas. Entregas de objetos e tarefas são combinadas entre participantes. Use as denúncias para informar problemas. Estes termos descrevem o funcionamento atual do projeto e não substituem a revisão jurídica necessária antes de uma operação pública.</Copy></Screen>;}
-export function Privacidade(){return <Screen title="Política de Privacidade" heading="Seu cuidado também importa."><Copy>O SOMA guarda dados da conta, campanhas e participações no banco configurado pela equipe. Nome e foto de uma conta Google só são usados quando o acesso é validado; a foto é opcional. E-mail e telefone não são publicados no perfil.</Copy><Heading>Você escolhe o que aparece</Heading><Copy>Seu perfil começa privado. Você pode autorizar um perfil público e a divulgação aproximada de estado e município de uma campanha. O mapa não consulta seu GPS. Documentos são privados e só podem ser acessados pelo responsável e pela equipe de revisão; os acessos são registrados.</Copy><Heading>Sessão e dispositivo</Heading><Copy>Na web, a sessão fica em um cookie protegido contra leitura por scripts, com validade de até 24 horas. No aplicativo nativo, a credencial é guardada no cofre do sistema. A aparência pode ser salva no dispositivo. Não há rastreamento publicitário conectado nesta versão.</Copy><Heading>Compartilhamento e seus direitos</Heading><Copy>Compartilhar usa os recursos do seu dispositivo. O SOMA pode registrar que você copiou um link ou iniciou um compartilhamento, sem conhecer o destinatário. Você pode editar seus dados e retirar as autorizações públicas no perfil. Pedidos de acesso ou exclusão que não tenham ação automática no app dependem da equipe responsável pelo projeto; não há um canal público de atendimento configurado nesta instalação.</Copy><Copy muted>Este resumo descreve a implementação atual. Processos formais de retenção, atendimento e conformidade precisam ser definidos antes da operação pública.</Copy></Screen>;}
-export function Sobre(){const r=useRouter();return <Screen title="Ajuda e transparência" heading="Vamos somar com clareza."><Disclosure title="Como faço uma doação?" initiallyOpen><Copy>Encontre uma campanha, conheça a história e escolha uma forma de ajudar. Para dinheiro, você escolhe um valor e confirma uma simulação. Nada é cobrado de verdade.</Copy></Disclosure><Disclosure title="Como publico uma campanha?"><Copy>Conte a história, escolha fotos e documentos privados quando necessários, defina a meta e revise. Ao enviar, a equipe analisa antes de publicar. Você pode salvar um rascunho e continuar depois.</Copy></Disclosure><Disclosure title="Como os anúncios ajudam?"><Copy>O fundo atual é simulado. A regra destina 70% da receita líquida elegível a emergências revisadas e 30% à manutenção. Não há dinheiro por clique ou compartilhamento e nenhum crescimento é garantido.</Copy><Button secondary title="Ver transparência do fundo" onPress={()=>r.push('/transparencia-anuncios')}/></Disclosure><Disclosure title="Encontrei um problema em uma campanha"><Copy>Abra a campanha e use Denunciar. O relato fica privado e é analisado pela equipe; não oculta a campanha automaticamente.</Copy></Disclosure><Button secondary title="Privacidade" onPress={()=>r.push('/privacidade')}/><Button secondary title="Termos de Uso" onPress={()=>r.push('/termos')}/></Screen>;}
+export function Termos() {
+  return (
+    <Screen title="Termos de Uso" heading="Solidariedade com responsabilidade.">
+      <Copy>
+        O SOMA é um projeto acadêmico. As campanhas podem pedir dinheiro,
+        objetos ou tempo. Doações financeiras, anúncios e repasses desta versão
+        são simulações; não há cobrança, transferência ou investimento real.
+      </Copy>
+      <Heading>Ao participar</Heading>
+      <Copy>
+        Use informações verdadeiras sobre suas próprias campanhas, imagens
+        autorizadas e linguagem respeitosa. Não publique documentos pessoais,
+        endereço residencial, conteúdo sexual explícito, perigoso, fraudulento
+        ou proibido.
+      </Copy>
+      <Heading>Revisão e prioridade</Heading>
+      <Copy>
+        Campanhas novas passam por revisão. A urgência depende de evidências e
+        decisão humana; não é definida pelo criador, por popularidade ou por
+        compartilhamentos. Uma aprovação não garante a veracidade de todos os
+        fatos nem o resultado da campanha.
+      </Copy>
+      <Heading>Proteção e limites</Heading>
+      <Copy>
+        Menores precisam de um responsável adulto para publicar campanhas.
+        Entregas de objetos e tarefas são combinadas entre participantes. Use as
+        denúncias para informar problemas. Estes termos descrevem o
+        funcionamento atual do projeto e não substituem a revisão jurídica
+        necessária antes de uma operação pública.
+      </Copy>
+    </Screen>
+  );
+}
+export function Privacidade() {
+  return (
+    <Screen
+      title="Política de Privacidade"
+      heading="Seu cuidado também importa."
+    >
+      <Copy>
+        O SOMA guarda dados da conta, campanhas e participações no banco
+        configurado pela equipe. Nome e foto de uma conta Google só são usados
+        quando o acesso é validado; a foto é opcional. E-mail e telefone não são
+        publicados no perfil.
+      </Copy>
+      <Heading>Você escolhe o que aparece</Heading>
+      <Copy>
+        Seu perfil começa privado. Você pode autorizar um perfil público e a
+        divulgação aproximada de estado e município de uma campanha. O mapa não
+        consulta seu GPS. Documentos são privados e só podem ser acessados pelo
+        responsável e pela equipe de revisão; os acessos são registrados.
+      </Copy>
+      <Heading>Sessão e dispositivo</Heading>
+      <Copy>
+        Na web, a sessão fica em um cookie protegido contra leitura por scripts,
+        com validade de até 24 horas. No aplicativo nativo, a credencial é
+        guardada no cofre do sistema. A aparência pode ser salva no dispositivo.
+        Não há rastreamento publicitário conectado nesta versão.
+      </Copy>
+      <Heading>Compartilhamento e seus direitos</Heading>
+      <Copy>
+        Compartilhar usa os recursos do seu dispositivo. O SOMA pode registrar
+        que você copiou um link ou iniciou um compartilhamento, sem conhecer o
+        destinatário. Você pode editar seus dados e retirar as autorizações
+        públicas no perfil. Pedidos de acesso ou exclusão que não tenham ação
+        automática no app dependem da equipe responsável pelo projeto; não há um
+        canal público de atendimento configurado nesta instalação.
+      </Copy>
+      <Copy muted>
+        Este resumo descreve a implementação atual. Processos formais de
+        retenção, atendimento e conformidade precisam ser definidos antes da
+        operação pública.
+      </Copy>
+    </Screen>
+  );
+}
+export function Sobre() {
+  const r = useRouter();
+  return (
+    <Screen title="Ajuda e transparência" heading="Vamos somar com clareza.">
+      <Disclosure title="Como faço uma doação?" initiallyOpen>
+        <Copy>
+          Encontre uma campanha, conheça a história e escolha uma forma de
+          ajudar. Para dinheiro, você escolhe um valor e confirma uma simulação.
+          Nada é cobrado de verdade.
+        </Copy>
+      </Disclosure>
+      <Disclosure title="Como publico uma campanha?">
+        <Copy>
+          Conte a história, escolha fotos e documentos privados quando
+          necessários, defina a meta e revise. Ao enviar, a equipe analisa antes
+          de publicar. Você pode salvar um rascunho e continuar depois.
+        </Copy>
+      </Disclosure>
+      <Disclosure title="Como os anúncios ajudam?">
+        <Copy>
+          O fundo atual é simulado. A regra destina 70% da receita líquida
+          elegível a emergências revisadas e 30% à manutenção. Não há dinheiro
+          por clique ou compartilhamento e nenhum crescimento é garantido.
+        </Copy>
+        <Button
+          secondary
+          title="Ver transparência do fundo"
+          onPress={() => r.push("/transparencia-anuncios")}
+        />
+      </Disclosure>
+      <Disclosure title="Encontrei um problema em uma campanha">
+        <Copy>
+          Abra a campanha e use Denunciar. O relato fica privado e é analisado
+          pela equipe; não oculta a campanha automaticamente.
+        </Copy>
+      </Disclosure>
+      <Button
+        secondary
+        title="Privacidade"
+        onPress={() => r.push("/privacidade")}
+      />
+      <Button
+        secondary
+        title="Termos de Uso"
+        onPress={() => r.push("/termos")}
+      />
+    </Screen>
+  );
+}
+
+// Estilos fixos separados do JSX, como no exemplo de aula de 07/05.
+const estilosFixos = StyleSheet.create({
+  area1: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  linha1: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 18,
+    paddingVertical: 12,
+  },
+  area2: { width: 76, height: 76 },
+  grupo1: { flex: 1, minWidth: 0, gap: 6 },
+  area3: { minHeight: 44, justifyContent: "center" },
+});

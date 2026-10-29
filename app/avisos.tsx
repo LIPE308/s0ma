@@ -1,1 +1,1 @@
-export { Notifications as default } from '../src/screens/account';
+export { Notifications as default } from "../src/screens/account";

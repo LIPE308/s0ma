@@ -1,1 +1,1 @@
-export { PrepararCampanha as default } from '../src/screens/preparacao';
+export { PrepararCampanha as default } from "../src/screens/preparacao";

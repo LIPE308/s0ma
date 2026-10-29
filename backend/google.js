@@ -19,6 +19,12 @@ async function atenderGoogle(ctx) {
   if(!config)erro('Login Google ainda não configurado pela equipe. Use e-mail e senha.',503);
   const cookie=(nome,valor,tempo)=>nome+'='+valor+'; HttpOnly; SameSite=Lax; Path=/api/auth/google; Max-Age='+tempo+config.seguro;
   if((caminho==='/api/auth/google/iniciar' && metodo==='GET') || (caminho==='/api/auth/google/vincular' && metodo==='POST')){
+    // O estado OAuth deve voltar para o mesmo host que gravou o cookie.
+    // Ao abrir por 127.0.0.1, inicia o login na origem canônica do callback.
+    if (metodo==='GET' && requisicao.headers.host!==config.uri.host) {
+      resposta.writeHead(302,{Location:config.uri.origin+'/api/auth/google/iniciar','Cache-Control':'no-store'});resposta.end();return{enviada:true};
+    }
+    if (metodo==='POST' && requisicao.headers.host!==config.uri.host) erro('Para vincular o Google, entre pelo endereço '+config.uri.origin+'.',409);
     if(metodo==='POST')exigirLogin(usuario);
     const estado=randomBytes(32).toString('hex'),nonce=randomBytes(24).toString('hex');
     const pkce=await config.client.generateCodeVerifierAsync();
@@ -59,7 +65,7 @@ async function atenderGoogle(ctx) {
       }
       if(!id){
         const [existente]=await consulta('SELECT id FROM usuarios WHERE email=?',[payload.email.toLowerCase()]);
-        if(existente)erro('Este e-mail já tem cadastro. Entre com sua senha e vincule o Google pelo perfil.',409);
+        if(existente){const falha=new Error('Este e-mail já tem cadastro. Entre com sua senha e vincule o Google pelo perfil.');falha.codigo=409;falha.googleVincular=true;throw falha;}
         const senha=gerarSenha(randomBytes(32).toString('base64url'));
         const r=await consulta('INSERT INTO usuarios (nome,email,senha_resumo,senha_sal) VALUES (?,?,?,?)',[String(payload.name||'Pessoa SOMA').slice(0,150),payload.email.toLowerCase(),senha.resumo,senha.sal]);id=r.insertId;
       }
@@ -70,9 +76,9 @@ async function atenderGoogle(ctx) {
     });
     resposta.setHeader('Set-Cookie',[cookie('soma_oauth_estado','',0),cookie('soma_oauth_entrega',entrega,60)]);
     resposta.writeHead(302,{Location:config.uri.origin+'/google','Cache-Control':'no-store','Referrer-Policy':'no-referrer'});resposta.end();return{enviada:true};
-    } catch {
+    } catch (problema) {
       resposta.setHeader('Set-Cookie',cookie('soma_oauth_estado','',0));
-      resposta.writeHead(302,{Location:config.uri.origin+'/entrar?aviso=google_erro','Cache-Control':'no-store','Referrer-Policy':'no-referrer'});resposta.end();return{enviada:true};
+      resposta.writeHead(302,{Location:config.uri.origin+'/entrar?aviso='+(problema.googleVincular?'google_vincular':'google_erro'),'Cache-Control':'no-store','Referrer-Policy':'no-referrer'});resposta.end();return{enviada:true};
     }
   }
   if(caminho==='/api/auth/google/trocar' && metodo==='POST'){
@@ -83,6 +89,7 @@ async function atenderGoogle(ctx) {
       if(!entrega || Number(entrega.expira_em)<Date.now())erro('Acesso Google expirado.',401);
       await consulta('DELETE FROM oauth_entregas WHERE resumo_codigo=?',[resumirToken(codigo)]);
       const [pessoa]=await consulta('SELECT * FROM usuarios WHERE id=?',[entrega.usuario_id]);
+      if (!pessoa || pessoa.bloqueado) erro('Esta conta não pode iniciar uma sessão.',403);
       const token=randomBytes(32).toString('hex');
       await consulta('INSERT INTO sessoes (resumo_token,usuario_id,expira_em) VALUES (?,?,?)',[resumirToken(token),pessoa.id,Date.now()+86400000]);
       return{token,usuario:usuarioPublico(pessoa)};

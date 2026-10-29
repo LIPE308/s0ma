@@ -57,11 +57,17 @@ async function inicializarBanco() {
   for (const comando of esquema.split(';').filter(comando => comando.trim())) await banco.query(comando);
   const extensoes = readFileSync(join(__dirname, 'extensoes.sql'), 'utf8');
   for (const comando of extensoes.split(';').filter(comando => comando.trim())) await banco.query(comando);
+  const admin = readFileSync(join(__dirname, 'esquema-admin.sql'), 'utf8');
+  for (const comando of admin.split(';').filter(comando => comando.trim())) await banco.query(comando);
+  const [destino] = await consultar("SHOW COLUMNS FROM avisos LIKE 'destino'");
+  if (!destino) await banco.query("ALTER TABLE avisos ADD COLUMN destino VARCHAR(300) NOT NULL DEFAULT ''");
+  const [bloqueado] = await consultar("SHOW COLUMNS FROM usuarios LIKE 'bloqueado'");
+  if (!bloqueado) await banco.query('ALTER TABLE usuarios ADD COLUMN bloqueado BOOLEAN NOT NULL DEFAULT FALSE');
   const [coluna] = await consultar("SELECT COUNT(*) AS total FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='campanhas' AND COLUMN_NAME='estado_antes_moderacao'");
   if (!Number(coluna.total)) await banco.query("ALTER TABLE campanhas ADD COLUMN estado_antes_moderacao ENUM('ativa','encerrada') DEFAULT NULL");
   // The published demonstration administrator must never remain a privileged login.
   // Keep the account, password, campaign history and ordinary access; revoke only this legacy role.
-  await consultar("UPDATE usuarios SET administrador=0 WHERE email='admin@exemplo.com' AND administrador=1");
+  await consultar("UPDATE usuarios SET administrador=0 WHERE email='admin@exemplo.com' AND administrador=1 AND id NOT IN (SELECT usuario_id FROM administradores_locais)");
   const [contagem] = await consultar('SELECT COUNT(*) AS total FROM usuarios');
   if (Number(contagem.total) > 0) { await migrarSoma2(consultar, banco, transacao); return; }
   // Exemplos apenas no banco vazio. Reiniciar não apaga o trabalho da turma.

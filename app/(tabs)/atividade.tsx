@@ -1,1 +1,1 @@
-export { Activity as default } from '../../src/screens/contributions';
+export { Activity as default } from "../../src/screens/contributions";

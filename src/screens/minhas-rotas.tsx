@@ -1,1 +1,1 @@
-export { MinhasCampanhas as MinhasRotas } from './comunidade';
+export { MinhasCampanhas as MinhasRotas } from "./comunidade";

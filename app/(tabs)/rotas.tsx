@@ -1,1 +1,1 @@
-export { MinhasRotas as default } from '../../src/screens/minhas-rotas';
+export { MinhasRotas as default } from "../../src/screens/minhas-rotas";

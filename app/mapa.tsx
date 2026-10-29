@@ -1,1 +1,1 @@
-export { MapaSolidario as default } from '../src/screens/mapa';
+export { MapaSolidario as default } from "../src/screens/mapa";

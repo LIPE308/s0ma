@@ -1,1 +1,1 @@
-export { Login as default } from '../src/screens/account';
+export { Login as default } from "../src/screens/account";

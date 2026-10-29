@@ -1,1 +1,1 @@
-export { Surplus as default } from '../src/screens/finance';
+export { Surplus as default } from "../src/screens/finance";

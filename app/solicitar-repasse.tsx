@@ -1,1 +1,1 @@
-export { RequestTransfer as default } from '../src/screens/finance';
+export { RequestTransfer as default } from "../src/screens/finance";
