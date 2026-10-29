@@ -1,1 +1,1 @@
-export { RetratoPerfil as PerfilPessoal } from '../screens/perfil-social';
+export { RetratoPerfil as PerfilPessoal } from "../screens/perfil-social";

@@ -1,1 +1,1 @@
-export { SignUp as default } from '../src/screens/account';
+export { SignUp as default } from "../src/screens/account";

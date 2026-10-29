@@ -1,1 +1,1 @@
-export { Donation as default } from '../src/screens/finance';
+export { Donation as default } from "../src/screens/finance";

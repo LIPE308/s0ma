@@ -46,3 +46,5 @@ app-example
 # Configuração local do MySQL e arquivos temporários de execução.
 backend/.env
 backend/.mysql/
+backend/.admin-local.json
+backend/.google-client*.json

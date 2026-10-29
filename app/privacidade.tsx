@@ -1,1 +1,1 @@
-export { Privacidade as default } from '../src/screens/comunidade';
+export { Privacidade as default } from "../src/screens/comunidade";

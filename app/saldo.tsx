@@ -1,1 +1,1 @@
-export { Balance as default } from '../src/screens/finance';
+export { Balance as default } from "../src/screens/finance";

@@ -5,6 +5,8 @@ const { join } = require('node:path');
 async function migrarSoma2(consultar, banco, transacao) {
   const esquema = readFileSync(join(__dirname, 'esquema-soma2.sql'), 'utf8');
   for (const comando of esquema.split(';').filter(item => item.trim())) await banco.query(comando);
+  const [verificador] = await consultar("SHOW COLUMNS FROM oauth_fluxos LIKE 'verificador'");
+  if (verificador.Type !== 'varchar(128)') await banco.query('ALTER TABLE oauth_fluxos MODIFY verificador VARCHAR(128) NOT NULL');
   // A main anterior também usava perfis: acrescentar campos sem perder foto/capa/biografia.
   const colunas = await consultar('SHOW COLUMNS FROM perfis');
   const adicionais = { nome_instituicao:"VARCHAR(150) NOT NULL DEFAULT ''", adulto:'BOOLEAN DEFAULT NULL', publico:'BOOLEAN NOT NULL DEFAULT FALSE', local_publico:'BOOLEAN NOT NULL DEFAULT FALSE', apoios_publicos:'BOOLEAN NOT NULL DEFAULT FALSE', cor:"ENUM('royal','verde','terracota') NOT NULL DEFAULT 'royal'", avatar_id:'VARCHAR(36)', capa_id:'VARCHAR(36)' };

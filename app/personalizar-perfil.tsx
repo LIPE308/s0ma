@@ -1,1 +1,1 @@
-export { PersonalizarPerfil as default } from '../src/screens/perfil-social';
+export { PersonalizarPerfil as default } from "../src/screens/perfil-social";

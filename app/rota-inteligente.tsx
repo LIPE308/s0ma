@@ -1,1 +1,1 @@
-export { RotaInteligente as default } from '../src/screens/inteligencia';
+export { RotaInteligente as default } from "../src/screens/inteligencia";

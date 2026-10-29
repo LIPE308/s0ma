@@ -1,1 +1,1 @@
-export { Profile as default } from '../../src/screens/account';
+export { Profile as default } from "../../src/screens/account";

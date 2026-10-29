@@ -13,7 +13,7 @@ export type Repasse = { id: number; campanha_id: string; campanha: string; valor
 export type Saldo = { campanha: string; confirmado: number; reservado: number; repassado: number; disponivel: number; repasses: Repasse[] };
 export type Atualizacao = { id: number; titulo: string; relato: string; autor: string; criada_em: string };
 export type Atividade = { ajudas: Ajuda[]; campanhas: Campanha[]; pagamentos: Pagamento[] };
-export type Aviso = { id: number; mensagem: string; lido: boolean; criado_em: string };
+export type Aviso = { destino?: string; id: number; mensagem: string; lido: boolean; criado_em: string };
 export type Denuncia = { id: number; campanha_id: string; campanha: string; motivo: string; relato: string; estado: string };
 export type Administracao = { campanhas: Campanha[]; denuncias: Denuncia[]; repasses: Repasse[]; pagamentos: Pagamento[] };
 

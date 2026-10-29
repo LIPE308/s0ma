@@ -1,1 +1,1 @@
-export { MinhasCampanhas as default } from '../src/screens/comunidade';
+export { MinhasCampanhas as default } from "../src/screens/comunidade";

@@ -16,7 +16,7 @@ test('PostgreSQL: esquema, consultas existentes, upserts, restrições e rollbac
     // Validate the actual static queries used by the API against PostgreSQL.
     const ts = require('typescript');
     let indice = 0;
-    for (const arquivo of ['servidor.js','soma2.js','google.js','experiencia.js','marcos.js','operacoes.js']) {
+    for (const arquivo of ['servidor.js','soma2.js','google.js','experiencia.js','marcos.js','operacoes.js','administracao.js','notificacoes.js']) {
       const ast = ts.createSourceFile(arquivo, readFileSync(join(__dirname, arquivo), 'utf8'), ts.ScriptTarget.Latest, true);
       const consultas = [];
       function visitar(no) {

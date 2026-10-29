@@ -1,1 +1,1 @@
-export { Configuracoes as default } from '../src/screens/comunidade';
+export { Configuracoes as default } from "../src/screens/comunidade";

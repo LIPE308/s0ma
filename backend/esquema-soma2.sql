@@ -137,7 +137,7 @@ CREATE TABLE IF NOT EXISTS identidades (
 );
 CREATE TABLE IF NOT EXISTS oauth_fluxos (
   resumo_estado CHAR(64) PRIMARY KEY,
-  verificador VARCHAR(100) NOT NULL,
+  verificador VARCHAR(128) NOT NULL,
   nonce VARCHAR(100) NOT NULL,
   expira_em BIGINT NOT NULL,
   usuario_id INT,

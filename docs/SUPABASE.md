@@ -8,6 +8,7 @@ A instalação inicial e os 36 índices de chaves estrangeiras já foram aplicad
 
 1. Crie um projeto SOMA na organização desejada do Supabase.
 2. No SQL Editor desse projeto **novo e vazio**, execute `backend/esquema-postgres.sql` e depois `backend/indices-postgres.sql`. Eles criam as tabelas e índices sem contas nem campanhas de demonstração. Não são importadores de dados MySQL. Não execute sobre uma instalação anterior com dados sem preparar uma migração específica.
+   Se o banco SOMA já existia antes da integração do painel administrativo, aplique somente `backend/admin-postgres.sql` para acrescentar as colunas e tabelas necessárias, preservando os dados existentes. Essa atualização já foi aplicada ao banco SOMA configurado nesta instalação.
 3. Em Connect, copie a conexão PostgreSQL **Session pooler** (porta 5432) para `DATABASE_URL` em `backend/.env`. Use a senha do banco, com caracteres especiais codificados na URL. Essa informação é secreta e deve ficar somente no servidor.
 4. Baixe o certificado raiz em Database Settings e configure `PGSSLROOTCERT` com seu caminho se necessário. A conexão remota valida o certificado e o nome do servidor; não desative essa validação.
 5. Execute `npm ci` e `npm run servidor`. O log deve indicar `Supabase/PostgreSQL conectado`.

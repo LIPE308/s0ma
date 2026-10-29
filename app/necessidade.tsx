@@ -1,1 +1,1 @@
-export { NeedDetails as default } from '../src/screens/discovery';
+export { NeedDetails as default } from "../src/screens/discovery";

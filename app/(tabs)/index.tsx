@@ -1,1 +1,1 @@
-export { Home as default } from '../../src/screens/discovery';
+export { Home as default } from "../../src/screens/discovery";

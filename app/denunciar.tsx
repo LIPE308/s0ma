@@ -1,1 +1,1 @@
-export { Report as default } from '../src/screens/management';
+export { Report as default } from "../src/screens/management";

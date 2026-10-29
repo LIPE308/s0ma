@@ -15,6 +15,8 @@ const { atenderExtensoes } = require('./extensoes');
 const { prepararArquivo } = require('./midias');
 const { tokenDaRequisicao, gravarCookieSessao } = require('./sessao-web');
 const { atenderExperiencia } = require('./experiencia');
+const { atenderAdministracao } = require('./administracao');
+const { iniciarFilaEmail } = require('./notificacoes');
 
 const categorias = ['Família', 'Saúde', 'Educação', 'Comunidade', 'Instituições', 'Proteção animal', 'Meio ambiente', 'Cultura', 'Necessidades pessoais', 'Objetivos individuais', 'Outras causas'];
 const consultaCampanhas = 'SELECT c.*, u.nome AS responsavel FROM campanhas c JOIN usuarios u ON u.id = c.usuario_id';
@@ -35,7 +37,7 @@ async function identificarUsuario(requisicao) {
   const token = tokenDaRequisicao(requisicao);
   if (!cabecalho && !token) return null;
   if (!/^[a-f0-9]{64}$/.test(token)) erro('Faça login novamente.', 401);
-  const [usuario] = await consultar('SELECT u.* FROM sessoes s JOIN usuarios u ON u.id = s.usuario_id WHERE s.resumo_token = ? AND s.expira_em > ?', [resumirToken(token), Date.now()]);
+  const [usuario] = await consultar('SELECT u.* FROM sessoes s JOIN usuarios u ON u.id = s.usuario_id WHERE s.resumo_token = ? AND s.expira_em > ? AND u.bloqueado=0', [resumirToken(token), Date.now()]);
   if (!usuario && cabecalho) erro('Sua sessão expirou. Faça login novamente.', 401);
   return usuario;
 }
@@ -156,7 +158,7 @@ async function atender(requisicao, resposta) {
     if (caminho === '/api/arquivos' && requisicao.method === 'POST') exigirLogin(usuario);
     const dados = ['POST', 'PUT', 'PATCH'].includes(metodo) ? await lerCorpo(requisicao, caminho === '/api/arquivos' ? 2900000 : 100000) : {};
     const contexto = { caminho, metodo, usuario, dados, requisicao, resposta, consultar, transacao, obterCampanha, exigirLogin, exigirAdministrador, exigirResponsavel, conferirVisibilidade, calcularSaldo };
-    const nova = await atenderGoogle(contexto) || await atenderExperiencia(contexto) || await atenderSoma2(contexto) || await atenderExtensoes(contexto);
+    const nova = await atenderGoogle(contexto) || await atenderAdministracao(contexto) || await atenderExperiencia(contexto) || await atenderSoma2(contexto) || await atenderExtensoes(contexto);
     if (nova) { if (!nova.enviada) responder(resposta, nova.codigo || 200, nova.resultado); return; }
     let resultado;
     let codigo = 200;
@@ -176,7 +178,7 @@ async function atender(requisicao, resposta) {
       const email = texto(dados.email, 'o e-mail', 150).toLowerCase();
       if (typeof dados.senha !== 'string' || dados.senha.length > 128) erro('E-mail ou senha incorretos.', 401);
       const [pessoa] = await consultar('SELECT * FROM usuarios WHERE email=?', [email]);
-      if (!pessoa || !conferirSenha(dados.senha, pessoa)) erro('E-mail ou senha incorretos.', 401);
+      if (!pessoa || pessoa.bloqueado || !conferirSenha(dados.senha, pessoa)) erro('E-mail ou senha incorretos.', 401);
       const token = randomBytes(32).toString('hex');
       await consultar('DELETE FROM sessoes WHERE expira_em <= ?', [Date.now()]);
       await consultar('INSERT INTO sessoes (resumo_token,usuario_id,expira_em) VALUES (?,?,?)', [resumirToken(token), pessoa.id, Date.now() + 86400000]);
@@ -442,6 +444,7 @@ async function atender(requisicao, resposta) {
         const insercao = await consulta('INSERT INTO denuncias (campanha_id,usuario_id,motivo,relato) VALUES (?,?,?,?)', [campanha.id, usuario.id, motivo, relato]);
         codigo = 201; return { id: insercao.insertId, mensagem: 'Denúncia registrada para análise.' };
       });
+    } else if (caminho === '/api/avisos/resumo' && metodo === 'GET') { exigirLogin(usuario); [resultado] = await consultar('SELECT COUNT(*) AS nao_lidos FROM avisos WHERE usuario_id=? AND lido=0',[usuario.id]);
     } else if (caminho === '/api/avisos' && metodo === 'GET') { exigirLogin(usuario); resultado = await consultar('SELECT * FROM avisos WHERE usuario_id=? ORDER BY id DESC', [usuario.id]);
     } else if ((partes = caminho.match(/^\/api\/avisos\/(\d+)$/)) && metodo === 'PATCH') {
       exigirLogin(usuario); const alteracao = await consultar('UPDATE avisos SET lido=1 WHERE id=? AND usuario_id=?', [partes[1], usuario.id]); if (!alteracao.affectedRows) erro('Aviso não encontrado.', 404); resultado = { mensagem: 'Aviso lido.' };
@@ -478,11 +481,13 @@ async function atender(requisicao, resposta) {
 
 const servidor = http.createServer(atender);
 servidor.requestTimeout = 30000;
+let pararEmail = async () => {};
 async function iniciar() {
   await inicializarBanco();
+  pararEmail = iniciarFilaEmail({ consultar, transacao });
   servidor.listen(Number(process.env.PORTA || 3001), process.env.ENDERECO || '127.0.0.1', () => console.log(`Soma: API e front compilado na porta ${servidor.address().port}. ${banco.postgres ? 'Supabase/PostgreSQL' : 'MySQL'} conectado.`));
 }
-function encerrar() { servidor.close(() => banco.end().then(() => process.exit(0))); }
+function encerrar() { servidor.close(() => Promise.resolve(pararEmail()).then(() => banco.end()).then(() => process.exit(0))); }
 process.on('SIGTERM', encerrar); process.on('SIGINT', encerrar);
 iniciar().catch(problema => {
   console.error('Não foi possível iniciar. Código:', problema.code || problema.message);

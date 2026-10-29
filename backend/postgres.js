@@ -14,7 +14,7 @@ types.setTypeParser(1114, valor => new Date(valor.replace(' ', 'T') + 'Z'));
 
 const chaves = {
   perfis: 'usuario_id', campanhas_detalhes: 'campanha_id', urgencias: 'campanha_id',
-  operacoes: 'usuario_id,chave',
+  operacoes: 'usuario_id,chave', relatorios_anuncios: 'provedor,conta,inicio,fim,moeda',
 };
 
 // Only translates the small SQL dialect used by the existing backend.
@@ -24,6 +24,8 @@ function converterSQL(sql) {
   let texto = sql.replace(/'(?:''|[^'])*'/g, valor => `__literal_${literais.push(valor) - 1}__`);
   let indice = 0;
   texto = texto.replace(/\?/g, () => '$' + (++indice));
+  texto = texto.replace(/DATABASE\(\)/gi, 'current_database()');
+  texto = texto.replace(/IF\(\$(\d+),6,tentativas\)/gi, (_, n) => 'CASE WHEN $' + n + ' THEN 6 ELSE tentativas END');
   texto = texto.replace(/UTC_DATE\(\)/gi, "(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::date");
   const ignorar = /^\s*INSERT IGNORE INTO /i.test(texto);
   texto = texto.replace(/INSERT IGNORE INTO /i, 'INSERT INTO ');

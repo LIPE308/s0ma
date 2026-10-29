@@ -1,1 +1,1 @@
-export { MeusDados as default } from '../src/screens/comunidade';
+export { MeusDados as default } from "../src/screens/comunidade";
