@@ -8,6 +8,8 @@
   "rollbackConfirmado": true,
   "registrosDeTestePermanentes": 0,
   "dadosPreexistentesPreservados": true,
-  "apiPublicada": false,
-  "apkSupabaseGerado": false
+  "apiPublicada": true,
+  "apkSupabaseGerado": false,
+  "urlApiPublica": "https://soma-api-studio308.onrender.com/api",
+  "saudeApiPublica": "Supabase/PostgreSQL"
 }

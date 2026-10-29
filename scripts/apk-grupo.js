@@ -9,7 +9,7 @@ async function main() {
   const saude = await resposta.json();
   if (saude.banco !== 'Supabase/PostgreSQL') throw Error('A API ainda não confirmou conexão com Supabase/PostgreSQL.');
   console.log('API HTTPS e Supabase confirmados. Iniciando APK do grupo.');
-  const args = ['--yes','eas-cli','build','--platform','android','--profile','grupo'];
+  const args = ['--yes','eas-cli','build','--platform','android','--profile','grupo','--non-interactive'];
   const filho = spawn(process.platform === 'win32' ? 'npx.cmd' : 'npx', args, { stdio: 'inherit', shell: process.platform === 'win32', env: { ...process.env, EAS_BUILD_PROFILE: 'grupo' } });
   filho.once('error', () => { console.error('Não foi possível iniciar o EAS.'); process.exitCode=1; });
   filho.once('exit', codigo => { process.exitCode=codigo || 0; });

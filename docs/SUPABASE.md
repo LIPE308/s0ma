@@ -62,3 +62,7 @@ O servidor local foi configurado para o projeto yahvoqitjxgrlndtaciu via Session
 O utilitário backend/configurar-supabase-local.js usa backend/.env.supabase.local (ignorado pelo Git), verifica o projeto esperado, aplica a atualização aditiva e só então altera backend/.env. O certificado público está em backend/certs/prod-ca-2021.crt. As senhas não são distribuídas. Esses passos não importam automaticamente o histórico do MySQL local.
 
 A API pública ainda precisa ser publicada antes da compilação do APK do grupo. Render exige login/autorização do proprietário e DATABASE_URL configurada como segredo de servidor.
+
+## API pública de demonstração
+
+Publicada e verificada em https://soma-api-studio308.onrender.com/api/saude, retornando Supabase/PostgreSQL no projeto do Igor. Serviço Render soma-api-studio308, plano Free, segredos somente no servidor. O perfil EAS grupo usa https://soma-api-studio308.onrender.com/api. No plano gratuito, a primeira abertura após inatividade pode levar cerca de um minuto; a aplicação utiliza valores financeiros simulados. Login de teste disponível por e-mail e senha.

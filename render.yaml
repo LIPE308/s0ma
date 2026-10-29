@@ -3,7 +3,7 @@ services:
     name: soma-api
     runtime: node
     plan: free
-    buildCommand: npm ci && npm run compilar:web
+    buildCommand: npm ci --include=dev && npm run compilar:web
     startCommand: npm run servidor
     healthCheckPath: /api/saude
     autoDeployTrigger: off

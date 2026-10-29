@@ -22,6 +22,10 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "environment": "preview",
+      "env": {
+        "EXPO_PUBLIC_URL_BACKEND": "https://soma-api-studio308.onrender.com/api"
       }
     }
   }

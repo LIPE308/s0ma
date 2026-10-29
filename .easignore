@@ -10,3 +10,8 @@ backend/
 *.log
 *.apk
 *.aab
+
+# Arquivos experimentais locais ainda não integrados ao app.
+src/design/brand-audio.ts
+src/design/brand-audio.web.ts
+assets/audio/soma-vinheta.wav
