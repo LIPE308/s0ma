@@ -55,7 +55,9 @@ async function atenderAdministracao(ctx) {
   if (caminho === '/api/administracao/painel/integracoes' && metodo === 'GET') {
     const [db] = await consultar('SELECT DATABASE() AS nome,VERSION() AS versao');
     const email = configuracaoEmail();
-    return ok({ banco: { conectado: true, nome: db.nome, versao: db.versao, host: process.env.MYSQL_HOST || '127.0.0.1', porta: Number(process.env.MYSQL_PORTA || 3306), usuario: process.env.MYSQL_USUARIO || 'soma' },
+    const postgres = Boolean(process.env.DATABASE_URL || process.env.BANCO_TIPO === 'postgres');
+    const enderecoBanco = postgres && process.env.DATABASE_URL ? new URL(process.env.DATABASE_URL) : null;
+    return ok({ banco: { conectado: true, nome: db.nome, versao: db.versao, host: enderecoBanco?.hostname || process.env.MYSQL_HOST || '127.0.0.1', porta: Number(enderecoBanco?.port || (postgres ? 5432 : process.env.MYSQL_PORTA || 3306)), usuario: enderecoBanco?.username || process.env.MYSQL_USUARIO || 'soma' },
       google: { configurado: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_REDIRECT_URI), retorno: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3001/api/auth/google/callback' },
       email: { configurado: email.pronto, remetente: email.remetente, host: email.host, porta: email.porta }, publicidade: configuracaoPublicidade(),
       financeiro: { modo: 'simulado', pagamentos_reais: false }, notificacoes: { aplicativo: true, push: false } });

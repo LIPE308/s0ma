@@ -174,7 +174,7 @@ export function ListaCampanhas() {
                     accessibilityRole="button"
                     accessibilityLabel={"Categoria: " + c}
                     accessibilityState={{ selected: categoria === c }}
-                    onPress={() => setCategoria(c)}
+                    onPress={() => { setCategoria(c); if (c === "Todas") setDinheiro(false); }}
                     style={{
                       flex: 1,
                       minHeight: 44,

@@ -11,6 +11,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "servidor": "node backend/servidor.js",
+    "servidor:rede-local": "node scripts/servidor-rede-local.js",
     "admin:configurar": "node backend/configurar-admin.js",
     "admin:local": "node backend/criar-admin-local.js",
     "google:importar": "node backend/importar-google.js",
@@ -25,7 +26,8 @@
     "testar:inteligencia": "node --test backend/inteligencia.test.js",
     "testar:experiencia": "node --experimental-strip-types --test backend/experiencia.test.js",
     "verificar:tipos": "tsc --noEmit",
-    "testar:mapa": "node --experimental-strip-types --test backend/mapa.test.js backend/camera-mapa.test.js"
+    "testar:mapa": "node --experimental-strip-types --test backend/mapa.test.js backend/camera-mapa.test.js",
+    "testar:postgres": "node --test backend/postgres.test.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -55,6 +57,7 @@
     "expo-web-browser": "~15.0.11",
     "google-auth-library": "^11.3.1",
     "mysql2": "^3.24.5",
+"pg": "8.23.1",
     "nodemailer": "^10.2.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
@@ -69,6 +72,7 @@
   },
   "devDependencies": {
     "@babel/helper-validator-identifier": "^8.0.6",
+    "@electric-sql/pglite": "0.5.13",
     "@types/react": "~19.1.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
