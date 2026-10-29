@@ -4,8 +4,10 @@ O servidor Node continua responsável pelas contas, sessões, permissões e regr
 
 ## Instalar em um projeto novo
 
+A instalação inicial e os 36 índices de chaves estrangeiras já foram aplicados no projeto `yahvoqitjxgrlndtaciu`, da organização `soma`, em 29/10/2026. Foram verificadas 33 tabelas com RLS e nenhuma conta de exemplo. A conexão e os fluxos HTTP do servidor ainda dependem de `DATABASE_URL` local.
+
 1. Crie um projeto SOMA na organização desejada do Supabase.
-2. No SQL Editor desse projeto **novo e vazio**, execute `backend/esquema-postgres.sql`. Ele cria as tabelas sem contas nem campanhas de demonstração. Não é um importador de dados MySQL. Não execute sobre uma instalação anterior com dados sem preparar uma migração específica.
+2. No SQL Editor desse projeto **novo e vazio**, execute `backend/esquema-postgres.sql` e depois `backend/indices-postgres.sql`. Eles criam as tabelas e índices sem contas nem campanhas de demonstração. Não são importadores de dados MySQL. Não execute sobre uma instalação anterior com dados sem preparar uma migração específica.
 3. Em Connect, copie a conexão PostgreSQL **Session pooler** (porta 5432) para `DATABASE_URL` em `backend/.env`. Use a senha do banco, com caracteres especiais codificados na URL. Essa informação é secreta e deve ficar somente no servidor.
 4. Baixe o certificado raiz em Database Settings e configure `PGSSLROOTCERT` com seu caminho se necessário. A conexão remota valida o certificado e o nome do servidor; não desative essa validação.
 5. Execute `npm ci` e `npm run servidor`. O log deve indicar `Supabase/PostgreSQL conectado`.

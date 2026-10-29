@@ -12,6 +12,7 @@ test('PostgreSQL: esquema, consultas existentes, upserts, restrições e rollbac
     const schema = readFileSync(join(__dirname, 'esquema-postgres.sql'), 'utf8');
     await db.exec(schema);
     await db.exec(schema); // Reapplying cannot erase accounts or create duplicate markers.
+    await db.exec(readFileSync(join(__dirname, 'indices-postgres.sql'), 'utf8'));
     // Validate the actual static queries used by the API against PostgreSQL.
     const ts = require('typescript');
     let indice = 0;
