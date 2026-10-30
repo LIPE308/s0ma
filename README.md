@@ -105,4 +105,6 @@ O [guia do layout baseado nas aulas](docs/LAYOUT-AULAS.md) explica a organizaç�
 
 ## Banco na nuvem
 
+O objetivo da próxima etapa é receber doações diretamente na conta verificada de cada beneficiário por um provedor. O financeiro atual permanece simulado. Veja [pagamentos reais e preparação das lojas](docs/PAGAMENTOS-E-LOJAS.md) para o fluxo e as dependências antes da ativação.
+
 Para usar PostgreSQL no Supabase, siga [a configuração do Supabase](docs/SUPABASE.md). A opção mantém as contas e regras do servidor SOMA e instala um banco novo sem dados de demonstração.
