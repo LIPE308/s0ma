@@ -31,7 +31,8 @@
     "apk:grupo": "node scripts/apk-grupo.js",
     "testar:ota": "node --experimental-strip-types --test tests/ota.test.cjs",
     "ota:preview": "npm exec --yes --package=eas-cli -- node scripts/publicar-ota.js preview",
-    "ota:development": "npm exec --yes --package=eas-cli -- node scripts/publicar-ota.js development"
+    "ota:development": "npm exec --yes --package=eas-cli -- node scripts/publicar-ota.js development",
+    "campanhas:exemplos": "node backend/campanhas-exemplos.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

@@ -1,3 +1,4 @@
+import { SimuladorCampanha } from "../components/simulador-campanha";
 import { StyleSheet, Text, View } from "react-native";
 import { useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -80,6 +81,7 @@ export function Gerenciar() {
         <Notice>Somente o responsável pode gerenciar esta campanha.</Notice>
       ) : c ? (
         <>
+          <SimuladorCampanha key={c.id} automatico />
           {salvo ? (
             <Notice success>
               {salvo === "enviada"

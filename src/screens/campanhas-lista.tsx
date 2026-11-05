@@ -1,3 +1,4 @@
+import { ordenarPrioridade } from "../servicos/campanhas-exemplos";
 import { StyleSheet, FlatList, Pressable, Text, View } from "react-native";
 import { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -91,7 +92,7 @@ export function ListaCampanhas() {
                 .includes(termo.toLocaleLowerCase()),
           )
           .map((v) => ({ tipo: "pedido", necessidades: v }))
-      : (campanhas.dados || [])
+      : ordenarPrioridade(campanhas.dados || [])
           .filter((c) => secao !== "Eventos" || !!c.evento)
           .map((c) => ({ tipo: "campanha", c }));
   function limpar() {
@@ -174,7 +175,10 @@ export function ListaCampanhas() {
                     accessibilityRole="button"
                     accessibilityLabel={"Categoria: " + c}
                     accessibilityState={{ selected: categoria === c }}
-                    onPress={() => { setCategoria(c); if (c === "Todas") setDinheiro(false); }}
+                    onPress={() => {
+                      setCategoria(c);
+                      if (c === "Todas") setDinheiro(false);
+                    }}
                     style={{
                       flex: 1,
                       minHeight: 44,

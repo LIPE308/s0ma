@@ -164,7 +164,19 @@ export function FotoDeCampanha({
   height?: number;
 }) {
   const { colors, fontsReady } = useTheme();
-  const foto = fotosDeCampanhas[campanhaId];
+  const foto =
+    fotosDeCampanhas[campanhaId] ||
+    (campanhaId.startsWith("exemplo-")
+      ? {
+          source:
+            categoria === "Educação"
+              ? imagens.educacao
+              : categoria === "Proteção animal"
+                ? imagens.protecaoAnimal
+                : imagens.comunidade,
+          descricao: "Ação comunitária ilustrativa para campanha fictícia",
+        }
+      : undefined);
   if (foto)
     return (
       <FotoEditorial

@@ -1,3 +1,8 @@
+import {
+  ordenarPrioridade,
+  prioridadeCampanha,
+  emergenciaExemplo,
+} from "../servicos/campanhas-exemplos";
 import type { Colors } from "../design/theme";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
@@ -33,13 +38,15 @@ export function Inicio() {
   const ativas =
     campanhas.dados?.filter((campanha) => campanha.estado === "ativa") || [];
   const revisadas = ativas.filter((campanha) => campanha.urgencia?.revisada);
-  const destaques = (revisadas.length ? revisadas : ativas).slice(0, 2);
+  const emergentes = ordenarPrioridade(ativas).filter(
+    (c) => prioridadeCampanha(c) >= 2,
+  );
+  const destaques = ordenarPrioridade(ativas).slice(0, 6);
   const acoes = [
     {
       nome: "Doar",
       icone: "heart-outline" as const,
-      acao: () =>
-        router.push("/explorar"),
+      acao: () => router.push("/explorar"),
     },
     {
       nome: "Criar campanha",
@@ -78,6 +85,31 @@ export function Inicio() {
         </Text>
         <Copy muted>Juntos, podemos transformar vidas.</Copy>
       </View>
+      {emergentes.length ? (
+        <View style={{ gap: 14 }}>
+          <Heading>Quem precisa de ajuda agora</Heading>
+          <Copy muted>
+            Emergências em destaque. Os casos fictícios estão identificados como
+            exemplos.
+          </Copy>
+          {emergentes.slice(0, 4).map((c) => (
+            <View key={c.id} style={{ gap: 6 }}>
+              {emergenciaExemplo(c) ? (
+                <Text style={{ color: colors.primary, fontSize: 12 }}>
+                  Emergência · exemplo fictício
+                </Text>
+              ) : null}
+              <CartaoCampanha
+                compacto
+                campanha={c}
+                aoAbrir={() =>
+                  router.push({ pathname: "/campanha", params: { id: c.id } })
+                }
+              />
+            </View>
+          ))}
+        </View>
+      ) : null}
       <View style={estilos.destaque}>
         <Image
           source={require("../../assets/photos/familia-pexels-catalina.jpg")}

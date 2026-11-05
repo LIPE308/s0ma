@@ -112,3 +112,7 @@ O cliente tem suporte a OTA a partir da nova base 1.1.0; o APK 1.0.1 anterior pr
 O SOMA usa MySQL local por padrão. `DATABASE_URL` sozinha não seleciona mais o PostgreSQL. Veja a [análise do MySQL local](docs/ANALISE-MYSQL-LOCAL.md). A configuração antiga do Render foi preservada em `docs/legado/render-supabase.yaml`, sem publicação remota por este merge.
 
 Os perfis EAS precisam da URL da API Node/MySQL antes de gerar um novo APK; o endereço remoto anterior não é mais preenchido por padrão. O financeiro permanece simulado; veja [pagamentos reais e preparação das lojas](docs/PAGAMENTOS-E-LOJAS.md) para essa etapa futura.
+
+## Campanhas de exemplo
+
+Com o MySQL local inicializado, execute `npm run campanhas:exemplos` para incluir 12 casos fictícios sem duplicar ou substituir campanhas existentes. Veja [os exemplos e a simulação de valores](docs/CAMPANHAS-EXEMPLO.md).

@@ -1,3 +1,4 @@
+import { SimuladorCampanha } from "../components/simulador-campanha";
 import { StyleSheet, Text, View } from "react-native";
 import { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -138,6 +139,10 @@ export function DetalheCampanha() {
               </Text>
             ) : null}
           </View>
+          <SimuladorCampanha
+            key={c.id}
+            automatico={Boolean(propria || c.id.startsWith("exemplo-"))}
+          />
           {meta > 0 ? (
             <View style={estilosFixos.grupo2}>
               <Text
