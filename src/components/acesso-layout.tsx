@@ -25,16 +25,13 @@ import { useReducedMotion } from "../design/motion";
 import { useTheme } from "./ui";
 
 function VideoFamilia() {
-  const insets = useSafeAreaInsets();
   const reduced = useReducedMotion();
   const focused = useIsFocused();
-  const [paused, setPaused] = useState(false);
-  const [manualPlay, setManualPlay] = useState(false);
   const [active, setActive] = useState(AppState.currentState === "active");
   const [visible, setVisible] = useState(true);
   const [ready, setReady] = useState(false);
   const player = useVideoPlayer(
-    require("../../assets/videos/familia-acolhimento.mp4"),
+    require("../../assets/videos/familias-sequencia.mp4"),
     (p) => {
       p.loop = true;
       p.muted = true;
@@ -47,9 +44,6 @@ function VideoFamilia() {
     status: player.status,
   });
   const failed = status === "error";
-  const { isPlaying } = useEvent(player, "playingChange", {
-    isPlaying: player.playing,
-  });
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) =>
       setActive(state === "active"),
@@ -64,18 +58,10 @@ function VideoFamilia() {
     };
   }, []);
   useEffect(() => {
-    if (
-      focused &&
-      active &&
-      visible &&
-      !paused &&
-      (!reduced || manualPlay) &&
-      !failed
-    )
-      player.play();
+    if (focused && active && visible && !reduced && !failed) player.play();
     else player.pause();
     // useVideoPlayer libera o player ao desmontar; o foco controla telas mantidas na navegação.
-  }, [focused, active, visible, paused, reduced, manualPlay, failed, player]);
+  }, [focused, active, visible, reduced, failed, player]);
   return (
     <>
       <View
@@ -117,31 +103,6 @@ function VideoFamilia() {
           <Rect width="100%" height="100%" fill="url(#acesso-sombra)" />
         </Svg>
       </View>
-      {status !== "error" ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={
-            isPlaying ? "Pausar vídeo de fundo" : "Reproduzir vídeo de fundo"
-          }
-          onPress={() => {
-            setPaused(isPlaying);
-            setManualPlay(true);
-          }}
-          style={({ pressed }) => [
-            styles.videoControl,
-            { top: Math.max(20, insets.top + 12), opacity: pressed ? 0.7 : 1 },
-          ]}
-        >
-          <Ionicons
-            name={isPlaying ? "pause" : "play"}
-            color="#FFFFFF"
-            size={16}
-          />
-          <Text style={styles.videoControlText}>
-            {isPlaying ? "Pausar vídeo" : "Reproduzir vídeo"}
-          </Text>
-        </Pressable>
-      ) : null}
     </>
   );
 }
@@ -219,7 +180,7 @@ export function AcessoLayout({
                   </Text>
                 ) : null}
                 <Text style={styles.illustration}>
-                  Vídeo ilustrativo · Ron Lach / Pexels
+                  Vídeos ilustrativos · Pexels
                 </Text>
               </View>
             </View>
@@ -443,20 +404,6 @@ const styles = StyleSheet.create({
   heroTitle: { color: "#FFFFFF", maxWidth: 490, letterSpacing: -1.2 },
   heroCopy: { color: "#E4EDFF", fontSize: 18, lineHeight: 29, maxWidth: 370 },
   illustration: { color: "#E4EDFF", fontSize: 11, lineHeight: 17 },
-  videoControl: {
-    position: "absolute",
-    right: 20,
-    top: 20,
-    minHeight: 44,
-    paddingHorizontal: 14,
-    gap: 7,
-    flexDirection: "row",
-    alignItems: "center",
-    borderRadius: 24,
-    backgroundColor: "rgba(6,28,73,0.78)",
-    zIndex: 2,
-  },
-  videoControlText: { color: "#FFFFFF", fontSize: 12 },
   panel: { flex: 1, justifyContent: "center" },
   mobilePanel: {
     marginTop: -24,
