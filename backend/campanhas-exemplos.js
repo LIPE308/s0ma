@@ -18,7 +18,7 @@ const exemplos = [
   ['12','Companhia e cuidado para idosos','Comunidade','Fortaleza, CE','CE',1100000,462000,'Kits de higiene, refeições e organização de visitas voluntárias.'],
 ].map(item => {
   const historia = require('./historias-campanhas.json')[item[0]];
-  return historia ? [item[0],historia.titulo,...item.slice(2,7),historia.historia] : item;
+  return historia ? [item[0],historia.titulo,item[2],historia.regiao || item[3],historia.uf || item[4],item[5],item[6],historia.historia] : item;
 });
 async function main() {
   if (require('./tipo-banco').tipoBanco() !== 'mysql' || !['127.0.0.1','localhost'].includes(process.env.MYSQL_HOST || '127.0.0.1')) throw Error('Este comando só cadastra exemplos no MySQL local.');

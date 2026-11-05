@@ -1,4 +1,12 @@
 import {
+  indicadoresSociais,
+  indicadorDaUF,
+  percentualSocial,
+  nivelSocial,
+  legendaSocial,
+} from "../data/indicadores-sociais";
+import {
+  Linking,
   StyleSheet,
   Pressable,
   Text,
@@ -113,6 +121,7 @@ export function MapaSolidario() {
   const [regiao, setRegiao] = useState("Todas");
   const [apenasDinheiro, setApenasDinheiro] = useState(true);
   const [demo, setDemo] = useState(false);
+  const [social, setSocial] = useState(true);
   const [filtros, setFiltros] = useState(false);
   const [camera, setCamera] = useState(cameraInicial);
   const { zoom } = camera;
@@ -160,6 +169,15 @@ export function MapaSolidario() {
   const total = estadosAtivos.reduce((s, e) => s + e.campanhas.length, 0);
   const restante = estadosAtivos.reduce((s, e) => s + e.restante, 0);
   const destaque = resumo.regioes.find((e) => e.campanhas > 0);
+  const regioesExibidas = social
+    ? [...resumo.regioes].sort(
+        (a, b) =>
+          (indicadoresSociais.regioes.find((r) => r.nome === b.nome)?.pobreza ||
+            0) -
+          (indicadoresSociais.regioes.find((r) => r.nome === a.nome)?.pobreza ||
+            0),
+      )
+    : resumo.regioes;
   const largo = width >= 900;
   const tintas = dark
     ? [colors.soft, "#304C72", "#436496", "#84A7FF", "#B6CEFF"]
@@ -178,7 +196,8 @@ export function MapaSolidario() {
     selecionar("");
   }
   function modo(valor: string) {
-    setDemo(valor === "Exemplo visual");
+    setDemo(false);
+    setSocial(valor === "Vulnerabilidade social");
     setCategoria("Todas");
     selecionarRegiao("Todas");
   }
@@ -212,15 +231,18 @@ export function MapaSolidario() {
             backgroundColor: colors.soft,
           }}
         >
-          {["Dados do app", "Exemplo visual"].map((v) => (
+          {["Vulnerabilidade social", "Campanhas"].map((v) => (
             <Pressable
               key={v}
               accessibilityRole="button"
               accessibilityLabel={"Fonte do mapa: " + v}
               accessibilityState={{
-                selected: (demo ? "Exemplo visual" : "Dados do app") === v,
+                selected:
+                  (social ? "Vulnerabilidade social" : "Campanhas") === v,
               }}
-              aria-pressed={(demo ? "Exemplo visual" : "Dados do app") === v}
+              aria-pressed={
+                (social ? "Vulnerabilidade social" : "Campanhas") === v
+              }
               onPress={() => modo(v)}
               style={({ pressed }) => ({
                 flex: 1,
@@ -230,7 +252,7 @@ export function MapaSolidario() {
                 alignItems: "center",
                 justifyContent: "center",
                 backgroundColor:
-                  (demo ? "Exemplo visual" : "Dados do app") === v
+                  (social ? "Vulnerabilidade social" : "Campanhas") === v
                     ? colors.surface
                     : "transparent",
                 opacity: pressed ? 0.65 : 1,
@@ -239,7 +261,7 @@ export function MapaSolidario() {
               <Text
                 style={{
                   color:
-                    (demo ? "Exemplo visual" : "Dados do app") === v
+                    (social ? "Vulnerabilidade social" : "Campanhas") === v
                       ? colors.primary
                       : colors.muted,
                   fontSize: 13,
@@ -258,6 +280,37 @@ export function MapaSolidario() {
           onPress={() => setFiltros(true)}
         />
       </View>
+      {social ? (
+        <View
+          style={{
+            gap: 12,
+            padding: 20,
+            backgroundColor: colors.brandSoft,
+            borderRadius: 20,
+          }}
+        >
+          <Heading>A renda ainda não cobre o básico</Heading>
+          <Copy>
+            Em 2024, {percentualSocial(indicadoresSociais.regioes[0].pobreza)}{" "}
+            das pessoas no Nordeste e{" "}
+            {percentualSocial(indicadoresSociais.regioes[1].pobreza)} no Norte
+            viviam abaixo da linha de pobreza. No Brasil, eram{" "}
+            {percentualSocial(indicadoresSociais.brasil.pobreza)}.
+          </Copy>
+          <Copy muted>
+            IBGE · SIS 2025 · referência 2024. Renda domiciliar por pessoa
+            inferior a R$ 694 por mês, na metodologia de US$ 6,85 PPC/dia. Não é
+            uma medição em tempo real.
+          </Copy>
+          <Button
+            secondary
+            title="Consultar a fonte dos indicadores"
+            onPress={() => {
+              void Linking.openURL(indicadoresSociais.fonte);
+            }}
+          />
+        </View>
+      ) : null}
       <View style={estilosFixos.grupo1}>
         <Text style={{ color: colors.muted, fontSize: 13, lineHeight: 21 }}>
           {regiao === "Todas" ? "Brasil" : regiao} ·{" "}
@@ -314,17 +367,23 @@ export function MapaSolidario() {
                   fontFamily: fonteForte,
                 }}
               >
-                {regiao === "Todas" ? "Brasil, causa por causa" : regiao}
+                {social
+                  ? "Pobreza por grande região · 2024"
+                  : regiao === "Todas"
+                    ? "Brasil, causa por causa"
+                    : regiao}
               </Text>
               <Text
                 style={{ color: colors.muted, fontSize: 13, lineHeight: 21 }}
               >
-                {total
-                  ? contagemCampanhas(total) +
-                    " nesta seleção · " +
-                    moeda(restante) +
-                    " em aberto"
-                  : "Aguardando campanhas com localização autorizada"}
+                {social
+                  ? "Cor regional pela proporção de pessoas na pobreza. Toque em uma UF para ver suas campanhas."
+                  : total
+                    ? contagemCampanhas(total) +
+                      " nesta seleção · " +
+                      moeda(restante) +
+                      " em aberto"
+                    : "Aguardando campanhas com localização autorizada"}
               </Text>
               {demo ? (
                 <Text
@@ -347,12 +406,18 @@ export function MapaSolidario() {
                 viewBox={[camera.x, camera.y, 600 / zoom, 580 / zoom].join(" ")}
                 width="100%"
                 height={alturaMapa}
-                accessibilityLabel="Mapa de campanhas por estado. A legenda e a lista abaixo descrevem os mesmos dados."
+                accessibilityLabel={
+                  social
+                    ? "Mapa de pobreza por grande região, referência IBGE 2024. As cores não representam taxas estaduais ou municipais."
+                    : "Mapa de campanhas por estado. A legenda e a lista abaixo descrevem os mesmos dados."
+                }
               >
                 {cartografia.estados.map((e) => {
                   const ativo = regiao === "Todas" || e.regiao === regiao;
                   const dados = porUF.get(e.uf);
-                  const nivel = dados?.nivel || 0;
+                  const nivel = social
+                    ? nivelSocial(e.regiao)
+                    : dados?.nivel || 0;
                   return (
                     <Path
                       key={e.uf}
@@ -370,7 +435,9 @@ export function MapaSolidario() {
                 {cartografia.estados.map((e) => {
                   if (regiao !== "Todas" && e.regiao !== regiao) return null;
                   const dados = porUF.get(e.uf);
-                  const nivel = dados?.nivel || 0;
+                  const nivel = social
+                    ? nivelSocial(e.regiao)
+                    : dados?.nivel || 0;
                   const chamada = chamadas[e.uf];
                   const texto = chamada
                     ? colors.ink
@@ -469,11 +536,13 @@ export function MapaSolidario() {
                         lineHeight: 19,
                       }}
                     >
-                      {demo && nivel >= 3
-                        ? nivel === 4
-                          ? "Prioridade crítica · exemplo"
-                          : "Prioridade moderada · exemplo"
-                        : descricaoNivel(nivel)}
+                      {social
+                        ? legendaSocial[nivel]
+                        : demo && nivel >= 3
+                          ? nivel === 4
+                            ? "Prioridade crítica · exemplo"
+                            : "Prioridade moderada · exemplo"
+                          : descricaoNivel(nivel)}
                     </Text>
                   </View>
                 ))}
@@ -525,27 +594,31 @@ export function MapaSolidario() {
             </View>
           </View>
           <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 20 }}>
-            Cartografia: IBGE. Localização por UF e município autorizado, sem
-            GPS nem endereço residencial.
+            Cartografia: IBGE. Na camada social, as cores representam as cinco
+            grandes regiões, não taxas de cada estado. Localizações de campanhas
+            são autorizadas, sem GPS nem endereço residencial.
           </Text>
         </View>
 
         <View style={{ width: largo ? 300 : "100%", gap: 12 }}>
-          <Heading>Onde começar a ajudar</Heading>
+          <Heading>
+            {social ? "Vulnerabilidade por região" : "Onde começar a ajudar"}
+          </Heading>
           <Copy muted>
-            {destaque
-              ? destaque.nome +
-                " aparece primeiro no recorte nacional desta categoria."
-              : "As regiões aparecerão em ordem de prioridade quando houver dados."}
+            {social
+              ? "Nordeste e Norte têm as maiores proporções de pobreza neste indicador."
+              : destaque
+                ? destaque.nome +
+                  " aparece primeiro no recorte nacional desta categoria."
+                : "As regiões aparecerão em ordem de prioridade quando houver dados."}
           </Copy>
           <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 20 }}>
-            Urgências revisadas vêm primeiro. Depois, contam a lacuna financeira
-            e o prazo.{" "}
-            {demo
-              ? "Neste exemplo, todos os dados são fictícios."
-              : "O ranking considera apenas os registros do app."}
+            {social
+              ? "Ordem pela taxa regional de pobreza do IBGE, referência 2024. Não define urgência de campanhas ou repasses."
+              : "Urgências revisadas vêm primeiro. Depois, contam a lacuna financeira e o prazo."}{" "}
+            {!social ? "O ranking considera apenas os registros do app." : ""}
           </Text>
-          {resumo.regioes.map((r, i) => (
+          {regioesExibidas.map((r, i) => (
             <Pressable
               key={r.nome}
               accessibilityRole="button"
@@ -580,7 +653,7 @@ export function MapaSolidario() {
                 }}
               >
                 <Text style={{ fontFamily: fonteForte, color: colors.primary }}>
-                  {r.campanhas ? i + 1 : "—"}
+                  {social || r.campanhas ? i + 1 : "—"}
                 </Text>
               </View>
               <View style={estilosFixos.grupo6}>
@@ -596,12 +669,25 @@ export function MapaSolidario() {
                 <Text
                   style={{ color: colors.muted, fontSize: 12, lineHeight: 19 }}
                 >
-                  {r.campanhas
-                    ? contagemCampanhas(r.campanhas) +
-                      " · " +
-                      moeda(r.restante) +
-                      " em aberto"
-                    : "Sem dados nesta seleção"}
+                  {social
+                    ? percentualSocial(
+                        indicadoresSociais.regioes.find(
+                          (e) => e.nome === r.nome,
+                        )?.pobreza || 0,
+                      ) +
+                      " na pobreza · " +
+                      percentualSocial(
+                        indicadoresSociais.regioes.find(
+                          (e) => e.nome === r.nome,
+                        )?.extremaPobreza || 0,
+                      ) +
+                      " na extrema pobreza"
+                    : r.campanhas
+                      ? contagemCampanhas(r.campanhas) +
+                        " · " +
+                        moeda(r.restante) +
+                        " em aberto"
+                      : "Sem dados nesta seleção"}
                 </Text>
                 {r.criticas || r.moderadas ? (
                   <Text
@@ -635,8 +721,8 @@ export function MapaSolidario() {
       {vazio ? (
         <EmptyState
           title="Ainda faltam localizações autorizadas."
-          action="Ver exemplo visual do mapa"
-          onPress={() => modo("Exemplo visual")}
+          action="Ver contexto social"
+          onPress={() => modo("Vulnerabilidade social")}
         >
           Não há campanhas {apenasDinheiro ? "com doações em aberto e " : ""}com
           localização autorizada nesta seleção. Você pode explorar outras causas
@@ -691,6 +777,20 @@ export function MapaSolidario() {
         title={geoSelecionada?.nome || uf || "Estado"}
         onClose={() => selecionar("")}
       >
+        {social && geoSelecionada ? (
+          <View style={{ gap: 8 }}>
+            <Copy>
+              {geoSelecionada.regiao}:{" "}
+              {percentualSocial(indicadorDaUF(uf)?.pobreza || 0)} na pobreza em
+              2024.
+            </Copy>
+            <Copy muted>
+              Indicador da grande região, não uma taxa desta UF ou município.
+              Abaixo aparecem apenas campanhas cadastradas com localização
+              autorizada.
+            </Copy>
+          </View>
+        ) : null}
         {selecionado ? (
           <>
             <Copy>
@@ -784,7 +884,10 @@ export function MapaSolidario() {
         <Copy muted>
           Regiões grandes ou com mais usuários podem ter mais registros. A
           ausência de campanhas não mede a necessidade da população. Não são
-          usados dados de pobreza, população ou localização do visitante.
+          usados dados de localização do visitante. Na camada social, as cores e
+          a ordem usam as taxas de pobreza por grande região da SIS 2025/IBGE,
+          referência 2024. A mesma cor nos estados de uma região não é uma
+          estimativa estadual. Essa camada não altera o fundo solidário.
         </Copy>
       </Disclosure>
       <Disclosure title="Como uma campanha aparece no mapa">

@@ -1,50 +1,110 @@
 {
   "urgente-01": {
-    "titulo": "A chuva levou a casa. O recomeço precisa chegar.",
-    "historia": "Quando a água entrou, as famílias saíram levando as crianças no colo e o que coube em algumas sacolas. Ao voltar, encontraram colchões encharcados, comida perdida e os materiais da escola cobertos de lama. O trabalho de muitos anos ficou dentro de casas que já não podiam acolher ninguém.\n\nAgora, os dias passam entre casas de parentes e espaços de acolhimento. A preocupação começa cedo: conseguir água, preparar uma refeição e encontrar uma roupa seca para cada criança. Quem perdeu o pouco que tinha precisa resolver tudo ao mesmo tempo.\n\nA campanha reúne recursos para cestas básicas, água e itens de higiene. A ajuda atende o que não pode esperar e dá às famílias algum espaço para reorganizar a vida."
+    "titulo": "Comida na mesa de quem precisa escolher qual conta pagar",
+    "historia": "Fome não começa apenas quando a comida acaba. Ela também aparece quando a família corta a quantidade, deixa de comprar alimentos frescos e não sabe o que haverá para o dia seguinte.\n\nEm 2024, 39,4% da população do Nordeste vivia abaixo da linha de pobreza adotada na Síntese de Indicadores Sociais 2025 do IBGE. No Brasil, eram 23,1%. São dados da grande região, não uma taxa de São Luís e não a comprovação de um caso individual.\n\nA proposta é reunir cestas básicas e itens de higiene para apoio alimentar em São Luís. A prioridade é garantir o básico enquanto as famílias procuram reconstruir sua segurança de renda.",
+    "municipio": "São Luís",
+    "uf": "MA",
+    "regiao": "São Luís, MA",
+    "fonte": "https://agenciabrasil.ebc.com.br/es/economia/noticia/2025-12/mas-de-86-millones-de-brasilenos-superan-umbral-de-la-pobreza",
+    "referencia": 2024
   },
   "urgente-02": {
-    "titulo": "Depois do incêndio, falta até um lugar para dormir",
-    "historia": "O incêndio terminou, mas a vida da família ainda está parada naquela noite. Junto dos móveis, desapareceram documentos, roupas de trabalho e fotografias que não poderão ser refeitas. As crianças perguntam quando vão voltar para casa, e os adultos ainda não têm uma resposta segura.\n\nCom a renda comprometida e a moradia sem condições de uso, cada dia depende de acolhimento e de itens emprestados. Reconstruir significa começar pelo básico: um lugar protegido da chuva, uma cama e condições de preparar comida.\n\nOs recursos serão destinados a materiais de recuperação e itens essenciais da casa. Cada etapa concluída aproxima a família de voltar a dormir sob o próprio teto."
+    "titulo": "Uma casa protegida da chuva, não apenas quatro paredes",
+    "historia": "Uma goteira sobre o colchão, uma instalação insegura e o medo de perder o lugar onde se vive transformam a moradia em preocupação diária. A renda curta deixa reparos essenciais sempre para depois.\n\nEm 2024, 39,4% da população do Nordeste vivia abaixo da linha de pobreza adotada na Síntese de Indicadores Sociais 2025 do IBGE. No Brasil, eram 23,1%. São dados da grande região, não uma taxa de Maceió e não a comprovação de um caso individual.\n\nA campanha propõe apoio a materiais e itens domésticos essenciais em Maceió. O objetivo é apoiar reparos essenciais, proteção contra chuva e reposição de itens básicos, começando pelas necessidades levantadas pela organização local.",
+    "municipio": "Maceió",
+    "uf": "AL",
+    "regiao": "Maceió, AL",
+    "fonte": "https://agenciabrasil.ebc.com.br/es/economia/noticia/2025-12/mas-de-86-millones-de-brasilenos-superan-umbral-de-la-pobreza",
+    "referencia": 2024
   },
   "urgente-03": {
-    "titulo": "O tratamento não pode parar no caminho",
-    "historia": "O dia de atendimento começa antes do amanhecer. É preciso preparar uma bolsa, organizar os documentos e sair com tempo para uma viagem que já pesa no corpo. Além da preocupação com a saúde, a família precisa fazer as contas para conseguir chegar ao próximo atendimento.\n\nAs faltas no trabalho reduziram a renda. Transporte e alimentação durante os deslocamentos passaram a disputar espaço com o aluguel e as compras da semana. O cuidado exige presença, mas estar presente também custa.\n\nEsta campanha apoia os deslocamentos e as refeições da família ao longo do tratamento. A ajuda busca preservar a continuidade dos atendimentos, sem deixar que o trajeto se torne mais uma barreira."
+    "titulo": "Chegar ao atendimento também faz parte do cuidado",
+    "historia": "Quem precisa se deslocar para cuidar da saúde nem sempre pode reservar dinheiro para a passagem e a alimentação fora de casa. Quando o trabalho é informal, o dia de atendimento também pode significar um dia sem renda.\n\nEm 2024, 39,4% da população do Nordeste vivia abaixo da linha de pobreza adotada na Síntese de Indicadores Sociais 2025 do IBGE. No Brasil, eram 23,1%. São dados da grande região, não uma taxa de Fortaleza e não a comprovação de um caso individual.\n\nA proposta em Fortaleza é apoiar transporte e alimentação durante deslocamentos para atendimento. O foco é reduzir o custo de chegar aos atendimentos e permitir a continuidade do cuidado.",
+    "municipio": "Fortaleza",
+    "uf": "CE",
+    "regiao": "Fortaleza, CE",
+    "fonte": "https://agenciabrasil.ebc.com.br/es/economia/noticia/2025-12/mas-de-86-millones-de-brasilenos-superan-umbral-de-la-pobreza",
+    "referencia": 2024
   },
   "urgente-04": {
-    "titulo": "Quando falta água, tudo na casa precisa esperar",
-    "historia": "O recipiente fica ao lado da porta, pronto para a próxima oportunidade de abastecimento. Na comunidade, a rotina passou a depender de uma pergunta: haverá água suficiente para hoje? Cozinhar, dar banho nas crianças e lavar uma roupa deixaram de ser tarefas simples.\n\nAlgumas famílias percorrem distâncias carregando peso. Pessoas idosas e quem tem mobilidade reduzida dependem de vizinhos para conseguir o essencial. Quando a reserva termina, até o preparo das refeições precisa ser adiado.\n\nO objetivo é ampliar o acesso à água potável com distribuição e reservatórios comunitários. A campanha procura devolver segurança à rotina, com uma solução que alcance também quem não consegue buscar água sozinho."
+    "titulo": "Água e alimento não podem esperar a próxima renda",
+    "historia": "O acesso ao básico pesa mais quando a renda não permite manter uma reserva. Comprar água, preparar uma refeição e cuidar da higiene passam a disputar o mesmo dinheiro.\n\nEm 2024, 39,4% da população do Nordeste vivia abaixo da linha de pobreza adotada na Síntese de Indicadores Sociais 2025 do IBGE. No Brasil, eram 23,1%. São dados da grande região, não uma taxa de Petrolina e não a comprovação de um caso individual.\n\nEsta ação em Petrolina propõe apoio a água potável e itens essenciais. O apoio será organizado conforme o levantamento local, para compra e distribuição de água e itens essenciais.",
+    "municipio": "Petrolina",
+    "uf": "PE",
+    "regiao": "Petrolina, PE",
+    "fonte": "https://agenciabrasil.ebc.com.br/es/economia/noticia/2025-12/mas-de-86-millones-de-brasilenos-superan-umbral-de-la-pobreza",
+    "referencia": 2024
   },
   "05": {
-    "titulo": "A vontade de aprender não cabe na mochila vazia",
-    "historia": "Na volta às aulas, há crianças que chegam com o caderno do ano anterior, já quase sem folhas, e uma mochila que precisou ser costurada mais uma vez. Em casa, os responsáveis escolheram entre completar a lista escolar e manter os alimentos da semana.\n\nA falta de material aparece nos pequenos momentos: pedir um lápis emprestado, dividir uma atividade, tentar esconder o que não foi possível comprar. Nenhuma criança deveria sentir vergonha por uma dificuldade que não escolheu.\n\nA campanha reúne recursos para mochilas e materiais escolares. Queremos que cada estudante tenha condições de participar das aulas com autonomia e leve para a escola mais confiança para começar."
+    "titulo": "Voltar à escola com material, não com vergonha",
+    "historia": "O custo de uma mochila e dos cadernos pode competir com a alimentação e o transporte. A criança vê a falta aparecer na sala de aula, mas não escolheu a dificuldade econômica de sua casa.\n\nEm 2024, 39,4% da população do Nordeste vivia abaixo da linha de pobreza adotada na Síntese de Indicadores Sociais 2025 do IBGE. No Brasil, eram 23,1%. São dados da grande região, não uma taxa de Codó e não a comprovação de um caso individual.\n\nA proposta em Codó é reunir material escolar para apoiar a permanência e a participação nas aulas. O destino do recurso é concreto: mochilas, cadernos e materiais para o dia a dia escolar.",
+    "municipio": "Codó",
+    "uf": "MA",
+    "regiao": "Codó, MA",
+    "fonte": "https://agenciabrasil.ebc.com.br/es/economia/noticia/2025-12/mas-de-86-millones-de-brasilenos-superan-umbral-de-la-pobreza",
+    "referencia": 2024
   },
   "06": {
-    "titulo": "Uma refeição quente para quem passou o dia esperando",
-    "historia": "Há pessoas que chegam à cozinha comunitária depois de um dia inteiro sem uma refeição completa. Outras levam um recipiente para dividir a comida com quem ficou em casa. Na fila, encontram-se histórias diferentes, ligadas pela mesma necessidade de conseguir comer hoje.\n\nA equipe organiza as panelas e calcula quantas porções ainda pode servir. Quando faltam mantimentos, a decisão de reduzir o atendimento pesa em quem prepara e em quem espera. O trabalho voluntário continua, mas não substitui os ingredientes.\n\nA campanha apoia a compra de alimentos para manter as refeições. O objetivo é dar continuidade ao acolhimento e permitir que a cozinha planeje os próximos dias com mais segurança."
+    "titulo": "Uma refeição completa faz diferença no dia inteiro",
+    "historia": "A insegurança da renda atravessa o prato. Reduzir porções ou pular refeições tira energia para estudar, trabalhar e cuidar de outras pessoas. O trabalho de quem prepara comida também depende de ter ingredientes amanhã.\n\nEm 2024, 39,4% da população do Nordeste vivia abaixo da linha de pobreza adotada na Síntese de Indicadores Sociais 2025 do IBGE. No Brasil, eram 23,1%. São dados da grande região, não uma taxa de Salvador e não a comprovação de um caso individual.\n\nEm Salvador, esta campanha propõe apoio a mantimentos para refeições comunitárias. O objetivo é sustentar o preparo e a continuidade do atendimento, com prestação de contas dos recursos utilizados.",
+    "municipio": "Salvador",
+    "uf": "BA",
+    "regiao": "Salvador, BA",
+    "fonte": "https://agenciabrasil.ebc.com.br/es/economia/noticia/2025-12/mas-de-86-millones-de-brasilenos-superan-umbral-de-la-pobreza",
+    "referencia": 2024
   },
   "07": {
-    "titulo": "O frio chega antes de haver um cobertor",
-    "historia": "Quando a temperatura cai, nem todo mundo consegue fechar uma janela e se aquecer. Há famílias com cobertores insuficientes e pessoas acolhidas temporariamente que chegam apenas com a roupa do corpo. Uma noite de frio pode tornar ainda mais difícil uma rotina que já exige muito.\n\nAs equipes de apoio recebem pedidos de agasalhos, meias e cobertores em boas condições. Por trás de cada pedido há alguém tentando descansar, proteger um filho ou atravessar a noite com um pouco mais de conforto.\n\nOs recursos serão usados na organização e aquisição de itens de inverno. A ajuda permite preparar kits de acolhimento e levá-los a quem precisa, com cuidado e respeito."
+    "titulo": "Roupas limpas e higiene para recomeçar com dignidade",
+    "historia": "Uma roupa adequada e condições de higiene fazem parte da vida em sociedade. A falta desses itens pesa na procura por trabalho, na rotina escolar e no cuidado pessoal, sem resumir a pessoa à sua dificuldade.\n\nEm 2024, 39,4% da população do Nordeste vivia abaixo da linha de pobreza adotada na Síntese de Indicadores Sociais 2025 do IBGE. No Brasil, eram 23,1%. São dados da grande região, não uma taxa de Caicó e não a comprovação de um caso individual.\n\nA ação em Caicó propõe kits de higiene e roupas em boas condições. O apoio será orientado por necessidades levantadas localmente, com respeito à privacidade de quem recebe.",
+    "municipio": "Caicó",
+    "uf": "RN",
+    "regiao": "Caicó, RN",
+    "fonte": "https://agenciabrasil.ebc.com.br/es/economia/noticia/2025-12/mas-de-86-millones-de-brasilenos-superan-umbral-de-la-pobreza",
+    "referencia": 2024
   },
   "08": {
-    "titulo": "Um livro pode ser o primeiro lugar para onde fugir",
-    "historia": "Para muitas crianças do bairro, a biblioteca é o único espaço onde podem escolher um livro para levar para casa. É também um lugar para fazer a lição, encontrar companhia e descobrir histórias além das dificuldades do dia a dia.\n\nO acervo está gasto e faltam opções para leitores de diferentes idades. Há procura por atividades, mas os poucos materiais precisam ser divididos. Quem acompanha as crianças sabe o quanto muda uma tarde quando existe um lugar seguro para aprender e imaginar.\n\nA campanha apoia novos livros, estantes e encontros de leitura. O objetivo é manter esse espaço vivo e ampliar as oportunidades para quem tem pouco acesso a atividades culturais."
+    "titulo": "Ler e aprender não deveriam depender do que sobra no orçamento",
+    "historia": "Quando a renda só alcança o essencial, livros e atividades culturais ficam distantes. Um espaço de leitura pode oferecer acesso ao conhecimento, convivência e tempo de aprendizagem fora da sala de aula.\n\nEm 2024, 35,9% da população do Norte vivia abaixo da linha de pobreza adotada na Síntese de Indicadores Sociais 2025 do IBGE. No Brasil, eram 23,1%. São dados da grande região, não uma taxa de Manaus e não a comprovação de um caso individual.\n\nA proposta em Manaus é apoiar acervo, estantes e atividades de leitura comunitária. O investimento busca criar oportunidades duradouras de aprendizagem e convivência.",
+    "municipio": "Manaus",
+    "uf": "AM",
+    "regiao": "Manaus, AM",
+    "fonte": "https://agenciabrasil.ebc.com.br/es/economia/noticia/2025-12/mas-de-86-millones-de-brasilenos-superan-umbral-de-la-pobreza",
+    "referencia": 2024
   },
   "09": {
-    "titulo": "Eles foram deixados para trás. O cuidado não pode faltar.",
-    "historia": "Os animais chegam ao abrigo de formas diferentes: encontrados nas ruas, retirados de situações de abandono ou entregues quando já não havia quem cuidasse deles. Alguns se aproximam imediatamente. Outros precisam de tempo para aceitar uma mão estendida.\n\nA rotina de recuperação exige alimentação, limpeza e acompanhamento. Enquanto se procura uma adoção responsável, a equipe precisa garantir que o espaço continue seguro. O número de animais acolhidos cresce mais rápido que os recursos disponíveis.\n\nEsta campanha reúne apoio para ração, materiais de limpeza e cuidados necessários. A ajuda sustenta o período entre o resgate e a chance de encontrar um lar com proteção e afeto."
+    "titulo": "Cuidar dos animais também exige uma rede de apoio",
+    "historia": "Alimentar, limpar e oferecer cuidado aos animais acolhidos exige recursos contínuos. O voluntariado precisa dividir seu esforço entre o atendimento e a busca de apoio para manter uma rotina de proteção.\n\nEm 2024, 35,9% da população do Norte vivia abaixo da linha de pobreza adotada na Síntese de Indicadores Sociais 2025 do IBGE. No Brasil, eram 23,1%. São dados da grande região, não uma taxa de Belém e não a comprovação de um caso individual.\n\nA campanha em Belém propõe ração, materiais de limpeza e cuidados para acolhimento animal. Os recursos serão destinados a alimentação, higiene e suporte ao trabalho de proteção animal.",
+    "municipio": "Belém",
+    "uf": "PA",
+    "regiao": "Belém, PA",
+    "fonte": "https://agenciabrasil.ebc.com.br/es/economia/noticia/2025-12/mas-de-86-millones-de-brasilenos-superan-umbral-de-la-pobreza",
+    "referencia": 2024
   },
   "10": {
-    "titulo": "Uma escada não deveria decidir quem pode participar",
-    "historia": "As atividades acontecem do outro lado de uma entrada que nem todos conseguem atravessar. Pessoas com mobilidade reduzida precisam pedir ajuda, esperar ou voltar para casa. Com o tempo, alguns deixam de tentar participar dos encontros da comunidade.\n\nA dificuldade não está na vontade de estar junto. Está nas barreiras do caminho: degraus, passagens estreitas e um espaço que ainda não acolhe diferentes necessidades. Depender de ser carregado não substitui o direito de entrar com autonomia.\n\nA campanha apoia adaptações de acesso ao espaço comunitário. Cada melhoria deve permitir que mais pessoas participem das atividades com segurança, dignidade e liberdade."
+    "titulo": "A porta da comunidade precisa estar aberta para todos",
+    "historia": "Um degrau, uma passagem estreita e a falta de uma adaptação podem impedir a participação. A barreira está no espaço, não na vontade da pessoa de estudar, trabalhar ou conviver.\n\nEm 2024, 39,4% da população do Nordeste vivia abaixo da linha de pobreza adotada na Síntese de Indicadores Sociais 2025 do IBGE. No Brasil, eram 23,1%. São dados da grande região, não uma taxa de João Pessoa e não a comprovação de um caso individual.\n\nA proposta em João Pessoa é apoiar acessibilidade em espaços de uso comunitário, com levantamento técnico das adaptações necessárias. O objetivo é ampliar a autonomia e a participação nas atividades da comunidade.",
+    "municipio": "João Pessoa",
+    "uf": "PB",
+    "regiao": "João Pessoa, PB",
+    "fonte": "https://agenciabrasil.ebc.com.br/es/economia/noticia/2025-12/mas-de-86-millones-de-brasilenos-superan-umbral-de-la-pobreza",
+    "referencia": 2024
   },
   "11": {
-    "titulo": "Cultivar comida onde a compra do mês já não alcança",
-    "historia": "Na comunidade, há famílias que passaram a comprar menos alimentos frescos para conseguir pagar as contas. A vontade de mudar essa realidade reuniu moradores em torno de um terreno e de uma ideia: cultivar juntos parte do que falta nas mesas.\n\nExistem mãos dispostas a trabalhar e conhecimento para compartilhar. Faltam ferramentas, sementes e estrutura para manter a horta. Sem esses itens, o esforço das primeiras semanas pode se perder antes da primeira colheita.\n\nA campanha apoia o preparo e a continuidade da horta coletiva. O objetivo é ampliar o acesso a alimentos e fortalecer um espaço de cooperação, onde quem planta também encontra apoio."
+    "titulo": "Cultivar alimento e fortalecer quem vive do próprio trabalho",
+    "historia": "A renda instável torna mais difícil comprar alimentos frescos e investir em uma atividade produtiva. Organizar ferramentas, insumos e trabalho coletivo pode ampliar as possibilidades de apoio entre os moradores.\n\nEm 2024, 39,4% da população do Nordeste vivia abaixo da linha de pobreza adotada na Síntese de Indicadores Sociais 2025 do IBGE. No Brasil, eram 23,1%. São dados da grande região, não uma taxa de Picos e não a comprovação de um caso individual.\n\nA proposta em Picos é apoiar uma horta comunitária com sementes, ferramentas e planejamento de manutenção. O planejamento inclui condições de terreno e água para que o trabalho coletivo tenha continuidade e resulte em alimento disponível para a comunidade.",
+    "municipio": "Picos",
+    "uf": "PI",
+    "regiao": "Picos, PI",
+    "fonte": "https://agenciabrasil.ebc.com.br/es/economia/noticia/2025-12/mas-de-86-millones-de-brasilenos-superan-umbral-de-la-pobreza",
+    "referencia": 2024
   },
   "12": {
-    "titulo": "Há quem passe o dia inteiro sem alguém para conversar",
-    "historia": "Em algumas casas, a visita mais esperada demora semanas. Pessoas idosas que vivem com pouco apoio precisam lidar com as compras, a alimentação e os cuidados diários em silêncio. A ausência de companhia torna tarefas simples mais difíceis e faz os dias parecerem ainda maiores.\n\nAs redes de vizinhos e voluntários procuram acompanhar essas necessidades, mas o cuidado precisa de continuidade. Uma entrega isolada ajuda naquele momento; uma presença organizada permite perceber o que mudou e o que está faltando.\n\nA campanha reúne recursos para kits de higiene, refeições e organização de visitas. Queremos fortalecer um cuidado que escute, respeite a autonomia e faça cada pessoa se sentir lembrada."
+    "titulo": "Cuidar de quem envelhece sem deixar ninguém para trás",
+    "historia": "A dificuldade econômica pode somar-se à mobilidade reduzida e à falta de uma rede de apoio. Refeições, higiene e companhia precisam de continuidade, não de uma entrega isolada.\n\nEm 2024, 39,4% da população do Nordeste vivia abaixo da linha de pobreza adotada na Síntese de Indicadores Sociais 2025 do IBGE. No Brasil, eram 23,1%. São dados da grande região, não uma taxa de Aracaju e não a comprovação de um caso individual.\n\nEsta campanha em Aracaju propõe kits de higiene, apoio alimentar e organização de visitas voluntárias. O atendimento deve ouvir cada pessoa, respeitar sua autonomia e proteger suas informações.",
+    "municipio": "Aracaju",
+    "uf": "SE",
+    "regiao": "Aracaju, SE",
+    "fonte": "https://agenciabrasil.ebc.com.br/es/economia/noticia/2025-12/mas-de-86-millones-de-brasilenos-superan-umbral-de-la-pobreza",
+    "referencia": 2024
   }
 }

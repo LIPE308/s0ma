@@ -1,0 +1,17 @@
+{
+  "referencia": 2024,
+  "publicacao": "Síntese de Indicadores Sociais 2025 — IBGE",
+  "consultadoEm": "2026-11-05",
+  "linhaPobrezaMensal": 694,
+  "linhaExtremaPobrezaMensal": 218,
+  "brasil": { "pobreza": 23.1, "extremaPobreza": 3.5 },
+  "fonte": "https://agenciabrasil.ebc.com.br/es/economia/noticia/2025-12/mas-de-86-millones-de-brasilenos-superan-umbral-de-la-pobreza",
+  "fonteIBGE": "https://agenciadenoticias.ibge.gov.br/agencia-noticias/2012-agencia-de-noticias/noticias/45344-8-6-milhoes-de-pessoas-sairam-da-pobreza-entre-2023-e-2024",
+  "regioes": [
+    { "nome": "Nordeste", "pobreza": 39.4, "extremaPobreza": 6.5, "ufs": ["MA","PI","CE","RN","PB","PE","AL","SE","BA"] },
+    { "nome": "Norte", "pobreza": 35.9, "extremaPobreza": 4.6, "ufs": ["AC","AP","AM","PA","RO","RR","TO"] },
+    { "nome": "Sudeste", "pobreza": 15.6, "extremaPobreza": 2.3, "ufs": ["ES","MG","RJ","SP"] },
+    { "nome": "Centro-Oeste", "pobreza": 15.4, "extremaPobreza": 1.6, "ufs": ["DF","GO","MT","MS"] },
+    { "nome": "Sul", "pobreza": 11.2, "extremaPobreza": 1.5, "ufs": ["PR","RS","SC"] }
+  ]
+}

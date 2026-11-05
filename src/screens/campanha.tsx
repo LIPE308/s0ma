@@ -1,6 +1,11 @@
+import {
+  indicadoresSociais,
+  indicadorDaUF,
+  percentualSocial,
+} from "../data/indicadores-sociais";
 import { permiteAnuncios } from "../servicos/campanhas-exemplos";
 import { SimuladorCampanha } from "../components/simulador-campanha";
-import { StyleSheet, Text, View } from "react-native";
+import { Linking, StyleSheet, Text, View } from "react-native";
 import { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -199,6 +204,29 @@ export function DetalheCampanha() {
           )}
           {["ativa", "encerrada"].includes(c.estado) ? (
             <BotaoCompartilhar id={c.id} titulo={c.titulo} />
+          ) : null}
+          {c.id.startsWith("exemplo-") && indicadorDaUF(c.uf || "") ? (
+            <Disclosure title="Dados que orientam esta causa">
+              <Copy>
+                {indicadorDaUF(c.uf || "")!.nome}:{" "}
+                {percentualSocial(indicadorDaUF(c.uf || "")!.pobreza)} na
+                pobreza e{" "}
+                {percentualSocial(indicadorDaUF(c.uf || "")!.extremaPobreza)} na
+                extrema pobreza em 2024. Fonte: IBGE, Síntese de Indicadores
+                Sociais 2025.
+              </Copy>
+              <Copy muted>
+                Indicadores da grande região. Não são taxas do município nem
+                comprovação de uma situação individual.
+              </Copy>
+              <Button
+                secondary
+                title="Consultar fonte dos dados"
+                onPress={() => {
+                  void Linking.openURL(indicadoresSociais.fonte);
+                }}
+              />
+            </Disclosure>
           ) : null}
           {c.descricao.length > 230 ? (
             <Disclosure title="Ler a história completa">
