@@ -18,7 +18,7 @@ test('metas alteradas refletem no percentual e o progresso não ultrapassa 100%'
 });
 test('projeção individual é estável e diferente nas 12 campanhas',()=>{
  const ids=['exemplo-urgente-01','exemplo-urgente-02','exemplo-urgente-03','exemplo-urgente-04',...['05','06','07','08','09','10','11','12'].map(i=>'exemplo-'+i)];
- assert.equal(new Set(ids.map(id=>projetarCampanha(id,10000,100000,3).total)).size,12);
+ assert.equal(new Set(ids.map((id,index)=>projetarCampanha(id,[428000,965000,391000,846000,364000,1023000,271000,185000,573000,768000,219000,462000][index],3200000,4,id.startsWith('exemplo-urgente-')).total)).size,12);
  assert.deepEqual(projetarCampanha('a',0,10000,3),projetarCampanha('a',0,10000,3));
 });
 test('cada uma das 12 campanhas possui foto com conteúdo diferente',()=>{
@@ -26,4 +26,19 @@ test('cada uma das 12 campanhas possui foto com conteúdo diferente',()=>{
  assert.equal(files.length,12);
  const hashes=files.map(f=>createHash('sha256').update(readFileSync('assets/photos/campanhas/'+f)).digest('hex'));
  assert.equal(new Set(hashes).size,12);
+});
+
+const {permiteAnuncios}=require('../src/servicos/campanhas-exemplos.ts');
+test('anúncios só entram na projeção quando permitidos',()=>{
+ assert.equal(projetarCampanha('comum',0,100000,10).anuncios,0);
+ assert.equal(projetarCampanha('comum',0,100000,10,false).anuncios,0);
+ assert.ok(projetarCampanha('emergente',0,100000,10,true).anuncios>0);
+});
+test('apenas emergências ativas revisadas ou casos emergenciais de apresentação recebem apoio',()=>{
+ assert.equal(permiteAnuncios({id:'normal',estado:'ativa',urgencia:{classe:'regular',revisada:false}}),false);
+ assert.equal(permiteAnuncios({id:'pendente',estado:'ativa',urgencia:{classe:'critica',revisada:false}}),false);
+ assert.equal(permiteAnuncios({id:'critica',estado:'ativa',urgencia:{classe:'critica',revisada:true}}),true);
+ assert.equal(permiteAnuncios({id:'exemplo-urgente-01',estado:'ativa'}),true);
+ assert.equal(permiteAnuncios({id:'exemplo-05',estado:'ativa'}),false);
+ assert.equal(permiteAnuncios({id:'exemplo-urgente-01',estado:'encerrada'}),false);
 });

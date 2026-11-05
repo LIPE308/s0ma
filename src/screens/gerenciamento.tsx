@@ -1,3 +1,4 @@
+import { permiteAnuncios } from "../servicos/campanhas-exemplos";
 import { SimuladorCampanha } from "../components/simulador-campanha";
 import { StyleSheet, Text, View } from "react-native";
 import { useState } from "react";
@@ -82,6 +83,7 @@ export function Gerenciar() {
       ) : c ? (
         <>
           <SimuladorCampanha
+            apoioAnuncios={permiteAnuncios(c)}
             key={c.id}
             campanhaId={c.id}
             confirmado={c.necessidades
@@ -127,7 +129,7 @@ export function Gerenciar() {
           {rota.dados && rota.dados.meta > 0 ? (
             <>
               <ResumoArrecadacao rota={rota.dados} />
-              <CartaoAnuncios rota={rota.dados} />
+              {permiteAnuncios(c) ? <CartaoAnuncios rota={rota.dados} /> : null}
             </>
           ) : null}
           {c.estado === "ativa" || c.estado === "encerrada" ? (

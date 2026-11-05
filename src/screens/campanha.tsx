@@ -1,3 +1,4 @@
+import { permiteAnuncios } from "../servicos/campanhas-exemplos";
 import { SimuladorCampanha } from "../components/simulador-campanha";
 import { StyleSheet, Text, View } from "react-native";
 import { useEffect, useState } from "react";
@@ -139,14 +140,17 @@ export function DetalheCampanha() {
               </Text>
             ) : null}
           </View>
-          <SimuladorCampanha
-            campanhaId={c.id}
-            confirmado={confirmado}
-            meta={meta}
-            somenteAnuncios={!propria}
-            key={c.id}
-            automatico={Boolean(propria || c.id.startsWith("exemplo-"))}
-          />
+          {propria || permiteAnuncios(c) ? (
+            <SimuladorCampanha
+              apoioAnuncios={permiteAnuncios(c)}
+              campanhaId={c.id}
+              confirmado={confirmado}
+              meta={meta}
+              somenteAnuncios={!propria}
+              key={c.id}
+              automatico={Boolean(propria || c.id.startsWith("exemplo-"))}
+            />
+          ) : null}
           {meta > 0 ? (
             <View style={estilosFixos.grupo2}>
               <Text

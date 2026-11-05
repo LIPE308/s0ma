@@ -14,12 +14,14 @@ export function SimuladorCampanha({
   confirmado = 0,
   meta = 0,
   somenteAnuncios = false,
+  apoioAnuncios = false,
 }: {
   automatico?: boolean;
   campanhaId: string;
   confirmado?: number;
   meta?: number;
   somenteAnuncios?: boolean;
+  apoioAnuncios?: boolean;
 }) {
   const { colors, fontsReady } = useTheme();
   const focused = useIsFocused();
@@ -54,7 +56,7 @@ export function SimuladorCampanha({
     if (step === 60) setRunning(false);
   }, [step]);
   const { base, doacoes, anuncios, rendimento, total, percentual, restante } =
-    projetarCampanha(campanhaId, confirmado, meta, step);
+    projetarCampanha(campanhaId, confirmado, meta, step, apoioAnuncios);
   return (
     <View
       testID="campaign-money-demo"
@@ -149,7 +151,9 @@ export function SimuladorCampanha({
           </Text>
           {[
             ["Doações previstas", doacoes],
-            ["Receita de anúncios prevista", anuncios],
+            ...(apoioAnuncios
+              ? [["Receita de anúncios prevista", anuncios]]
+              : []),
             ["Rendimento projetado", rendimento],
           ].map(([label, value]) => (
             <View

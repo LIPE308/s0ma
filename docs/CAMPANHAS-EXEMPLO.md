@@ -19,3 +19,7 @@ Verificado localmente: 12 inclusões na primeira execução e zero na segunda; c
 A tela inicial conserva a organização anterior: saudação, destaque principal, atalhos e apenas duas campanhas na seção de destaque existente, com prioridade às emergentes. A lista completa de campanhas fica na tela de causas (`/explorar`).
 
 Cada uma das 12 campanhas possui foto própria, associada explicitamente ao ID em `src/data/fotos-campanhas.ts`. Não existe mais fallback que reutilize uma foto por categoria. Imagens enviadas pelos responsáveis continuam prioritárias; campanhas novas sem foto mantêm um espaço reservado. Fontes e licença estão em `assets/photos/campanhas/CREDITOS.md`.
+
+As 12 narrativas foram ampliadas para a apresentação escolar, sem mudanças em metas, saldos ou revisões de urgência. O texto está em `backend/historias-campanhas.json`, utilizado também pelo cadastro inicial. São histórias criadas para este projeto, sem vínculo entre as pessoas das fotos e os relatos.
+
+A projeção de anúncios só existe nas emergências ativas: urgência crítica com revisão vigente ou os quatro casos emergenciais da apresentação. Campanhas comuns não ganham anúncios no total projetado e não exibem essa linha; visitantes não veem painel publicitário nessas campanhas. O backend já limita a distribuição efetiva do fundo às urgências críticas ativas, revisadas e com evidência válida. Não foram aprovadas urgências nem gerados créditos para os exemplos.
