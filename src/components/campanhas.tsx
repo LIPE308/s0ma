@@ -1,4 +1,3 @@
-import { campanhaExemplo } from "../servicos/campanhas-exemplos";
 import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { EntryMotion, MotionPressable } from "../design/motion";
@@ -35,12 +34,7 @@ export function CartaoCampanha({
     <EntryMotion>
       <MotionPressable
         accessibilityRole="button"
-        accessibilityLabel={
-          (campanhaExemplo(campanha) ? "Exemplo fictício. " : "") +
-          (cta || "Conhecer campanha") +
-          ": " +
-          titulo
-        }
+        accessibilityLabel={(cta || "Conhecer campanha") + ": " + titulo}
         onPress={aoAbrir}
         style={({ pressed }) => ({
           flexDirection: compacto ? "row" : "column",
@@ -117,11 +111,6 @@ export function CartaoCampanha({
               {campanha.descricao}
             </Text>
           ) : null}
-          {campanhaExemplo(campanha) ? (
-            <Text style={{ color: colors.primary, fontSize: 12 }}>
-              Campanha de exemplo · valores fictícios
-            </Text>
-          ) : null}
           {campanha.urgencia?.revisada ? (
             <Text
               style={{ fontSize: 12, lineHeight: 19, color: colors.primary }}
@@ -148,11 +137,6 @@ export function CartaoCampanha({
                   : recebido + " de " + meta + " confirmados"}
               </Text>
               <Progress done={recebido} total={meta} />
-              {!compacto && financeira ? (
-                <Text style={{ fontSize: 11, color: colors.muted }}>
-                  Valores de demonstração
-                </Text>
-              ) : null}
             </>
           ) : evento ? (
             <Text style={{ fontSize: 13, lineHeight: 21, color: colors.muted }}>

@@ -70,7 +70,7 @@ export function SimuladorCampanha({
         </Text>
       </View>
       <Text style={{ color: colors.onHero, fontSize: 13 }}>
-        Simulação acelerada · valores fictícios
+        Saldo projetado
       </Text>
       <Animated.Text
         testID="demo-money-total"
@@ -92,13 +92,12 @@ export function SimuladorCampanha({
         {formatarDinheiro((10000 + doacoes + anuncios + rendimento) / 100)}
       </Animated.Text>
       <Text style={{ color: colors.onHero, fontSize: 14, lineHeight: 22 }}>
-        Cenário inicial fictício: R$ 100,00. Acompanhe os acréscimos da
-        demonstração:
+        Projeção a partir de R$ 100,00. Acompanhe a evolução:
       </Text>
       {[
-        ["Doações de exemplo", doacoes],
-        ["Apoio de anúncios de exemplo", anuncios],
-        ["Rendimento hipotético", rendimento],
+        ["Doações previstas", doacoes],
+        ["Receita de anúncios prevista", anuncios],
+        ["Rendimento projetado", rendimento],
       ].map(([label, value]) => (
         <View
           key={String(label)}
@@ -117,17 +116,16 @@ export function SimuladorCampanha({
         </View>
       ))}
       <Text style={{ color: colors.onHero, fontSize: 12, lineHeight: 19 }}>
-        Esta animação não representa dinheiro recebido, aplicação financeira nem
-        promessa de rentabilidade. O saldo registrado da campanha permanece
-        separado.
+        Estimativa de evolução. O saldo registrado da campanha aparece
+        separadamente.
       </Text>
       <Button
         inverse
         title={
           step === 60
-            ? "Reiniciar demonstração"
+            ? "Reiniciar projeção"
             : running
-              ? "Pausar demonstração"
+              ? "Pausar evolução"
               : "Ver valores em movimento"
         }
         onPress={() => {

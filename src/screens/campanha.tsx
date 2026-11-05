@@ -162,7 +162,7 @@ export function DetalheCampanha() {
               <Text
                 style={{ fontSize: 12, color: colors.muted, lineHeight: 20 }}
               >
-                Doações e valores desta versão são simulados.
+                Saldo registrado da campanha.
               </Text>
             </View>
           ) : null}
@@ -306,7 +306,7 @@ export function DetalheCampanha() {
                 title={n.nome}
                 subtitle={
                   n.tipo === "dinheiro"
-                    ? "Doação de demonstração"
+                    ? "Apoio financeiro"
                     : n.tipo === "tarefa"
                       ? "Participe com seu tempo"
                       : "Contribua com objetos"

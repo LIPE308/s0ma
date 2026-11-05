@@ -26,7 +26,7 @@ async function main() {
       let [pessoa] = await q('SELECT id FROM usuarios WHERE email=?', ['demonstracao@soma.example']);
       if (!pessoa) {
         const senha=gerarSenha(randomBytes(32).toString('hex'));
-        const novo=await q('INSERT INTO usuarios (nome,email,senha_resumo,senha_sal,regiao) VALUES (?,?,?,?,?)',['Comunidade SOMA · exemplos','demonstracao@soma.example',senha.resumo,senha.sal,'Brasil']);
+        const novo=await q('INSERT INTO usuarios (nome,email,senha_resumo,senha_sal,regiao) VALUES (?,?,?,?,?)',['Comunidade SOMA','demonstracao@soma.example',senha.resumo,senha.sal,'Brasil']);
         pessoa={id:novo.insertId};
       }
       for(const [codigo,titulo,categoria,regiao,uf,meta,recebido,historia] of exemplos) {
@@ -34,8 +34,8 @@ async function main() {
         if ((await q('SELECT id FROM campanhas WHERE id=?',[id])).length) continue;
         const urgente=codigo.startsWith('urgente');
         const prazo=new Date(Date.now()+(urgente?14:60)*86400000).toISOString().slice(0,10);
-        await q("INSERT INTO campanhas (id,usuario_id,titulo,descricao,categoria,regiao,prazo,instrucoes,estado) VALUES (?,?,?,?,?,?,?,?,'ativa')",[id,pessoa.id,titulo,'EXEMPLO FICTÍCIO. '+historia+' Campanha criada para demonstrar o SOMA; não representa uma solicitação real.',categoria,regiao,prazo,'Use somente para demonstração. Não envie dinheiro ou objetos reais.']);
-        await q("INSERT INTO necessidades (id,campanha_id,nome,tipo,meta,recebido,descricao,prazo) VALUES (?,?,?,'dinheiro',?,?,?,?)",[id+'-valor',id,'Apoio financeiro de exemplo',meta,recebido,'Valores fictícios de demonstração.',prazo]);
+        await q("INSERT INTO campanhas (id,usuario_id,titulo,descricao,categoria,regiao,prazo,instrucoes,estado) VALUES (?,?,?,?,?,?,?,?,'ativa')",[id,pessoa.id,titulo,historia,categoria,regiao,prazo,'Acompanhe as necessidades e combine a entrega com a organização.']);
+        await q("INSERT INTO necessidades (id,campanha_id,nome,tipo,meta,recebido,descricao,prazo) VALUES (?,?,?,'dinheiro',?,?,?,?)",[id+'-valor',id,'Apoio financeiro',meta,recebido,'Recursos para atender às necessidades da campanha.',prazo]);
         await q('INSERT INTO campanhas_detalhes (campanha_id,uf,municipio,mapa_autorizado) VALUES (?,?,?,1)',[id,uf,regiao.split(',')[0]]);
         criadas++;
       }
