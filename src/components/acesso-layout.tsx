@@ -24,14 +24,14 @@ import { BrandSignature } from "../design/brand";
 import { useReducedMotion } from "../design/motion";
 import { useTheme } from "./ui";
 
-function VideoFamilia() {
+function VideoSolidariedade() {
   const reduced = useReducedMotion();
   const focused = useIsFocused();
   const [active, setActive] = useState(AppState.currentState === "active");
   const [visible, setVisible] = useState(true);
   const [ready, setReady] = useState(false);
   const player = useVideoPlayer(
-    require("../../assets/videos/familias-sequencia.mp4"),
+    require("../../assets/videos/solidariedade-sequencia.mp4"),
     (p) => {
       p.loop = true;
       p.muted = true;
@@ -72,7 +72,7 @@ function VideoFamilia() {
         style={StyleSheet.absoluteFill}
       >
         <Image
-          source={require("../../assets/videos/familia-acolhimento.jpg")}
+          source={require("../../assets/videos/solidariedade-capa.jpg")}
           contentFit="cover"
           style={StyleSheet.absoluteFill}
         />
@@ -145,7 +145,7 @@ export function AcessoLayout({
                 : { width: "100%", height: width < 360 ? 290 : 320 },
             ]}
           >
-            <VideoFamilia />
+            <VideoSolidariedade />
             <View
               pointerEvents="none"
               style={[
