@@ -1,3 +1,4 @@
+import { SeletorMunicipio } from "../components/seletor-municipio";
 import { StyleSheet, Switch, View } from "react-native";
 import { useEffect, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -187,12 +188,20 @@ export function PrepararCampanha() {
                       label="UF"
                       options={UFS}
                       selected={uf}
-                      onSelect={setUf}
+                      onSelect={(v) => {
+                        setUf(v);
+                        setMunicipio("");
+                      }}
                     />
-                    <Field
-                      label="Município aproximado (opcional)"
+                    <SeletorMunicipio
+                      label="Cidade (opcional)"
                       value={municipio}
                       onChangeText={setMunicipio}
+                      uf={uf}
+                      onSelect={(m) => {
+                        setUf(m.uf);
+                        setMunicipio(m.nome);
+                      }}
                     />
                   </>
                 ) : null}

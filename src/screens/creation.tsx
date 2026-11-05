@@ -1,3 +1,4 @@
+import { SeletorMunicipio } from "../components/seletor-municipio";
 import { useEffect, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Switch, View } from "react-native";
@@ -405,8 +406,8 @@ export function Organization() {
         })
       }
     >
-      <Field
-        label="Cidade ou região (opcional)"
+      <SeletorMunicipio
+        label="Cidade (opcional)"
         value={regiao}
         onChangeText={definirRegiao}
       />

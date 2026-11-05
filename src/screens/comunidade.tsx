@@ -1,3 +1,4 @@
+import { SeletorMunicipio } from "../components/seletor-municipio";
 import { StyleSheet, Pressable, Text, View } from "react-native";
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
@@ -297,7 +298,7 @@ export function MeusDados() {
       ) : q.dados ? (
         <>
           <Field label="Seu nome" value={nome} onChangeText={setNome} />
-          <Field
+          <SeletorMunicipio
             label="Cidade (opcional)"
             value={cidade}
             onChangeText={setCidade}

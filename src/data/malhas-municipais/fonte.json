@@ -1,0 +1,15 @@
+{
+  "fonte": "IBGE / Malhas v3 e Localidades v1",
+  "consulta": "2026-11-05",
+  "malhas": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/{UF}?formato=application/vnd.geo+json&qualidade=minima&intrarregiao=municipio",
+  "localidades": "https://servicodados.ibge.gov.br/api/v1/localidades/municipios?orderBy=nome",
+  "catalogo": 5571,
+  "territorios": 5570,
+  "semMalha": [
+    {
+      "id": 5101837,
+      "nome": "Boa Esperança do Norte",
+      "uf": "MT"
+    }
+  ]
+}

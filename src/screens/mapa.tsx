@@ -221,6 +221,7 @@ export function MapaSolidario() {
       heading="Onde sua ajuda faz falta."
       subtitle="Encontre campanhas por região e entenda o que ainda falta para cada causa."
     >
+      <Button title="Explorar cidades e seus territórios" onPress={() => router.push({ pathname: "/mapa-cidades", params: { uf: uf || "PE" } })} />
       <View style={estilosFixos.linha1}>
         <View
           style={{

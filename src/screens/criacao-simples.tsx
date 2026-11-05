@@ -1,3 +1,5 @@
+import { localizarMunicipio } from "../servicos/municipios";
+import { SeletorMunicipio } from "../components/seletor-municipio";
 import { StyleSheet, BackHandler, Switch, View } from "react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Image } from "expo-image";
@@ -104,8 +106,10 @@ export function CriacaoSimples() {
       setErro("Escolha hoje, uma data futura ou deixe sem prazo.");
       return;
     }
-    if (etapa === 2 && mapa && uf === "Não informar") {
-      setErro("Escolha o estado para autorizar a presença no mapa.");
+    if (etapa === 2 && mapa && !localizarMunicipio(cidade, uf)) {
+      setErro(
+        "Selecione sua cidade na lista para autorizar a presença no mapa.",
+      );
       return;
     }
     setEtapa((e) => e + 1);
@@ -136,6 +140,11 @@ export function CriacaoSimples() {
     }
   }
   async function salvar(enviar: boolean) {
+    const selecionado = localizarMunicipio(cidade, uf);
+    if (mapa && !selecionado) {
+      setErro("Selecione sua cidade na lista antes de salvar.");
+      return;
+    }
     if (enviar && !adulto) {
       setErro(
         "A publicação precisa de um responsável maior de 18 anos. Você pode salvar o rascunho.",
@@ -195,7 +204,7 @@ export function CriacaoSimples() {
       await requisitar("/campanhas/" + id + "/contexto", "PUT", {
         mapa_autorizado: mapa,
         uf: mapa ? uf : "",
-        municipio: "",
+        municipio: mapa ? selecionado!.nome : "",
       });
       for (const d of documentos)
         await requisitar(
@@ -400,19 +409,19 @@ export function CriacaoSimples() {
                 opcional
               />
               <Disclosure title="Adicionar localização (opcional)">
-                <Field
-                  label="Cidade ou região pública"
+                <SeletorMunicipio
+                  label="Cidade (opcional)"
                   value={cidade}
                   onChangeText={setCidade}
-                  placeholder="Sem endereço residencial"
+                  onSelect={(m) => setUf(m.uf)}
                 />
                 <View style={estilosFixos.linha1}>
                   <Switch
-                    accessibilityLabel="Incluir apenas meu estado no mapa"
+                    accessibilityLabel="Mostrar minha cidade no mapa"
                     value={mapa}
                     onValueChange={setMapa}
                   />
-                  <Copy>Incluir apenas o estado no mapa</Copy>
+                  <Copy>Mostrar minha cidade no mapa</Copy>
                 </View>
                 {mapa ? (
                   <Choices
@@ -424,7 +433,10 @@ export function CriacaoSimples() {
                       ),
                     ]}
                     selected={uf}
-                    onSelect={setUf}
+                    onSelect={(v) => {
+                      setUf(v);
+                      setCidade("");
+                    }}
                   />
                 ) : null}
               </Disclosure>

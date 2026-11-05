@@ -1,3 +1,4 @@
+import { SeletorMunicipio } from "../components/seletor-municipio";
 import { StyleSheet, Switch, View } from "react-native";
 import { useEffect, useState } from "react";
 import { useRouter, useLocalSearchParams, Redirect } from "expo-router";
@@ -188,11 +189,10 @@ export function CompletarPerfil() {
                 />
               ) : null}
               <Field label="Seu nome" value={nome} onChangeText={setNome} />
-              <Field
+              <SeletorMunicipio
                 label="Cidade (opcional)"
                 value={cidade}
                 onChangeText={setCidade}
-                placeholder="Apenas a cidade, sem endereço"
               />
               {p.foto_google ? (
                 <View style={estilosFixos.linha2}>
