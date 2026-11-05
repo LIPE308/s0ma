@@ -1,7 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { readFileSync } = require('node:fs');
-const { criarVerificacaoOTA } = require('../src/servicos/atualizacoes-core.ts');
+const { criarVerificacaoOTA, lerRegistrosOTA } = require('../src/servicos/atualizacoes-core.ts');
 const { planoPublicacao } = require('../scripts/publicar-ota');
 
 function ambiente(opcoes = {}) {
@@ -90,4 +90,14 @@ test('publicação assistida recusa produção, opções extras e mensagens vazi
   const args = planoPublicacao('preview', 'teste & conteúdo');
   assert.equal(args[args.indexOf('--message') + 1], 'teste & conteúdo');
   assert.equal(args[args.indexOf('--channel') + 1], 'preview');
+});
+test('diagnóstico tolera armazenamento corrompido, limita registros e descarta campos privados', () => {
+  for (const valor of [null, '{', 'null', '{}', JSON.stringify([null, {}, { evento: 'segredo', horario: 'x' }]), 'x'.repeat(16001)]) {
+    assert.deepEqual(lerRegistrosOTA(valor), []);
+  }
+  const registro = { horario: '2026-11-05T12:00:00.000Z', evento: 'falha_download', token: 'nao-exibir' };
+  const logs = lerRegistrosOTA(JSON.stringify(Array(100).fill(registro)));
+  assert.equal(logs.length, 40);
+  assert.deepEqual(Object.keys(logs[0]), ['horario', 'evento']);
+  assert.ok(!JSON.stringify(logs).includes('nao-exibir'));
 });

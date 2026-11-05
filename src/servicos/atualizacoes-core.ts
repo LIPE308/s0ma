@@ -4,6 +4,25 @@ export type EventoOTA =
   | "baixando" | "pronta_na_proxima_abertura" | "recuperacao_preparada"
   | "falha_verificacao" | "falha_download";
 
+export type RegistroOTA = { horario: string; evento: EventoOTA };
+const eventosPermitidos = new Set<EventoOTA>([
+  "inicializado", "desativado", "verificando", "sem_atualizacao", "baixando",
+  "pronta_na_proxima_abertura", "recuperacao_preparada", "falha_verificacao", "falha_download",
+]);
+
+export function lerRegistrosOTA(serializado: string | null): RegistroOTA[] {
+  if (!serializado || serializado.length > 16000) return [];
+  try {
+    const dados: unknown = JSON.parse(serializado);
+    if (!Array.isArray(dados)) return [];
+    return dados.filter(item => item && typeof item === "object" &&
+      eventosPermitidos.has(item.evento) && typeof item.horario === "string" &&
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(item.horario) &&
+      Number.isFinite(Date.parse(item.horario)))
+      .slice(-40).map(item => ({ horario: item.horario, evento: item.evento }));
+  } catch { return []; }
+}
+
 type ProvedorOTA = {
   habilitado: boolean;
   verificar: () => Promise<{ isAvailable: boolean; isRollBackToEmbedded: boolean }>;
