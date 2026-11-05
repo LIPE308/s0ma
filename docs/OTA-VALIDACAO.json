@@ -1,0 +1,103 @@
+{
+  "data": "2026-11-05",
+  "branch": "ota-segura",
+  "expoSDK": "54.0.38",
+  "expoUpdates": "29.0.20",
+  "apkAnterior": {
+    "versao": "1.0.1",
+    "sha256": "928196ddd758253ad24b3e8fcab2c7d8e14c0a2c38cf5d7b96dd38a76f9f1104",
+    "otaHabilitado": false,
+    "exigeNovaInstalacao": true
+  },
+  "novaBase": {
+    "buildId": "4704823a-322c-42c0-8a9e-fe8bf4b160f2",
+    "fonte": "45445054773c43cddf686bb2571a26e42b869f37",
+    "status": "FINISHED",
+    "concluidaEm": "2026-11-05T14:13:00.107Z",
+    "download": "https://expo.dev/artifacts/eas/s1jihwzRcv7ZphgdivGq7T396MYiUWuXbPKvslNtm30.apk",
+    "versao": "1.1.0",
+    "versionCode": 3,
+    "canal": "preview",
+    "runtime": "52f8e2509e07828205a1363d3fb473a8df5519ad",
+    "marcadorEmbarcado": "ota-base-1",
+    "configuracaoNativaConferida": true,
+    "credenciaisPrivadasAusentes": true,
+    "mesmoCertificadoDoAPKAnterior": true,
+    "bytes": 94472822,
+    "sha256": "8a286a30aa862f1b3026071e143265b72d2efe9b496148cf5da8eb58f400ed04"
+  },
+  "candidato": {
+    "grupo": "2ba6f0d8-764a-4b8a-b4c7-b669c7e309ee",
+    "updateId": "01a1ac0f-1929-7c63-b7eb-3bf70d6e51c5",
+    "canal": "preview",
+    "fonte": "2628afb3d9c27264d7bfd99887c99c016c3d3a58",
+    "runtime": "52f8e2509e07828205a1363d3fb473a8df5519ad",
+    "criadoEm": "2026-11-05T14:13:53.065Z",
+    "publicadoAposConclusaoDaBuild": true,
+    "bundle": {
+      "updateId": "01a1ac0f-1929-7c63-b7eb-3bf70d6e51c5",
+      "runtime": "52f8e2509e07828205a1363d3fb473a8df5519ad",
+      "integridadeSHA256": true,
+      "bytesBundle": 2522752,
+      "assetsVerificados": 54,
+      "marcador": "ota-teste-1"
+    }
+  },
+  "verificacoes": {
+    "testesUnitarios": 9,
+    "tipos": "passou, excluindo somente os arquivos locais nao rastreados brand-audio.ts e brand-audio.web.ts que nao integram a build",
+    "lint": "passou nos arquivos alterados",
+    "exportacaoAndroid": "passou",
+    "diagnosticoWeb": "conferido, OTA desativado na web",
+    "selecaoRealDoServidor": [
+      {
+        "canal": "preview",
+        "runtime": "52f8e2509e07828205a1363d3fb473a8df5519ad",
+        "status": 200,
+        "bundle": true,
+        "idEsperado": true
+      },
+      {
+        "canal": "preview",
+        "runtime": "1.0.1",
+        "status": 204,
+        "bundle": false,
+        "idEsperado": false
+      },
+      {
+        "canal": "preview",
+        "runtime": "0000000000000000000000000000000000000000",
+        "status": 204,
+        "bundle": false,
+        "idEsperado": false
+      },
+      {
+        "canal": "production",
+        "runtime": "52f8e2509e07828205a1363d3fb473a8df5519ad",
+        "status": 204,
+        "bundle": false,
+        "idEsperado": false
+      },
+      {
+        "canal": "development",
+        "runtime": "52f8e2509e07828205a1363d3fb473a8df5519ad",
+        "status": 204,
+        "bundle": false,
+        "idEsperado": false
+      }
+    ],
+    "certificadoAPKAnteriorPreservado": true,
+    "credenciaisDoServidorAusentesNoAPK": true
+  },
+  "aparelho": {
+    "status": "aguardando_confirmacao_do_usuario",
+    "trocaDeVersaoNaProximaAbertura": "ainda_nao_confirmada",
+    "sessaoFormulariosEOperacoes": "aguardando_teste_no_aparelho"
+  },
+  "producao": {
+    "publicacoesRealizadasNestaTarefa": 0,
+    "autorizada": false,
+    "liberada": false,
+    "motivo": "Homologacao no aparelho e autorizacao explicita ainda pendentes."
+  }
+}

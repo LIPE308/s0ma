@@ -71,6 +71,8 @@ Eventos do SOMA ficam em um buffer local de até 40 registros em AsyncStorage e 
 7. Conferir login/sessão, leitura das campanhas e navegação. Não criar doações/campanhas reais só para testar OTA. Reabrir offline para verificar uso do bundle já armazenado; funcionamento de telas que dependem da API ainda exige rede.
 8. Registrar modelo/Android, build ID, update ID, runtime e resultado. Validar rollback em preview antes de usá-lo em produção. Testes unitários, exportação, build concluída e update disponível no servidor não substituem esse teste no aparelho.
 
+Publicar o candidato de teste depois da conclusão da base nativa. Um update publicado antes da geração do bundle embarcado pode ser considerado antigo pela seleção nativa mesmo com runtime correto; nesse caso, republicar o mesmo grupo explicitamente para `preview` depois de concluir a build. A data e a política de seleção nativa também participam da escolha do bundle.
+
 `npm run ota:development -- "descricao"` oferece o mesmo fluxo no canal development. Os comandos assistidos recusam produção, exigem commit e aceitam somente uma mensagem, sem opções adicionais. O comando EAS pode ser usado diretamente por quem possui credenciais; os scripts são uma proteção operacional, não substituem controle de acesso à conta Expo.
 
 ## Publicação futura em produção — somente com autorização
