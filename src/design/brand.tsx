@@ -1,4 +1,76 @@
-import { Text, View } from 'react-native';
-import { useDesign } from './theme';
-export function BrandMark({size=40,color}:{size?:number;color?:string}){const {colors}=useDesign();const u=size/100;return <View accessible={false} style={{width:size,height:size}}>{[[20,20,44,18],[20,38,18,26],[36,62,44,18],[62,36,18,26]].map(([left,top,width,height],i)=><View key={i} style={{position:'absolute',left:left*u,top:top*u,width:width*u,height:height*u,borderRadius:2*u,backgroundColor:color||colors.primary}}/>)}</View>;}
-export function BrandSignature({inverse=false,size=40}:{inverse?:boolean;size?:number}){const {colors,fontsReady}=useDesign();return <View accessible accessibilityLabel="SOMA" style={{flexDirection:'row',alignItems:'center',gap:8}}><BrandMark size={size} color={inverse?colors.onHero:undefined}/><Text style={{color:inverse?colors.onHero:colors.ink,fontSize:size*.85,letterSpacing:-size*.035,fontFamily:fontsReady?'Sora-SemiBold':undefined,fontWeight:fontsReady?'400':'700'}}>soma</Text></View>;}
+import { Text, View } from "react-native";
+import { useDesign } from "./theme";
+import { BrandMarkMotion } from "./brand-mark-motion";
+export function BrandMark({
+  size = 40,
+  color,
+}: {
+  size?: number;
+  color?: string;
+}) {
+  const { colors } = useDesign();
+  const u = size / 100;
+  return (
+    <View accessible={false} style={{ width: size, height: size }}>
+      {[
+        [20, 20, 44, 18],
+        [20, 38, 18, 26],
+        [36, 62, 44, 18],
+        [62, 36, 18, 26],
+      ].map(([left, top, width, height], i) => (
+        <View
+          key={i}
+          style={{
+            position: "absolute",
+            left: left * u,
+            top: top * u,
+            width: width * u,
+            height: height * u,
+            borderRadius: 2 * u,
+            backgroundColor: color || colors.primary,
+          }}
+        />
+      ))}
+    </View>
+  );
+}
+export function BrandSignature({
+  inverse = false,
+  size = 40,
+  animated = false,
+}: {
+  inverse?: boolean;
+  size?: number;
+  animated?: boolean;
+}) {
+  const { colors, fontsReady } = useDesign();
+  return (
+    <View
+      accessible
+      accessibilityLabel="SOMA"
+      style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+    >
+      <>
+        {animated ? (
+          <BrandMarkMotion
+            size={size}
+            color={inverse ? colors.onHero : colors.primary}
+          />
+        ) : (
+          <BrandMark size={size} color={inverse ? colors.onHero : undefined} />
+        )}
+      </>
+      <Text
+        style={{
+          color: inverse ? colors.onHero : colors.ink,
+          fontSize: size * 0.85,
+          letterSpacing: -size * 0.035,
+          fontFamily: fontsReady ? "Sora-SemiBold" : undefined,
+          fontWeight: fontsReady ? "400" : "700",
+        }}
+      >
+        soma
+      </Text>
+    </View>
+  );
+}

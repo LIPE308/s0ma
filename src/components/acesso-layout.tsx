@@ -95,9 +95,9 @@ function VideoSolidariedade() {
         <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
           <Defs>
             <LinearGradient id="acesso-sombra" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor="#061C49" stopOpacity="0.28" />
-              <Stop offset="0.45" stopColor="#061C49" stopOpacity="0.12" />
-              <Stop offset="1" stopColor="#061C49" stopOpacity="0.94" />
+              <Stop offset="0" stopColor="#061C49" stopOpacity="0.22" />
+              <Stop offset="0.45" stopColor="#061C49" stopOpacity="0.06" />
+              <Stop offset="1" stopColor="#061C49" stopOpacity="0.82" />
             </LinearGradient>
           </Defs>
           <Rect width="100%" height="100%" fill="url(#acesso-sombra)" />
@@ -141,8 +141,14 @@ export function AcessoLayout({
             style={[
               styles.hero,
               wide
-                ? { width: "48%", minHeight: height }
-                : { width: "100%", height: width < 360 ? 290 : 320 },
+                ? { width: width >= 1200 ? "55%" : "50%", minHeight: height }
+                : {
+                    width: "100%",
+                    height: Math.max(
+                      width < 360 ? 310 : 350,
+                      Math.min(420, height * 0.48),
+                    ),
+                  },
             ]}
           >
             <VideoSolidariedade />
@@ -156,17 +162,17 @@ export function AcessoLayout({
                 },
               ]}
             >
-              <BrandSignature inverse size={wide ? 44 : 36} />
+              <BrandSignature inverse animated size={wide ? 52 : 44} />
               <View
-                style={{ gap: wide ? 20 : 10, paddingBottom: wide ? 56 : 28 }}
+                style={{ gap: wide ? 20 : 10, paddingBottom: wide ? 28 : 24 }}
               >
                 <Text
                   style={[
                     styles.heroTitle,
                     {
                       fontFamily: fontTitle,
-                      fontSize: wide ? 48 : 28,
-                      lineHeight: wide ? 60 : 36,
+                      fontSize: wide ? 44 : 28,
+                      lineHeight: wide ? 56 : 36,
                     },
                   ]}
                 >
@@ -179,9 +185,6 @@ export function AcessoLayout({
                     Um gesto seu pode fazer parte de uma história muito maior.
                   </Text>
                 ) : null}
-                <Text style={styles.illustration}>
-                  Vídeos ilustrativos · Pexels
-                </Text>
               </View>
             </View>
           </View>
@@ -403,7 +406,6 @@ const styles = StyleSheet.create({
   heroContent: { flex: 1, justifyContent: "space-between" },
   heroTitle: { color: "#FFFFFF", maxWidth: 490, letterSpacing: -1.2 },
   heroCopy: { color: "#E4EDFF", fontSize: 18, lineHeight: 29, maxWidth: 370 },
-  illustration: { color: "#E4EDFF", fontSize: 11, lineHeight: 17 },
   panel: { flex: 1, justifyContent: "center" },
   mobilePanel: {
     marginTop: -24,
