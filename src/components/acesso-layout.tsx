@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useIsFocused } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -6,6 +6,8 @@ import { Image } from "expo-image";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useEvent } from "expo";
 import {
+  Animated,
+  Easing,
   AppState,
   KeyboardAvoidingView,
   Platform,
@@ -21,7 +23,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { BrandSignature } from "../design/brand";
-import { useReducedMotion } from "../design/motion";
+import { nativeDriver, useReducedMotion } from "../design/motion";
 import { useTheme } from "./ui";
 
 function VideoSolidariedade() {
@@ -122,6 +124,58 @@ export function AcessoLayout({
   const insets = useSafeAreaInsets();
   const wide = width >= 900;
   const fontTitle = fontsReady ? "Sora-SemiBold" : undefined;
+  const reduced = useReducedMotion();
+  const focused = useIsFocused();
+  const formMotion = useRef(new Animated.Value(0)).current;
+  const tabMotion = useRef(new Animated.Value(cadastro ? 1 : 0)).current;
+  const [tabWidth, setTabWidth] = useState(0);
+  const [switching, setSwitching] = useState(false);
+  const [selectedTab, setSelectedTab] = useState(cadastro);
+  useEffect(() => {
+    if (!focused) return;
+    setSwitching(false);
+    formMotion.setValue(reduced ? 1 : 0);
+    const animation = Animated.timing(formMotion, {
+      toValue: 1,
+      duration: 360,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: nativeDriver,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [focused, reduced, formMotion]);
+  useEffect(() => () => tabMotion.stopAnimation(), [tabMotion]);
+  function trocarConta(register: boolean) {
+    if (cadastro === register || switching) return;
+    setSwitching(true);
+    setSelectedTab(register);
+    const navigate = () =>
+      r.replace({
+        pathname: register ? "/criar-conta" : "/entrar",
+        params: { retorno },
+      });
+    if (reduced) {
+      navigate();
+      return;
+    }
+    Animated.parallel([
+      Animated.timing(tabMotion, {
+        toValue: register ? 1 : 0,
+        duration: 240,
+        easing: Easing.inOut(Easing.cubic),
+        useNativeDriver: nativeDriver,
+      }),
+      Animated.timing(formMotion, {
+        toValue: 0,
+        duration: 180,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: nativeDriver,
+      }),
+    ]).start(({ finished }) => {
+      if (finished) navigate();
+    });
+  }
+
   return (
     <KeyboardAvoidingView
       style={[styles.screen, { backgroundColor: colors.bg }]}
@@ -211,38 +265,53 @@ export function AcessoLayout({
                 </Text>
               </Pressable>
               <View
+                onLayout={(event) =>
+                  setTabWidth(
+                    Math.max(0, (event.nativeEvent.layout.width - 10) / 2),
+                  )
+                }
                 style={[
                   styles.tabs,
                   { backgroundColor: colors.bg, borderColor: colors.line },
                 ]}
               >
+                <Animated.View
+                  pointerEvents="none"
+                  style={{
+                    position: "absolute",
+                    left: 4,
+                    top: 4,
+                    bottom: 4,
+                    width: tabWidth,
+                    borderRadius: 12,
+                    backgroundColor: colors.primary,
+                    transform: [
+                      {
+                        translateX: tabMotion.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0, tabWidth],
+                        }),
+                      },
+                    ],
+                  }}
+                />
                 {[false, true].map((register) => (
                   <Pressable
                     key={String(register)}
                     accessibilityRole="tab"
                     accessibilityState={{ selected: cadastro === register }}
-                    onPress={() => {
-                      if (cadastro !== register)
-                        r.replace({
-                          pathname: register ? "/criar-conta" : "/entrar",
-                          params: { retorno },
-                        });
-                    }}
-                    style={[
-                      styles.tab,
-                      cadastro === register && {
-                        backgroundColor: colors.surface,
-                        borderColor: colors.line,
-                        borderWidth: 1,
-                      },
-                    ]}
+                    disabled={switching}
+                    onPress={() => trocarConta(register)}
+                    style={styles.tab}
                   >
                     <Text
                       style={{
                         fontSize: 15,
                         fontFamily: fontsReady ? "Manrope-SemiBold" : undefined,
                         color:
-                          cadastro === register ? colors.primary : colors.muted,
+                          selectedTab === register
+                            ? colors.onPrimary
+                            : colors.muted,
                       }}
                     >
                       {register ? "Criar conta" : "Entrar"}
@@ -250,30 +319,50 @@ export function AcessoLayout({
                   </Pressable>
                 ))}
               </View>
-              <View style={styles.heading}>
-                <Text
-                  accessibilityRole="header"
-                  aria-level={1}
-                  style={{
-                    color: colors.ink,
-                    fontFamily: fontTitle,
-                    fontSize: wide ? 32 : 27,
-                    lineHeight: wide ? 42 : 36,
-                  }}
-                >
-                  {cadastro
-                    ? "Sua história também soma."
-                    : "Bom ter você por aqui."}
-                </Text>
-                <Text
-                  style={{ color: colors.muted, fontSize: 16, lineHeight: 25 }}
-                >
-                  {cadastro
-                    ? "Crie sua conta para apoiar causas e aproximar quem quer ajudar."
-                    : "Entre para acompanhar suas causas e continuar fazendo a diferença."}
-                </Text>
-              </View>
-              {children}
+              <Animated.View
+                testID="access-form-motion"
+                style={{
+                  gap: 22,
+                  opacity: formMotion,
+                  transform: [
+                    {
+                      translateX: formMotion.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [cadastro ? 20 : -20, 0],
+                      }),
+                    },
+                  ],
+                }}
+              >
+                <View style={styles.heading}>
+                  <Text
+                    accessibilityRole="header"
+                    aria-level={1}
+                    style={{
+                      color: colors.ink,
+                      fontFamily: fontTitle,
+                      fontSize: wide ? 32 : 27,
+                      lineHeight: wide ? 42 : 36,
+                    }}
+                  >
+                    {cadastro
+                      ? "Sua história também soma."
+                      : "Bom ter você por aqui."}
+                  </Text>
+                  <Text
+                    style={{
+                      color: colors.muted,
+                      fontSize: 16,
+                      lineHeight: 25,
+                    }}
+                  >
+                    {cadastro
+                      ? "Crie sua conta para apoiar causas e aproximar quem quer ajudar."
+                      : "Entre para acompanhar suas causas e continuar fazendo a diferença."}
+                  </Text>
+                </View>
+                {children}
+              </Animated.View>
               <View style={[styles.footer, { borderTopColor: colors.line }]}>
                 <Ionicons
                   name="heart-outline"
@@ -333,11 +422,35 @@ export function CampoAcesso({
   const { colors, fontsReady } = useTheme();
   const [show, setShow] = useState(false);
   const [focus, setFocus] = useState(false);
+  const reduced = useReducedMotion();
+  const inputMotion = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const animation = Animated.timing(inputMotion, {
+      toValue: focus ? 1 : 0,
+      duration: reduced ? 0 : 180,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: nativeDriver,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [focus, reduced, inputMotion]);
   return (
-    <View style={{ gap: 8 }}>
+    <Animated.View
+      style={{
+        gap: 8,
+        transform: [
+          {
+            translateY: inputMotion.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, -2],
+            }),
+          },
+        ],
+      }}
+    >
       <Text
         style={{
-          color: colors.ink,
+          color: focus ? colors.primary : colors.ink,
           fontSize: 14,
           fontFamily: fontsReady ? "Manrope-SemiBold" : undefined,
         }}
@@ -348,17 +461,37 @@ export function CampoAcesso({
         style={[
           styles.inputBox,
           {
-            backgroundColor: colors.bg,
+            backgroundColor: focus ? colors.brandSoft : colors.bg,
             borderColor: focus ? colors.primary : colors.line,
+            borderWidth: 2,
           },
         ]}
       >
-        <Ionicons
-          name={icon}
-          size={20}
-          color={focus ? colors.primary : colors.muted}
-          accessible={false}
-        />
+        <Animated.View
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 11,
+            backgroundColor: focus ? colors.primary : colors.surface,
+            alignItems: "center",
+            justifyContent: "center",
+            transform: [
+              {
+                scale: inputMotion.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [1, 1.08],
+                }),
+              },
+            ],
+          }}
+        >
+          <Ionicons
+            name={icon}
+            size={19}
+            color={focus ? colors.onPrimary : colors.muted}
+            accessible={false}
+          />
+        </Animated.View>
         <TextInput
           {...props}
           accessibilityLabel={label}
@@ -372,6 +505,7 @@ export function CampoAcesso({
             {
               color: colors.ink,
               fontFamily: fontsReady ? "Manrope-Regular" : undefined,
+              ...(Platform.OS === "web" ? { outlineWidth: 0 } : {}),
             },
           ]}
         />
@@ -394,7 +528,7 @@ export function CampoAcesso({
           </Pressable>
         ) : null}
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -443,9 +577,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
     borderRadius: 14,
-    paddingLeft: 16,
-    minHeight: 56,
-    gap: 12,
+    paddingLeft: 10,
+    minHeight: 62,
+    gap: 10,
   },
   input: {
     flex: 1,
