@@ -4,13 +4,22 @@ import { Animated, AppState, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Button, useTheme } from "./ui";
 import { nativeDriver, useReducedMotion } from "../design/motion";
+import { projetarCampanha } from "../servicos/projecao-campanha";
 import { formatarDinheiro } from "../data/formatacao";
 
 // Cenário didático isolado: nunca grava pagamentos, rendimentos ou saldo no banco.
 export function SimuladorCampanha({
   automatico = false,
+  campanhaId,
+  confirmado = 0,
+  meta = 0,
+  somenteAnuncios = false,
 }: {
   automatico?: boolean;
+  campanhaId: string;
+  confirmado?: number;
+  meta?: number;
+  somenteAnuncios?: boolean;
 }) {
   const { colors, fontsReady } = useTheme();
   const focused = useIsFocused();
@@ -44,38 +53,39 @@ export function SimuladorCampanha({
   useEffect(() => {
     if (step === 60) setRunning(false);
   }, [step]);
-  const doacoes = Math.floor(step / 4) * 2500,
-    anuncios = step * 12,
-    rendimento = step;
+  const { base, doacoes, anuncios, rendimento, total, percentual, restante } =
+    projetarCampanha(campanhaId, confirmado, meta, step);
   return (
     <View
       testID="campaign-money-demo"
       style={{
-        backgroundColor: colors.hero,
+        backgroundColor: colors.successBg,
         borderRadius: 24,
         padding: 24,
         gap: 16,
       }}
     >
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <Ionicons name="trending-up" color={colors.onHero} size={26} />
+        <Ionicons name="trending-up" color={colors.success} size={26} />
         <Text
           style={{
-            color: colors.onHero,
+            color: colors.success,
             fontSize: 16,
             fontFamily: fontsReady ? "Manrope-SemiBold" : undefined,
           }}
         >
-          Veja sua campanha ganhar força
+          {somenteAnuncios
+            ? "Os anúncios também ajudam"
+            : "Sua campanha em crescimento"}
         </Text>
       </View>
-      <Text style={{ color: colors.onHero, fontSize: 13 }}>
-        Saldo projetado
+      <Text style={{ color: colors.success, fontSize: 13 }}>
+        {somenteAnuncios ? "Receita de anúncios projetada" : "Saldo projetado"}
       </Text>
       <Animated.Text
         testID="demo-money-total"
         style={{
-          color: colors.onHero,
+          color: colors.success,
           fontSize: 36,
           lineHeight: 48,
           fontFamily: fontsReady ? "Sora-SemiBold" : undefined,
@@ -89,35 +99,79 @@ export function SimuladorCampanha({
           ],
         }}
       >
-        {formatarDinheiro((10000 + doacoes + anuncios + rendimento) / 100)}
+        {formatarDinheiro((somenteAnuncios ? anuncios : total) / 100)}
       </Animated.Text>
-      <Text style={{ color: colors.onHero, fontSize: 14, lineHeight: 22 }}>
-        Projeção a partir de R$ 100,00. Acompanhe a evolução:
-      </Text>
-      {[
-        ["Doações previstas", doacoes],
-        ["Receita de anúncios prevista", anuncios],
-        ["Rendimento projetado", rendimento],
-      ].map(([label, value]) => (
-        <View
-          key={String(label)}
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            gap: 12,
-          }}
-        >
-          <Text style={{ color: colors.onHero, fontSize: 13, flex: 1 }}>
-            {label}
+      {somenteAnuncios ? (
+        <Text style={{ color: colors.success, fontSize: 14, lineHeight: 22 }}>
+          Acompanhe a evolução estimada do apoio dos anúncios para esta
+          campanha.
+        </Text>
+      ) : (
+        <>
+          {meta > 0 ? (
+            <View style={{ gap: 10 }}>
+              <Text
+                testID="campaign-projected-goal"
+                style={{ color: colors.success, fontSize: 15 }}
+              >
+                Meta: {formatarDinheiro(meta / 100)} · {percentual.toFixed(2)}%
+              </Text>
+              <View
+                style={{
+                  height: 10,
+                  borderRadius: 8,
+                  backgroundColor: colors.line,
+                  overflow: "hidden",
+                }}
+              >
+                <View
+                  style={{
+                    width: `${percentual}%`,
+                    height: "100%",
+                    backgroundColor: colors.success,
+                    borderRadius: 8,
+                  }}
+                />
+              </View>
+              <Text style={{ color: colors.success, fontSize: 13 }}>
+                {restante > 0
+                  ? `Faltam ${formatarDinheiro(restante / 100)} para a meta projetada`
+                  : "Meta projetada alcançada"}
+              </Text>
+            </View>
+          ) : (
+            <Text style={{ color: colors.success }}>
+              Adicione uma meta financeira para acompanhar seu progresso.
+            </Text>
+          )}
+          <Text style={{ color: colors.success, fontSize: 13 }}>
+            A partir do saldo registrado: {formatarDinheiro(base / 100)}
           </Text>
-          <Text style={{ color: colors.onHero, fontSize: 14 }}>
-            + {formatarDinheiro(Number(value) / 100)}
-          </Text>
-        </View>
-      ))}
-      <Text style={{ color: colors.onHero, fontSize: 12, lineHeight: 19 }}>
-        Estimativa de evolução. O saldo registrado da campanha aparece
-        separadamente.
+          {[
+            ["Doações previstas", doacoes],
+            ["Receita de anúncios prevista", anuncios],
+            ["Rendimento projetado", rendimento],
+          ].map(([label, value]) => (
+            <View
+              key={String(label)}
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                gap: 12,
+              }}
+            >
+              <Text style={{ color: colors.success, flex: 1, fontSize: 13 }}>
+                {label}
+              </Text>
+              <Text style={{ color: colors.success, fontSize: 14 }}>
+                + {formatarDinheiro(Number(value) / 100)}
+              </Text>
+            </View>
+          ))}
+        </>
+      )}
+      <Text style={{ color: colors.success, fontSize: 12, lineHeight: 19 }}>
+        Estimativa de evolução, separada do saldo registrado.
       </Text>
       <Button
         inverse

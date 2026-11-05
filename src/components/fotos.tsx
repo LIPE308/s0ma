@@ -1,3 +1,4 @@
+import { fotosCampanhas } from "../data/fotos-campanhas";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import {
@@ -22,6 +23,7 @@ const imagens = {
 // Uma foto editorial por campanha de exemplo. Novas campanhas não herdam fotos de outras causas.
 const fotosDeCampanhas: Record<string, { source: number; descricao: string }> =
   {
+    ...fotosCampanhas,
     familia: {
       source: imagens.familia,
       descricao: "Família reunida ao entardecer",
@@ -164,19 +166,7 @@ export function FotoDeCampanha({
   height?: number;
 }) {
   const { colors, fontsReady } = useTheme();
-  const foto =
-    fotosDeCampanhas[campanhaId] ||
-    (campanhaId.startsWith("exemplo-")
-      ? {
-          source:
-            categoria === "Educação"
-              ? imagens.educacao
-              : categoria === "Proteção animal"
-                ? imagens.protecaoAnimal
-                : imagens.comunidade,
-          descricao: "Ação comunitária ilustrativa para campanha fictícia",
-        }
-      : undefined);
+  const foto = fotosDeCampanhas[campanhaId];
   if (foto)
     return (
       <FotoEditorial

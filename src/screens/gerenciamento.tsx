@@ -81,7 +81,17 @@ export function Gerenciar() {
         <Notice>Somente o responsável pode gerenciar esta campanha.</Notice>
       ) : c ? (
         <>
-          <SimuladorCampanha key={c.id} automatico />
+          <SimuladorCampanha
+            key={c.id}
+            campanhaId={c.id}
+            confirmado={c.necessidades
+              .filter((n) => n.tipo === "dinheiro")
+              .reduce((s, n) => s + n.recebido, 0)}
+            meta={c.necessidades
+              .filter((n) => n.tipo === "dinheiro")
+              .reduce((s, n) => s + n.meta, 0)}
+            automatico
+          />
           {salvo ? (
             <Notice success>
               {salvo === "enviada"

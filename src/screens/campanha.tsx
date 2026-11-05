@@ -140,6 +140,10 @@ export function DetalheCampanha() {
             ) : null}
           </View>
           <SimuladorCampanha
+            campanhaId={c.id}
+            confirmado={confirmado}
+            meta={meta}
+            somenteAnuncios={!propria}
             key={c.id}
             automatico={Boolean(propria || c.id.startsWith("exemplo-"))}
           />
