@@ -64,7 +64,7 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        animation: reduced ? "none" : "fade",
+        animation: reduced || !nativeDriver ? "none" : "fade",
         transitionSpec: {
           animation: "timing",
           config: { duration: motion.tab },

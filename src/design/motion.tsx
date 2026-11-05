@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { AccessibilityInfo, Animated, Easing, Platform, Pressable, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { motion } from './theme';
@@ -23,6 +23,25 @@ export function MotionProvider({ children }: { children: ReactNode }) {
 }
 export const useReducedMotion = () => useContext(MotionContext);
 export const nativeDriver = Platform.OS !== 'web';
+
+// Envolve o navegador sem usar key: preserva formulários e o estado das telas.
+// No aparelho, Stack e Tabs são responsáveis pela transição nativa.
+export function NavigationMotion({ routeKey, children }: { routeKey: string; children: ReactNode }) {
+  const reduced = useReducedMotion();
+  const value = useRef(new Animated.Value(1)).current;
+  useLayoutEffect(() => {
+    value.stopAnimation();
+    if (Platform.OS !== 'web' || reduced) { value.setValue(1); return; }
+    value.setValue(0);
+    const animation = Animated.timing(value, {
+      toValue: 1, duration: motion.navigation,
+      easing: Easing.out(Easing.cubic), useNativeDriver: false,
+    });
+    animation.start();
+    return () => { animation.stop(); value.setValue(1); };
+  }, [routeKey, reduced, value]);
+  return <Animated.View testID="navigation-motion" style={{ flex: 1, opacity: value.interpolate({inputRange:[0,1],outputRange:[0.35,1]}), transform:[{translateY:value.interpolate({inputRange:[0,1],outputRange:[12,0]})}] }}>{children}</Animated.View>;
+}
 
 export function ContentMotion({ children, style, ...props }: ViewProps) {
   const reduced = useReducedMotion(); const value = useRef(new Animated.Value(1)).current;

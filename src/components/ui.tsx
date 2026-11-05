@@ -16,7 +16,6 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BrandMark, BrandSignature } from "../design/brand";
 import {
-  ContentMotion,
   EntryMotion,
   MotionPressable,
   useReducedMotion,
@@ -171,12 +170,12 @@ export function Screen({
             {subtitle ? <Text style={s.subtitle}>{subtitle}</Text> : null}
           </View>
         )}
-        <ContentMotion
+        <View
           testID="screen-content"
           style={[s.body, form && s.formBody]}
         >
           {children}
-        </ContentMotion>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );

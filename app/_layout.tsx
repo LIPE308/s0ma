@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
-import { Stack } from "expo-router";
+import { Stack, usePathname, useGlobalSearchParams } from "expo-router";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import * as SystemUI from "expo-system-ui";
 import { Platform, View } from "react-native";
-import { DesignProvider } from "../src/design/theme";
+import { DesignProvider, motion } from "../src/design/theme";
 import {
   MotionProvider,
+  NavigationMotion,
   ThemeMotion,
   useReducedMotion,
 } from "../src/design/motion";
@@ -44,6 +45,9 @@ export default function RootLayout() {
 }
 
 function Application({ ready }: { ready: boolean }) {
+  const pathname = usePathname();
+  const params = useGlobalSearchParams();
+  const routeKey = pathname + JSON.stringify(params);
   const { colors, dark, temaPronto } = useTheme();
   const reduced = useReducedMotion();
   const pronto = ready && temaPronto;
@@ -65,16 +69,17 @@ function Application({ ready }: { ready: boolean }) {
     >
       <StatusBar style={dark ? "light" : "dark"} />
       {pronto ? (
-        <>
+        <NavigationMotion routeKey={routeKey}>
           <Stack
             screenOptions={{
               headerShown: false,
               contentStyle: { backgroundColor: colors.bg },
-              animation: reduced ? "none" : "slide_from_right",
-              animationDuration: 220,
+              animation: reduced ? "none" : "fade_from_bottom",
+              animationDuration: motion.navigation,
+              animationTypeForReplace: "push",
             }}
           />
-        </>
+        </NavigationMotion>
       ) : (
         <View
           accessibilityLabel="Carregando SOMA"
