@@ -5,15 +5,18 @@
   },
   "build": {
     "preview": {
+      "channel": "preview",
+      "environment": "preview",
       "distribution": "internal",
       "android": {
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_URL_BACKEND": "http://10.10.84.209:3001/api"
+        "EXPO_PUBLIC_URL_BACKEND": "https://soma-api-studio308.onrender.com/api"
       }
     },
     "production": {
+      "channel": "production",
       "distribution": "store",
       "environment": "production",
       "env": {
@@ -24,13 +27,25 @@
       }
     },
     "grupo": {
+      "channel": "production",
       "distribution": "internal",
       "android": {
         "buildType": "apk"
       },
-      "environment": "preview",
+      "environment": "production",
       "env": {
         "EXPO_PUBLIC_URL_BACKEND": "https://soma-api-studio308.onrender.com/api"
+      }
+    },
+    "development": {
+      "extends": "preview",
+      "channel": "development",
+      "environment": "development"
+    },
+    "local": {
+      "extends": "development",
+      "env": {
+        "EXPO_PUBLIC_URL_BACKEND": "http://10.10.84.209:3001/api"
       }
     }
   }

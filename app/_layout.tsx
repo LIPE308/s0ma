@@ -14,6 +14,7 @@ import {
 import { BrandSignature } from "../src/design/brand";
 import { useTheme } from "../src/components/ui";
 import { recuperarSessaoNativa } from "../src/servicos/api";
+import { verificarAtualizacoesNaAbertura } from "../src/servicos/atualizacoes";
 
 void SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -46,6 +47,9 @@ function Application({ ready }: { ready: boolean }) {
   const { colors, dark, temaPronto } = useTheme();
   const reduced = useReducedMotion();
   const pronto = ready && temaPronto;
+  useEffect(() => {
+    if (pronto) void verificarAtualizacoesNaAbertura();
+  }, [pronto]);
   useEffect(() => {
     if (pronto) void SplashScreen.hideAsync().catch(() => {});
   }, [pronto]);

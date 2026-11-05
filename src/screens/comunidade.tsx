@@ -373,6 +373,11 @@ export function Configuracoes() {
         title="Termos de Uso"
         onPress={() => r.push("/termos")}
       />
+      <Button
+        secondary
+        title="Atualizações do app"
+        onPress={() => r.push("/atualizacoes-app")}
+      />
     </Screen>
   );
 }

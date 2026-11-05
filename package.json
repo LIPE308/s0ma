@@ -1,7 +1,7 @@
 {
   "name": "flatList",
   "main": "expo-router/entry",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "scripts": {
     "start": "expo start",
     "start:tunnel": "expo start --tunnel",
@@ -28,7 +28,10 @@
     "verificar:tipos": "tsc --noEmit",
     "testar:mapa": "node --experimental-strip-types --test backend/mapa.test.js backend/camera-mapa.test.js",
     "testar:postgres": "node --test backend/postgres.test.js",
-    "apk:grupo": "node scripts/apk-grupo.js"
+    "apk:grupo": "node scripts/apk-grupo.js",
+    "testar:ota": "node --experimental-strip-types --test tests/ota.test.cjs",
+    "ota:preview": "npm exec --yes --package=eas-cli -- node scripts/publicar-ota.js preview",
+    "ota:development": "npm exec --yes --package=eas-cli -- node scripts/publicar-ota.js development"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -55,6 +58,7 @@
     "expo-status-bar": "~3.0.9",
     "expo-symbols": "~1.0.8",
     "expo-system-ui": "~6.0.9",
+    "expo-updates": "~29.0.20",
     "expo-web-browser": "~15.0.11",
     "google-auth-library": "^11.3.1",
     "mysql2": "^3.24.5",

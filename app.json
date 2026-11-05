@@ -2,7 +2,18 @@
   "expo": {
     "name": "SOMA",
     "slug": "soma-pulso",
-    "version": "1.0.1",
+    "version": "1.1.0",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/90068c5e-1b11-40f7-b9ee-2b0bb8d6061d",
+      "enabled": true,
+      "checkAutomatically": "ON_ERROR_RECOVERY",
+      "fallbackToCacheTimeout": 0,
+      "useEmbeddedUpdate": true,
+      "disableAntiBrickingMeasures": false
+    },
     "orientation": "portrait",
     "icon": "./assets/brand/icon.png",
     "scheme": "soma",
@@ -21,7 +32,7 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.soma.pulso",
-      "versionCode": 2
+      "versionCode": 3
     },
     "web": {
       "output": "single",

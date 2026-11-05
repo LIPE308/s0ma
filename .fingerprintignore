@@ -1,0 +1,9 @@
+# Sem código nativo: nunca incluir credenciais ou arquivos do servidor no hash.
+backend/
+.expo/
+dist/
+docs/
+# Experimentos locais não incluídos nas builds (.easignore).
+assets/audio/soma-vinheta.wav
+src/design/brand-audio.ts
+src/design/brand-audio.web.ts
