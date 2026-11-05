@@ -63,6 +63,7 @@
         }
       ],
       "expo-web-browser",
+      "expo-video",
       "expo-build-properties"
     ],
     "experiments": {

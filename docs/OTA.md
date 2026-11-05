@@ -12,6 +12,10 @@ O relatório `OTA-VALIDACAO.json` e o APK de preview nele referenciado são regi
 
 ## Situação e migração inicial
 
+### Nova tela de acesso com vídeo
+
+O redesign de login e cadastro adicionou `expo-video` 3.0.16 e seu plugin, compatíveis com SDK 54. Essa dependência altera o código nativo e o fingerprint: os APKs anteriores não podem receber o player pelo runtime antigo. Configure a API, incremente o versionCode e gere/homologue uma nova build antes de distribuir. Não foi publicada OTA nem gerado APK por essa mudança visual. O vídeo local possui imagem de reserva, controle de pausa e respeito à preferência de movimento reduzido; fonte e adaptação estão em `assets/videos/CREDITOS.md`.
+
 Implementação em 05/11/2026 para Expo SDK 54, React Native 0.81.5 e `expo-updates` 29.0.20. Projeto EAS: `@studio308/soma-pulso`, ID `90068c5e-1b11-40f7-b9ee-2b0bb8d6061d`.
 
 O APK 1.0.1/versionCode 2 distribuído anteriormente foi criado sem `expo-updates`, URL de update, canal ou runtime. Ele **não pode ganhar OTA por OTA**. É necessário instalar uma nova build uma única vez, mantendo pacote `com.soma.pulso` e o keystore existente. A nova base é 1.1.0/versionCode 3.

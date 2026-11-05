@@ -1,17 +1,18 @@
 import { useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Switch, View } from "react-native";
+import { Pressable, Switch, Text, View } from "react-native";
 import {
   Button,
   Card,
   Copy,
   Dialog,
-  Field,
   Heading,
   Notice,
   Screen,
   useTheme,
 } from "../components/ui";
+import { AcessoLayout, CampoAcesso } from "../components/acesso-layout";
+import { Ionicons } from "@expo/vector-icons";
 import { EstadoConexao, PedirLogin } from "../components/conexao";
 import {
   requisitar,
@@ -28,7 +29,7 @@ import { destinoAposLogin } from "../servicos/navegacao";
 export { Entrada as Login } from "./boas-vindas";
 
 export function SignUp() {
-  const { s, colors } = useTheme();
+  const { colors } = useTheme();
   const roteador = useRouter();
   const { retorno } = useLocalSearchParams<{ retorno?: string }>();
   const [nome, definirNome] = useState("");
@@ -40,6 +41,7 @@ export function SignUp() {
   const [erro, definirErro] = useState("");
   const [ocupado, definirOcupado] = useState(false);
   async function cadastrar() {
+    if (ocupado) return;
     if (
       !nome.trim() ||
       !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ||
@@ -80,44 +82,99 @@ export function SignUp() {
     }
   }
   return (
-    <Screen
-      variant="form"
-      title="Criar conta"
-      heading="Uma conta. Muitas formas."
-      subtitle="Ajude e organize com o mesmo cadastro."
-    >
-      <Field label="Nome completo *" value={nome} onChangeText={definirNome} />
-      <Field label="E-mail *" email value={email} onChangeText={definirEmail} />
-      <Field
-        label="Senha *"
-        secret
-        value={senha}
-        onChangeText={definirSenha}
-        placeholder="Mínimo de 6 caracteres"
-      />
-      <Field
-        label="Confirmar senha *"
-        secret
-        value={confirmacao}
-        onChangeText={definirConfirmacao}
-      />
-      <View style={s.row}>
-        <Switch
-          accessibilityLabel="Aceito os termos"
-          value={aceito}
-          onValueChange={definirAceito}
-          trackColor={{ false: colors.line, true: colors.primary }}
+    <AcessoLayout cadastro retorno={retorno}>
+      <View style={{ gap: 18 }}>
+        <CampoAcesso
+          label="Nome completo"
+          icon="person-outline"
+          autoComplete="name"
+          autoCapitalize="words"
+          value={nome}
+          onChangeText={definirNome}
+          placeholder="Como podemos chamar você?"
+          editable={!ocupado}
         />
-        <Copy>Aceito os termos</Copy>
+        <CampoAcesso
+          label="E-mail"
+          icon="mail-outline"
+          keyboardType="email-address"
+          autoComplete="email"
+          autoCapitalize="none"
+          autoCorrect={false}
+          value={email}
+          onChangeText={definirEmail}
+          placeholder="seu@email.com"
+          editable={!ocupado}
+        />
+        <CampoAcesso
+          label="Senha"
+          icon="lock-closed-outline"
+          password
+          autoComplete="new-password"
+          autoCapitalize="none"
+          value={senha}
+          onChangeText={definirSenha}
+          placeholder="Pelo menos 6 caracteres"
+          editable={!ocupado}
+        />
+        <CampoAcesso
+          label="Confirmar senha"
+          icon="lock-closed-outline"
+          password
+          autoComplete="new-password"
+          autoCapitalize="none"
+          value={confirmacao}
+          onChangeText={definirConfirmacao}
+          placeholder="Repita sua senha"
+          editable={!ocupado}
+          returnKeyType="done"
+          onSubmitEditing={() => {
+            if (!ocupado) void cadastrar();
+          }}
+        />
       </View>
-      <Button
-        secondary
-        title="Termos e privacidade"
+      <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+        <Pressable
+          accessibilityRole="checkbox"
+          accessibilityLabel="Aceito os termos de uso e a política de privacidade"
+          accessibilityState={{ checked: aceito, disabled: ocupado }}
+          disabled={ocupado}
+          onPress={() => definirAceito(!aceito)}
+          style={{
+            minWidth: 44,
+            minHeight: 44,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Ionicons
+            name={aceito ? "checkbox" : "square-outline"}
+            size={26}
+            color={aceito ? colors.primary : colors.muted}
+          />
+        </Pressable>
+        <Text
+          style={{ color: colors.muted, flex: 1, fontSize: 14, lineHeight: 23 }}
+        >
+          Li e aceito os termos de uso e a política de privacidade.
+        </Text>
+      </View>
+      <Pressable
+        accessibilityRole="button"
         onPress={() => definirTermos(true)}
-      />
-      {erro ? <Notice error>{erro}</Notice> : null}
+        style={{ minHeight: 44, justifyContent: "center" }}
+      >
+        <Text style={{ color: colors.primary, fontSize: 14 }}>
+          Ler termos e privacidade
+        </Text>
+      </Pressable>
+      {erro ? (
+        <View accessibilityRole="alert" accessibilityLiveRegion="polite">
+          <Notice error>{erro}</Notice>
+        </View>
+      ) : null}
       <Button
-        title={ocupado ? "Cadastrando..." : "Criar conta"}
+        title={ocupado ? "Criando sua conta…" : "Criar minha conta"}
         disabled={ocupado}
         onPress={cadastrar}
       />
@@ -133,7 +190,7 @@ export function SignUp() {
         </Copy>
         <Button title="Entendi" onPress={() => definirTermos(false)} />
       </Dialog>
-    </Screen>
+    </AcessoLayout>
   );
 }
 
