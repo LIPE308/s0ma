@@ -54,7 +54,7 @@ export async function diagnosticoAtualizacoes() {
     canal: Updates.channel,
     runtime: Updates.runtimeVersion,
     updateId: Updates.updateId,
-    origem: Updates.isEmbeddedLaunch ? "APK instalado" : "Atualização OTA",
+    origem: !Updates.isEnabled ? "Web, Expo Go ou depuração" : Updates.isEmbeddedLaunch ? "APK instalado" : "Atualização OTA",
     recuperacaoEmergencial: Updates.isEmergencyLaunch,
     registros,
     codigosNativos,
