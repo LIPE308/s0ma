@@ -13,6 +13,9 @@ function main() {
   const [canal, mensagem, ...extras] = process.argv.slice(2);
   if (extras.length) throw Error('Passe apenas uma mensagem entre aspas. Não são aceitas opções adicionais.');
   const args = planoPublicacao(canal, mensagem);
+  const perfil = require('../eas.json').build;
+  const api = (perfil[canal].env || perfil[perfil[canal].extends]?.env)?.EXPO_PUBLIC_URL_BACKEND;
+  if (!api) throw Error('Publicação bloqueada: configure a API Node/MySQL em eas.json e no ambiente EAS correspondente. A URL antiga da nuvem foi desativada nesta configuração.');
   const status = spawnSync('git', ['status', '--porcelain', '--untracked-files=no'], { encoding: 'utf8' });
   if (status.status !== 0 || status.stdout.trim()) throw Error('Salve as mudanças rastreadas em um commit antes de publicar OTA.');
   // npm exec disponibiliza EAS no PATH. Invocar Node diretamente evita shell

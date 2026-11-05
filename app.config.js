@@ -1,5 +1,8 @@
 // HTTP permitido apenas no perfil local, isolado das distribuições OTA públicas.
 module.exports = ({ config }) => {
+  if (process.env.EAS_BUILD_PROFILE === 'local' && !process.env.EXPO_PUBLIC_URL_BACKEND) {
+    throw new Error('Configure EXPO_PUBLIC_URL_BACKEND no perfil local com o IP da API Node desta máquina, por exemplo http://IP_DO_PC:3001/api.');
+  }
   if (['grupo', 'production', 'preview', 'development'].includes(process.env.EAS_BUILD_PROFILE)) {
     const api = new URL(process.env.EXPO_PUBLIC_URL_BACKEND || 'http://localhost');
     if (api.protocol !== 'https:' || /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(api.hostname) || api.hostname.endsWith('.supabase.co')) {

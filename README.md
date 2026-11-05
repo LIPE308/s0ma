@@ -107,8 +107,8 @@ O [guia do layout baseado nas aulas](docs/LAYOUT-AULAS.md) explica a organizaç�
 
 O cliente tem suporte a OTA a partir da nova base 1.1.0; o APK 1.0.1 anterior precisa de uma instalação nova para ganhar esse suporte. Veja [o guia de OTA](docs/OTA.md) para canais, compatibilidade, homologação e publicação controlada. Não há publicação automática no canal de produção.
 
-## Banco na nuvem
+## Banco atual: MySQL local
 
-O objetivo da próxima etapa é receber doações diretamente na conta verificada de cada beneficiário por um provedor. O financeiro atual permanece simulado. Veja [pagamentos reais e preparação das lojas](docs/PAGAMENTOS-E-LOJAS.md) para o fluxo e as dependências antes da ativação.
+O SOMA usa MySQL local por padrão. `DATABASE_URL` sozinha não seleciona mais o PostgreSQL. Veja a [análise do MySQL local](docs/ANALISE-MYSQL-LOCAL.md). A configuração antiga do Render foi preservada em `docs/legado/render-supabase.yaml`, sem publicação remota por este merge.
 
-Para usar PostgreSQL no Supabase, siga [a configuração do Supabase](docs/SUPABASE.md). A opção mantém as contas e regras do servidor SOMA e instala um banco novo sem dados de demonstração.
+Os perfis EAS precisam da URL da API Node/MySQL antes de gerar um novo APK; o endereço remoto anterior não é mais preenchido por padrão. O financeiro permanece simulado; veja [pagamentos reais e preparação das lojas](docs/PAGAMENTOS-E-LOJAS.md) para essa etapa futura.

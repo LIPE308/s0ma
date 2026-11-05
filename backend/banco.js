@@ -5,7 +5,7 @@ const { gerarSenha } = require('./auxiliares');
 const { randomBytes } = require('node:crypto');
 const { migrarSoma2 } = require('./migrar-soma2');
 
-const usarPostgres = process.env.BANCO_TIPO === 'postgres' || Boolean(process.env.DATABASE_URL);
+const usarPostgres = require('./tipo-banco').tipoBanco() === 'postgres';
 const banco = usarPostgres ? require('./postgres').criarBancoPostgres() : mysql.createPool({
   host: process.env.MYSQL_HOST || '127.0.0.1',
   port: Number(process.env.MYSQL_PORTA || 3306),

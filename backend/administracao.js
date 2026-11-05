@@ -55,7 +55,7 @@ async function atenderAdministracao(ctx) {
   if (caminho === '/api/administracao/painel/integracoes' && metodo === 'GET') {
     const [db] = await consultar('SELECT DATABASE() AS nome,VERSION() AS versao');
     const email = configuracaoEmail();
-    const postgres = process.env.BANCO_TIPO === 'postgres' || Boolean(process.env.DATABASE_URL);
+    const postgres = require('./tipo-banco').tipoBanco() === 'postgres';
     const conexao = postgres ? new URL(process.env.DATABASE_URL) : null;
     return ok({ banco: { conectado: true, nome: db.nome, versao: db.versao, tipo: postgres ? 'Supabase/PostgreSQL' : 'MySQL', host: conexao?.hostname || process.env.MYSQL_HOST || '127.0.0.1', porta: Number(postgres ? conexao.port || 5432 : process.env.MYSQL_PORTA || 3306), usuario: conexao ? decodeURIComponent(conexao.username) : process.env.MYSQL_USUARIO || 'soma' },
       google: { configurado: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_REDIRECT_URI), retorno: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3001/api/auth/google/callback' },

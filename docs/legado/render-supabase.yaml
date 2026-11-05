@@ -1,3 +1,4 @@
+# Arquivo histórico. Não usar para a configuração atual em MySQL local.
 services:
   - type: web
     name: soma-api

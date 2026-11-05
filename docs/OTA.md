@@ -1,5 +1,15 @@
 # Atualizações OTA do SOMA
 
+## Integração na main com MySQL local
+
+O código OTA foi integrado à `main` junto com a escolha de MySQL como banco padrão. A seleção de PostgreSQL ficou somente como compatibilidade explícita (`BANCO_TIPO=postgres`); a presença de uma `DATABASE_URL` antiga não altera o MySQL.
+
+As URLs de API legadas foram retiradas de `eas.json`. Os campos `EXPO_PUBLIC_URL_BACKEND` estão vazios intencionalmente: configure a API Node que atende ao MySQL antes de gerar APK ou publicar OTA. Para `local`, use o IP da máquina acessível pelo telefone na mesma rede. Para os demais perfis, use HTTPS público. O aplicativo nunca deve receber a senha do MySQL nem se conectar diretamente à porta 3307.
+
+Os comandos assistidos de OTA recusam publicar enquanto essa configuração estiver vazia. Quando houver uma API adequada, alinhe o campo do perfil **e** a variável `EXPO_PUBLIC_URL_BACKEND` do ambiente EAS correspondente antes de publicar; as variáveis EAS antigas não foram alteradas por este merge. O comando `apk:grupo` agora exige que a saúde da API confirme `MySQL`.
+
+O relatório `OTA-VALIDACAO.json` e o APK de preview nele referenciado são registros da homologação anterior à escolha de MySQL. Essa build usa a API remota antiga e não representa a configuração local atual. O teste no aparelho continua pendente. A alteração dos perfis modifica o fingerprint: calcule o novo runtime e gere uma nova base de teste após configurar a API. Incremente o versionCode antes de distribuir a próxima build. Nenhum update de produção foi publicado por esta integração.
+
 ## Situação e migração inicial
 
 Implementação em 05/11/2026 para Expo SDK 54, React Native 0.81.5 e `expo-updates` 29.0.20. Projeto EAS: `@studio308/soma-pulso`, ID `90068c5e-1b11-40f7-b9ee-2b0bb8d6061d`.
