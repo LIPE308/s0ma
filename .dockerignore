@@ -1,0 +1,12 @@
+node_modules
+.git
+.expo
+dist
+android
+ios
+backend/.env*
+backend/.mysql
+backend/.admin-local.json
+backend/.google-client*
+**/*.log
+.env*

@@ -1,0 +1,53 @@
+services:
+  soma:
+    image: soma-temporario:${SOMA_SHA:?}
+    mem_limit: 768m
+    cpus: 1.0
+    build:
+      context: ../..
+      dockerfile: deploy/korvy/Dockerfile
+    restart: unless-stopped
+    environment:
+      BANCO_TIPO: mysql
+      MYSQL_HOST: banco-soma
+      MYSQL_PORTA: 3306
+      MYSQL_USUARIO: soma
+      MYSQL_SENHA: ${SOMA_MYSQL_PASSWORD:?}
+      MYSQL_BANCO: soma
+      APP_URL: https://korvy.com.br/soma
+      APP_BASE_PATH: /soma
+      ORIGEM_WEB: https://korvy.com.br
+      COOKIE_SEGURO: '1'
+    depends_on:
+      banco-soma:
+        condition: service_healthy
+    networks:
+      web:
+        aliases: [soma-temporario]
+      banco:
+  banco-soma:
+    mem_limit: 512m
+    cpus: 0.75
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: soma
+      MYSQL_USER: soma
+      MYSQL_PASSWORD: ${SOMA_MYSQL_PASSWORD:?}
+      MYSQL_ROOT_PASSWORD: ${SOMA_MYSQL_ROOT_PASSWORD:?}
+    volumes:
+      - dados:/var/lib/mysql
+    networks: [banco]
+    healthcheck:
+      test: [CMD-SHELL, 'MYSQL_PWD="$$MYSQL_PASSWORD" mysql -h 127.0.0.1 -u soma -D soma -e "SELECT 1"']
+      interval: 10s
+      timeout: 5s
+      retries: 30
+networks:
+  web:
+    external: true
+    name: ${KORVY_NETWORK:?}
+  banco:
+    internal: true
+volumes:
+  dados:

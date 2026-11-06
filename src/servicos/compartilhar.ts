@@ -1,7 +1,7 @@
 import { Share, Platform } from 'react-native';
 import { criarChaveOperacao, requisitar, usuarioLogado } from './api';
 export function enderecoPublico(campanha?:string){
- const base=Platform.OS==='web'&&typeof window!=='undefined'?window.location.origin:'soma://';
+ const base=Platform.OS==='web'&&typeof window!=='undefined'?window.location.origin+(process.env.EXPO_BASE_URL||''):'soma://';
  return campanha?(base==='soma://'?'soma://':base+'/')+'campanha?id='+encodeURIComponent(campanha):base;
 }
 export async function compartilhar(titulo:string,campanha?:string){

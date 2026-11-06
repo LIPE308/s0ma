@@ -6,7 +6,9 @@ function tokenDaRequisicao(req) {
 }
 function gravarCookieSessao(req,res,token) {
   const seguro=Boolean(req.socket?.encrypted)||process.env.COOKIE_SEGURO==='1';
-  const valor=NOME+'='+token+'; Path=/api; HttpOnly; SameSite=Lax; Max-Age='+(token?86400:0)+(seguro?'; Secure':'');
+  const prefixo = process.env.APP_BASE_PATH || '';
+  if (prefixo && !/^\/[a-z0-9-]+$/.test(prefixo)) throw Error('APP_BASE_PATH inválido');
+  const valor=NOME+'='+token+'; Path='+prefixo+'/api; HttpOnly; SameSite=Lax; Max-Age='+(token?86400:0)+(seguro?'; Secure':'');
   const anterior=res.getHeader('Set-Cookie');
   res.setHeader('Set-Cookie',[...(Array.isArray(anterior)?anterior:anterior?[anterior]:[]),valor]);
 }

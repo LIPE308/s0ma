@@ -21,7 +21,8 @@ const exemplos = [
   return historia ? [item[0],historia.titulo,item[2],historia.regiao || item[3],historia.uf || item[4],item[5],item[6],historia.historia] : item;
 });
 async function main() {
-  if (require('./tipo-banco').tipoBanco() !== 'mysql' || !['127.0.0.1','localhost'].includes(process.env.MYSQL_HOST || '127.0.0.1')) throw Error('Este comando só cadastra exemplos no MySQL local.');
+  const isolado = process.env.SOMA_SEED_ISOLADO === 'soma-temporario' && process.env.MYSQL_HOST === 'banco-soma' && process.env.MYSQL_BANCO === 'soma';
+  if (require('./tipo-banco').tipoBanco() !== 'mysql' || (!isolado && !['127.0.0.1','localhost'].includes(process.env.MYSQL_HOST || '127.0.0.1'))) throw Error('Este comando só cadastra exemplos no MySQL local ou no serviço temporário explicitamente autorizado.');
   const { banco, transacao } = require('./banco');
   try {
     let criadas=0;

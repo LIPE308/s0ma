@@ -10,8 +10,11 @@ module.exports = ({ config }) => {
     }
     if (api.username || api.password || api.search || api.hash) throw new Error('A URL pública da API não deve conter credenciais ou tokens.');
   }
+  const baseUrl = process.env.SOMA_WEB_BASE || '';
+  if (baseUrl && !/^\/[a-z0-9-]+$/.test(baseUrl)) throw Error('SOMA_WEB_BASE inválido');
   return ({
   ...config,
+  experiments: { ...config.experiments, ...(baseUrl ? { baseUrl } : {}) },
   plugins: (config.plugins || []).map(plugin =>
     plugin === 'expo-build-properties'
       ? ['expo-build-properties', { android: { usesCleartextTraffic: process.env.EAS_BUILD_PROFILE === 'local' } }]

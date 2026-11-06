@@ -17,14 +17,16 @@ async function atenderGoogle(ctx) {
   if(!caminho.startsWith('/api/auth/google/'))return null;
   const config=configuracao();
   if(!config)erro('Login Google ainda não configurado pela equipe. Use e-mail e senha.',503);
-  const cookie=(nome,valor,tempo)=>nome+'='+valor+'; HttpOnly; SameSite=Lax; Path=/api/auth/google; Max-Age='+tempo+config.seguro;
+  const baseApp = config.uri.origin + (process.env.APP_BASE_PATH || '');
+  const prefixo = process.env.APP_BASE_PATH || '';
+  const cookie=(nome,valor,tempo)=>nome+'='+valor+'; HttpOnly; SameSite=Lax; Path='+prefixo+'/api/auth/google; Max-Age='+tempo+config.seguro;
   if((caminho==='/api/auth/google/iniciar' && metodo==='GET') || (caminho==='/api/auth/google/vincular' && metodo==='POST')){
     // O estado OAuth deve voltar para o mesmo host que gravou o cookie.
     // Ao abrir por 127.0.0.1, inicia o login na origem canônica do callback.
     if (metodo==='GET' && requisicao.headers.host!==config.uri.host) {
-      resposta.writeHead(302,{Location:config.uri.origin+'/api/auth/google/iniciar','Cache-Control':'no-store'});resposta.end();return{enviada:true};
+      resposta.writeHead(302,{Location:baseApp+'/api/auth/google/iniciar','Cache-Control':'no-store'});resposta.end();return{enviada:true};
     }
-    if (metodo==='POST' && requisicao.headers.host!==config.uri.host) erro('Para vincular o Google, entre pelo endereço '+config.uri.origin+'.',409);
+    if (metodo==='POST' && requisicao.headers.host!==config.uri.host) erro('Para vincular o Google, entre pelo endereço '+baseApp+'.',409);
     if(metodo==='POST')exigirLogin(usuario);
     const estado=randomBytes(32).toString('hex'),nonce=randomBytes(24).toString('hex');
     const pkce=await config.client.generateCodeVerifierAsync();
@@ -40,7 +42,7 @@ async function atenderGoogle(ctx) {
     const params=new URL(requisicao.url,'http://localhost').searchParams,estado=params.get('state'),code=params.get('code');
     if(params.get('error')==='access_denied' && /^[a-f0-9]{64}$/.test(estado||'') && cookies(requisicao).soma_oauth_estado===estado){
       await transacao(async q=>{const[f]=await q('SELECT expira_em FROM oauth_fluxos WHERE resumo_estado=? FOR UPDATE',[resumirToken(estado)]);if(!f||Number(f.expira_em)<Date.now())erro('Acesso expirado.',401);await q('DELETE FROM oauth_fluxos WHERE resumo_estado=?',[resumirToken(estado)]);});
-      resposta.setHeader('Set-Cookie',cookie('soma_oauth_estado','',0));resposta.writeHead(302,{Location:config.uri.origin+'/entrar?aviso=google_cancelado','Cache-Control':'no-store'});resposta.end();return{enviada:true};}
+      resposta.setHeader('Set-Cookie',cookie('soma_oauth_estado','',0));resposta.writeHead(302,{Location:baseApp+'/entrar?aviso=google_cancelado','Cache-Control':'no-store'});resposta.end();return{enviada:true};}
     if(!estado || !/^[a-f0-9]{64}$/.test(estado) || cookies(requisicao).soma_oauth_estado!==estado || !code || code.length>4000)erro('Retorno Google inválido. Inicie o acesso novamente.',400);
     const fluxo=await transacao(async consulta=>{
       const [f]=await consulta('SELECT * FROM oauth_fluxos WHERE resumo_estado=? FOR UPDATE',[resumirToken(estado)]);
@@ -75,10 +77,10 @@ async function atenderGoogle(ctx) {
       await auditar(consulta,id,null,'google_validado',{vinculacao:Boolean(fluxo.usuario_id)});
     });
     resposta.setHeader('Set-Cookie',[cookie('soma_oauth_estado','',0),cookie('soma_oauth_entrega',entrega,60)]);
-    resposta.writeHead(302,{Location:config.uri.origin+'/google','Cache-Control':'no-store','Referrer-Policy':'no-referrer'});resposta.end();return{enviada:true};
+    resposta.writeHead(302,{Location:baseApp+'/google','Cache-Control':'no-store','Referrer-Policy':'no-referrer'});resposta.end();return{enviada:true};
     } catch (problema) {
       resposta.setHeader('Set-Cookie',cookie('soma_oauth_estado','',0));
-      resposta.writeHead(302,{Location:config.uri.origin+'/entrar?aviso='+(problema.googleVincular?'google_vincular':'google_erro'),'Cache-Control':'no-store','Referrer-Policy':'no-referrer'});resposta.end();return{enviada:true};
+      resposta.writeHead(302,{Location:baseApp+'/entrar?aviso='+(problema.googleVincular?'google_vincular':'google_erro'),'Cache-Control':'no-store','Referrer-Policy':'no-referrer'});resposta.end();return{enviada:true};
     }
   }
   if(caminho==='/api/auth/google/trocar' && metodo==='POST'){
