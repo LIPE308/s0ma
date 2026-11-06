@@ -4,15 +4,22 @@ umask 077
 case "${SOMA_SHA:-}" in ''|*[!a-f0-9]*) exit 1;; esac
 test "${#SOMA_SHA}" -eq 40
 KORVY_DIR=/var/www/korva
+echo 'Preflight: localizar serviços existentes da Korvy.'
 cd "$KORVY_DIR"
 APP=$(docker compose ps -q app)
 CADDY=$(docker compose ps -q caddy)
 test -n "$APP" && test -n "$CADDY"
 NETWORK=$(docker inspect --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{"\n"}}{{end}}' "$CADDY" | head -n1)
 test -n "$NETWORK"
+echo 'Preflight: serviços e rede encontrados.'
 # Guarda de recursos: não pressionar o serviço institucional com um build pesado.
-test "$(awk '/MemAvailable/ {print $2}' /proc/meminfo)" -ge 1300000
-test "$(df -Pk /var | awk 'NR==2 {print $4}')" -ge 6000000
+MEMORY=$(awk '/MemAvailable/ {print $2}' /proc/meminfo)
+DISK=$(df -Pk /var | awk 'NR==2 {print $4}')
+printf 'Recursos disponíveis: memória %s KiB; disco %s KiB.\n' "$MEMORY" "$DISK"
+if [ "$MEMORY" -lt 1300000 ] || [ "$DISK" -lt 6000000 ]; then
+  echo 'Recursos insuficientes para compilar com margem; nenhuma alteração aplicada.'
+  exit 1
+fi
 ROOT=/var/lib/soma-temporario
 mkdir -p "$ROOT/releases"
 PREVIOUS=$(cat "$ROOT/versao" 2>/dev/null || true)
