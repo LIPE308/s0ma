@@ -17,6 +17,7 @@ curl -fsS https://korvy.com.br/ > "$BEFORE"
 curl -fsS "$API_ORIGIN/api/saude" > "$ROOT/saude-tunel.json"
 docker exec "$CADDY" wget -qO- http://127.0.0.1:2019/config/ > "$BACKUP"
 curl -fsS "https://raw.githubusercontent.com/LIPE308/s0ma/$SOMA_SHA/deploy/korvy/rota-caddy.cjs" > "$ROOT/rota.cjs"
+chmod 644 "$ROOT/rota.cjs"
 docker cp "$ROOT/rota.cjs" "$APP:/tmp/soma-rota.cjs" >/dev/null
 docker exec -i "$APP" node /tmp/soma-rota.cjs "$API_ORIGIN" < "$BACKUP" > "$ROOT/caddy-tunel.json"
 docker cp "$ROOT/caddy-tunel.json" "$CADDY:/tmp/soma-tunel.json" >/dev/null
