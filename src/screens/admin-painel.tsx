@@ -458,6 +458,21 @@ export function PainelAdministrativo() {
     if (tipo === "usuarios")
       return (
         <Card key={r.id} title={valor(r, "nome")} subtitle={valor(r, "email")}>
+          <Line label="Cidade" value={valor(r, "regiao") || "Não informada"} />
+          <Line
+            label="Telefone"
+            value={valor(r, "telefone") || "Não informado"}
+          />
+          <Button
+            secondary
+            title="Abrir cadastro e campanhas"
+            onPress={() =>
+              router.push({
+                pathname: "/admin-usuario",
+                params: { id: String(r.id) },
+              })
+            }
+          />
           <Copy>
             {r.administrador
               ? "Administrador"
@@ -1007,6 +1022,12 @@ export function PainelAdministrativo() {
                       />
                     ) : null}
                   </View>
+                  {tipo === "usuarios" ? (
+                    <Button
+                      title="Cadastrar pessoa"
+                      onPress={() => router.push("/admin-usuario")}
+                    />
+                  ) : null}
                   <EstadoConexao {...lista} />
                   {lista.dados ? (
                     <>

@@ -1,3 +1,4 @@
+const limiteAdmin = require('./limite-admin');
 // Node puro: servidor HTTP, JSON, SQL e funções. Sem Express e sem ORM.
 const http = require('node:http');
 const { randomBytes, randomUUID } = require('node:crypto');
@@ -176,9 +177,11 @@ async function atender(requisicao, resposta) {
       resultado = usuarioPublico(novoUsuario); codigo = 201;
     } else if (caminho === '/api/login' && metodo === 'POST') {
       const email = texto(dados.email, 'o e-mail', 150).toLowerCase();
+      limiteAdmin.tentar(email);
       if (typeof dados.senha !== 'string' || dados.senha.length > 128) erro('E-mail ou senha incorretos.', 401);
       const [pessoa] = await consultar('SELECT * FROM usuarios WHERE email=?', [email]);
       if (!pessoa || pessoa.bloqueado || !conferirSenha(dados.senha, pessoa)) erro('E-mail ou senha incorretos.', 401);
+      limiteAdmin.sucesso(email);
       const token = randomBytes(32).toString('hex');
       await consultar('DELETE FROM sessoes WHERE expira_em <= ?', [Date.now()]);
       await consultar('INSERT INTO sessoes (resumo_token,usuario_id,expira_em) VALUES (?,?,?)', [resumirToken(token), pessoa.id, Date.now() + 86400000]);

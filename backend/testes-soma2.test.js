@@ -30,6 +30,20 @@ test('SOMA 2.0: revisão, urgência, anúncios, rota, mapa, perfil e privacidade
     a=await conta('a@teste.example','Responsável A');b=await conta('b@teste.example','Responsável B');c=await conta('c@teste.example','Responsável C');d=await conta('d@teste.example','Doador D');admin=await conta('operador@teste.example','Operador');
     execFileSync(process.execPath,['backend/configurar-admin.js','operador@teste.example'],{env,stdio:'pipe'});
     admin=await chamar('/login',{method:'POST',body:{email:'operador@teste.example',senha:'SenhaTeste_2026!'}});
+    await suite.test('CRUD administrativo exige privilégio, lista cidade, edita e exclui cadastro sem histórico',async()=>{
+      const base='/administracao/painel/pessoas';
+      await chamar(base,{method:'POST',body:{},status:401});
+      await chamar(base,{method:'POST',token:a.token,body:{},status:403});
+      const novo=await chamar(base,{method:'POST',token:admin.token,body:{nome:'Pessoa CRUD',email:'crud@teste.example',senha:'SenhaInicialTeste2026!',telefone:'48999990000',regiao:'Criciúma, SC',administrador:true}});
+      const pessoa=await chamar(base+'/'+novo.id,{token:admin.token});
+      assert.equal(pessoa.regiao,'Criciúma, SC');assert.equal(Boolean(pessoa.administrador),false);assert.deepEqual(pessoa.campanhas,[]);assert.equal(pessoa.senha_resumo,undefined);
+      const lista=await chamar('/administracao/painel/lista?tipo=usuarios&busca=Criciúma',{token:admin.token});assert.ok(lista.itens.some(p=>p.id===novo.id));
+      await chamar(base+'/'+novo.id,{method:'PUT',token:admin.token,body:{nome:'Pessoa atualizada',email:'crud@teste.example',regiao:'Florianópolis, SC'}});
+      assert.equal((await chamar(base+'/'+novo.id,{token:admin.token})).nome,'Pessoa atualizada');
+      await chamar(base+'/'+admin.usuario.id,{method:'DELETE',token:admin.token,status:403});
+      await chamar(base+'/'+novo.id,{method:'DELETE',token:admin.token});
+      await chamar(base+'/'+novo.id,{token:admin.token,status:404});
+    });
     await suite.test('sessão web HttpOnly restaura, rejeita CSRF e encerra sem depender de JavaScript persistente',async()=>{
       const login=await fetch(url+'/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:'d@teste.example',senha:'SenhaTeste_2026!'})});
       assert.equal(login.status,200);const cookie=login.headers.get('set-cookie');
