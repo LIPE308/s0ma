@@ -1,3 +1,4 @@
+import { SeloUrgencia } from "../components/selo-urgencia";
 import {
   indicadoresSociais,
   indicadorDaUF,
@@ -135,6 +136,7 @@ export function DetalheCampanha() {
                 </Text>
               </View>
             ) : null}
+            <SeloUrgencia campanha={c} />
             {c.urgencia?.revisada ? (
               <Text
                 style={{ fontSize: 13, color: colors.primary, lineHeight: 21 }}

@@ -10,6 +10,7 @@ import {
   Choices,
   Copy,
   Disclosure,
+  Dialog,
   EmptyState,
   Field,
   Heading,
@@ -95,12 +96,15 @@ export function PerfilComunidade() {
   const { colors, fontsReady } = useTheme();
   const [erro, setErro] = useState("");
   const [saindo, setSaindo] = useState(false);
+  const [confirmarSaida, setConfirmarSaida] = useState(false);
   async function sair() {
+    if (saindo) return;
     setSaindo(true);
     setErro("");
     try {
       await requisitar("/sair", "POST");
       limparSessao();
+      setConfirmarSaida(false);
       r.replace("/entrar");
     } catch (e) {
       setErro(
@@ -247,13 +251,37 @@ export function PerfilComunidade() {
               icone="log-out-outline"
               perigo
               onPress={() => {
-                if (!saindo) void sair();
+                if (!saindo) setConfirmarSaida(true);
               }}
             />
           </View>
           {erro ? <Notice error>{erro}</Notice> : null}
         </>
       )}
+      <Dialog
+        visible={confirmarSaida}
+        title="Sair da sua conta?"
+        onClose={() => {
+          if (!saindo) setConfirmarSaida(false);
+        }}
+      >
+        <Copy>
+          Tem certeza de que deseja sair? Suas campanhas e seu histórico
+          continuarão salvos.
+        </Copy>
+        {erro ? <Notice error>{erro}</Notice> : null}
+        <Button
+          title={saindo ? "Saindo…" : "Sim, sair da conta"}
+          disabled={saindo}
+          onPress={() => void sair()}
+        />
+        <Button
+          secondary
+          title="Continuar na conta"
+          disabled={saindo}
+          onPress={() => setConfirmarSaida(false)}
+        />
+      </Dialog>
     </Screen>
   );
 }

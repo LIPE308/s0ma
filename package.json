@@ -22,7 +22,7 @@
     "banco:local:parar": "node backend/mysql-local.js parar",
     "testar:backend:local": "node backend/mysql-local.js testar",
     "compilar:web": "expo export --platform web --max-workers 2",
-    "testar:backend": "node --test backend/regras-soma2.test.js backend/testes.test.js backend/testes-soma2.test.js backend/compatibilidade.test.js",
+    "testar:backend": "node --test backend/regras-soma2.test.js backend/testes.test.js backend/testes-soma2.test.js backend/compatibilidade.test.js backend/ordem-campanhas.test.js",
     "testar:inteligencia": "node --test backend/inteligencia.test.js",
     "testar:experiencia": "node --experimental-strip-types --test backend/experiencia.test.js",
     "verificar:tipos": "tsc --noEmit",

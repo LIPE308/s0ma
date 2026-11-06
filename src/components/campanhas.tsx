@@ -7,6 +7,7 @@ import { Progress, useTheme } from "./ui";
 import { formatarDinheiro } from "../data/formatacao";
 import type { Campanha, Necessidade } from "../servicos/api";
 import { lerEvento } from "../data/eventos";
+import { SeloUrgencia } from "./selo-urgencia";
 export function CartaoCampanha({
   campanha,
   pedido,
@@ -79,6 +80,7 @@ export function CartaoCampanha({
             justifyContent: "center",
           }}
         >
+          <SeloUrgencia campanha={campanha} />
           {!compacto ? (
             <Text
               style={{

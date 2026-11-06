@@ -1,3 +1,4 @@
+const { urgentesPrimeiro } = require('./ordem-campanhas');
 const { randomUUID, randomBytes, createHash } = require('node:crypto');
 const { erro, texto, inteiro, opcao, usuarioPublico } = require('./auxiliares');
 const { avaliarUrgencia, urgenciaPublica, dataISO, diasAte, naturezas } = require('./urgencia');
@@ -31,17 +32,7 @@ async function completarCampanhas(consulta, campanhas) {
 }
 function ordenarFeed(campanhas) {
   const novas = [...campanhas].sort((a, b) => new Date(b.criada_em) - new Date(a.criada_em) || a.id.localeCompare(b.id));
-  const criticas = novas.filter(c => c.urgencia.classe === 'critica');
-  const regulares = novas.filter(c => c.urgencia.classe !== 'critica');
-  const poucoVistas = [...regulares].sort((a, b) => a.visualizacoes - b.visualizacoes || new Date(b.criada_em) - new Date(a.criada_em));
-  const resultado = [], usados = new Set(); let passo = 0;
-  while (resultado.length < campanhas.length) {
-    const fila = passo % 3 === 0 ? criticas : passo % 3 === 1 ? regulares : poucoVistas;
-    const item = fila.find(c => !usados.has(c.id)) || novas.find(c => !usados.has(c.id));
-    if (!item) break;
-    usados.add(item.id); resultado.push(item); passo++;
-  }
-  return resultado;
+  return urgentesPrimeiro(novas);
 }
 async function revisarPublicacao(consulta, campanha, usuario) {
   const [perfil] = await consulta('SELECT adulto FROM perfis WHERE usuario_id=?', [campanha.usuario_id]);
@@ -268,7 +259,7 @@ async function atenderSoma2(ctx) {
     else if (ordem==='pouca-visibilidade') lista.sort((a,b)=>a.visualizacoes-b.visualizacoes);
     else if (ordem==='conclusao') lista.sort((a,b)=>(b.recebido_financeiro/Math.max(1,b.meta_financeira))-(a.recebido_financeiro/Math.max(1,a.meta_financeira)));
     else lista=ordenarFeed(lista);
-    return ok(lista.slice(0,200));
+    return ok(urgentesPrimeiro(lista).slice(0,200));
   }
   if ((partes = caminho.match(/^\/api\/campanhas\/([^/]+)\/visualizacao$/)) && metodo === 'POST') {
     const campanha = await obterCampanha(partes[1]); conferirVisibilidade(campanha,usuario);
