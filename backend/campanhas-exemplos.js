@@ -18,7 +18,7 @@ const exemplos = [
   ['12','Companhia e cuidado para idosos','Comunidade','Fortaleza, CE','CE',1100000,462000,'Kits de higiene, refeições e organização de visitas voluntárias.'],
 ].map(item => {
   const historia = require('./historias-campanhas.json')[item[0]];
-  return historia ? [item[0],historia.titulo,item[2],historia.regiao || item[3],historia.uf || item[4],item[5],item[6],historia.historia] : item;
+  return historia ? [item[0],historia.titulo,historia.categoria || item[2],historia.regiao || item[3],historia.uf || item[4],item[5],item[6],historia.historia] : item;
 });
 async function main() {
   const isolado = process.env.SOMA_SEED_ISOLADO === 'soma-temporario' && process.env.MYSQL_HOST === 'banco-soma' && process.env.MYSQL_BANCO === 'soma';
