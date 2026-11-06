@@ -70,6 +70,20 @@ export function CartaoCampanha({
               height={compacto ? 100 : 190}
             />
           )}
+          {!compacto ? (
+            <View
+              pointerEvents="none"
+              style={{
+                position: "absolute",
+                top: 12,
+                left: 12,
+                right: 12,
+                alignItems: "flex-start",
+              }}
+            >
+              <SeloUrgencia campanha={campanha} variante="foto" />
+            </View>
+          ) : null}
         </View>
         <View
           style={{
@@ -80,7 +94,7 @@ export function CartaoCampanha({
             justifyContent: "center",
           }}
         >
-          <SeloUrgencia campanha={campanha} />
+          {compacto ? <SeloUrgencia campanha={campanha} /> : null}
           {!compacto ? (
             <Text
               style={{

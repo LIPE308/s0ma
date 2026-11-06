@@ -136,7 +136,7 @@ export function DetalheCampanha() {
                 </Text>
               </View>
             ) : null}
-            <SeloUrgencia campanha={c} />
+            <SeloUrgencia campanha={c} variante="detalhe" />
             {c.urgencia?.revisada ? (
               <Text
                 style={{ fontSize: 13, color: colors.primary, lineHeight: 21 }}
