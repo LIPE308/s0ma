@@ -15,3 +15,11 @@ Validação local: três testes da configuração de rota e cookies; 52 testes d
 ## Tentativa em 06/11/2026
 
 O preflight da execução https://github.com/srdiasjr/korva/actions/runs/42227513066 encontrou somente 181.076 KiB de memória disponível e 1.962.124 KiB de disco livre. A execução parou antes de criar serviços, banco ou alterar a configuração do Caddy. A rota não foi publicada. É necessário disponibilizar recursos suficientes ou escolher outro servidor para o SOMA antes de repetir. Não remover as guardas para forçar a publicação sobre o site institucional.
+
+## Alternativa leve temporária
+
+O workflow separado `soma-link-temporario.yml` não instala Node/MySQL, não compila e não cria contêineres na VPS. Acrescenta somente o encaminhamento `/soma` no Caddy para uma origem HTTPS temporária validada `*.trycloudflare.com`, com TLS e Host corretos. Mantém backup, validação de configuração, comparação da homepage e retorno automático em caso de erro. Usa Node do contêiner já existente apenas para transformar o JSON por alguns milissegundos; não muda arquivos da aplicação institucional.
+
+Frontend exportado com `SOMA_WEB_BASE=/soma` e `EXPO_PUBLIC_URL_BACKEND=/soma/api`. Worker local separado: `PORTA=3003`, `ENDERECO=127.0.0.1`, `SOMA_FRONT_DIR` apontando para o export, `APP_BASE_PATH=/soma`, `APP_URL=https://korvy.com.br/soma`, `ORIGEM_WEB=https://korvy.com.br`, `COOKIE_SEGURO=1`. O servidor padrão continua na porta 3001. O worker usa o banco e o `.env` já existentes sem enviar as credenciais ao servidor da Korvy. Assim o histórico local permanece disponível. Desativar Google nesse worker (`GOOGLE_CLIENT_ID` vazio) até autorizar callback público; login por e-mail e senha permanece disponível.
+
+Executar `cloudflared tunnel --url http://127.0.0.1:3003 --no-autoupdate` e fornecer a origem resultante ao workflow. Apenas o túnel acessa a porta local; MySQL não é exposto. **O computador, MySQL, worker e túnel precisam permanecer ligados**. Quick Tunnels não têm garantia de disponibilidade e mudam de endereço ao reiniciar: atualizar o workflow com a nova origem. Referência: https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/. O reinício do Caddy também remove a rota temporária; reexecutar workflow para restaurá-la.

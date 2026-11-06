@@ -22,3 +22,11 @@ test('cookie fica restrito à API do SOMA quando hospedado em subrota',()=>{
  try{let valor;gravarCookieSessao({socket:{}},{getHeader:()=>undefined,setHeader:(_,v)=>{valor=v;}},'a'.repeat(64));assert.match(valor[0],/Path=\/soma\/api;/);}
  finally{if(old===undefined)delete process.env.APP_BASE_PATH;else process.env.APP_BASE_PATH=old;}
 });
+test('conexão temporária exige HTTPS e Host/TLS correspondentes ao túnel',()=>{
+ const c={apps:{http:{servers:{s:{routes:[{match:[{host:['korvy.com.br']}],handle:[{handler:'subroute',routes:[]}]}]}}}}};
+ const r=adicionarRota(c,'https://teste.trycloudflare.com').apps.http.servers.s.routes[0].handle[0].routes[0];
+ const proxy=r.handle[2];assert.equal(proxy.upstreams[0].dial,'teste.trycloudflare.com:443');
+ assert.equal(proxy.transport.tls.server_name,'teste.trycloudflare.com');
+ assert.deepEqual(proxy.headers.request.set.Host,['teste.trycloudflare.com']);
+ for(const invalid of ['http://teste.trycloudflare.com','https://127.0.0.1','https://teste.trycloudflare.com.evil.example','https://teste.trycloudflare.com/api','https://a:b@teste.trycloudflare.com'])assert.throws(()=>adicionarRota(c,invalid));
+});

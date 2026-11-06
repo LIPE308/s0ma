@@ -123,7 +123,7 @@ async function calcularSaldo(campanhaId, consulta = consultar) {
 
 // Também serve o front compilado: um único endereço para apresentar em sala.
 function servirFront(caminho, resposta) {
-  const pasta = resolve(__dirname, '..', 'dist');
+  const pasta = process.env.SOMA_FRONT_DIR ? resolve(process.env.SOMA_FRONT_DIR) : resolve(__dirname, '..', 'dist');
   let arquivo = resolve(pasta, '.' + caminho);
   if (!arquivo.startsWith(pasta + sep) && arquivo !== pasta) { responder(resposta, 404, { mensagem: 'Arquivo não encontrado.' }); return; }
   if (!existsSync(arquivo) || !statSync(arquivo).isFile()) {
