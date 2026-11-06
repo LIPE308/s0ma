@@ -11,3 +11,7 @@ A rota é inserida apenas no JSON ativo do Caddy, após backup. Configuração a
 Guardas: memória/disco disponíveis antes do build, limites nos contêineres, health check MySQL e API antes de abrir rota, validação Caddy antes do reload, comparação byte a byte da homepage antes/depois e rollback de configuração/serviço SOMA se falhar. As imagens e volumes não são apagados. Alterações do esquema precisam ser retrocompatíveis para permitir retorno da imagem anterior.
 
 Validação local: três testes da configuração de rota e cookies; 52 testes do backend/MySQL; tipos, lint, export web com base `/soma`; navegador abriu `/soma/mapa-cidades`, carregou bundle sob `/soma/_expo/` e selecionou Petrolina/PE. O resultado da publicação deve ser conferido no workflow e na URL pública; preparação não comprova publicação.
+
+## Tentativa em 06/11/2026
+
+O preflight da execução https://github.com/srdiasjr/korva/actions/runs/42227513066 encontrou somente 181.076 KiB de memória disponível e 1.962.124 KiB de disco livre. A execução parou antes de criar serviços, banco ou alterar a configuração do Caddy. A rota não foi publicada. É necessário disponibilizar recursos suficientes ou escolher outro servidor para o SOMA antes de repetir. Não remover as guardas para forçar a publicação sobre o site institucional.
