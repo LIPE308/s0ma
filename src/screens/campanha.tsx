@@ -1,3 +1,4 @@
+import { ApoioAnuncios } from "../components/apoio-anuncios";
 import { SeloUrgencia } from "../components/selo-urgencia";
 import {
   indicadoresSociais,
@@ -147,6 +148,7 @@ export function DetalheCampanha() {
               </Text>
             ) : null}
           </View>
+          {permiteAnuncios(c) ? <ApoioAnuncios compacto /> : null}
           {propria || permiteAnuncios(c) ? (
             <SimuladorCampanha
               apoioAnuncios={permiteAnuncios(c)}

@@ -205,6 +205,11 @@ export function PerfilComunidade() {
           <EstadoConexao {...q} />
           <View>
             <ItemMenu
+              titulo="Tutorial e apoio por anúncios"
+              icone="play-circle-outline"
+              onPress={() => r.push("/tutorial")}
+            />
+            <ItemMenu
               titulo="Minhas campanhas"
               icone="albums-outline"
               onPress={() => r.push("/minhas-campanhas")}

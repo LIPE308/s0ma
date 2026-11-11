@@ -123,6 +123,12 @@ export function Entrada() {
           onPress={entrar}
         />
       </View>
+      <Button
+        secondary
+        title="Conheça o SOMA: veja como funciona"
+        disabled={ocupado}
+        onPress={() => r.push("/tutorial")}
+      />
     </AcessoLayout>
   );
 }

@@ -1,3 +1,4 @@
+import { ApoioAnuncios } from "../components/apoio-anuncios";
 import { ordenarPrioridade } from "../servicos/campanhas-exemplos";
 import type { Colors } from "../design/theme";
 import { useRouter } from "expo-router";
@@ -132,6 +133,7 @@ export function Inicio() {
           </MotionPressable>
         ))}
       </View>
+      <ApoioAnuncios />
       <View style={estilos.cabecalhoCampanhas}>
         <View style={estilos.tituloCampanhas}>
           <Heading>
