@@ -1,3 +1,4 @@
+import { FotoPerfilAdmin } from "../components/foto-perfil-admin";
 import {
   StyleSheet,
   Linking,
@@ -49,6 +50,8 @@ type Resumo = {
   pessoas: { total: number; bloqueados: number };
   urgencias_pendentes: number;
   financeiro: {
+    doacoes_confirmadas: number;
+    saldo_campanhas: number;
     bruto: number;
     custos: number;
     liquido: number;
@@ -212,7 +215,7 @@ export function PainelAdministrativo() {
   const tipo = secoes.find((s) => s.nome === secao)?.tipo || "";
   const admin = !!pessoa?.administrador;
   const chaves = useRef(new Map<string, string>());
-  const resumo = useDados<Resumo>(admin ? "/administracao/painel" : null);
+  const resumo = useDados<Resumo>(admin ? "/administracao/painel" : null, true);
   const integracoes = useDados<Integracoes>(
     admin ? "/administracao/painel/integracoes" : null,
   );
@@ -227,6 +230,7 @@ export function PainelAdministrativo() {
           "&estado=" +
           encodeURIComponent(estado === "Todos" ? "" : estado)
       : null,
+    true,
   );
   function mudar(nome: string) {
     setSecao(nome);
@@ -458,6 +462,7 @@ export function PainelAdministrativo() {
     if (tipo === "usuarios")
       return (
         <Card key={r.id} title={valor(r, "nome")} subtitle={valor(r, "email")}>
+          <FotoPerfilAdmin pessoa={r} />
           <Line label="Cidade" value={valor(r, "regiao") || "Não informada"} />
           <Line
             label="Telefone"
@@ -734,6 +739,26 @@ export function PainelAdministrativo() {
                       valor={resumo.dados.pessoas.total}
                     />
                   </View>
+                  <Card title="Arrecadação do aplicativo">
+                    <Line
+                      label="Doações confirmadas"
+                      value={dinheiro(
+                        resumo.dados.financeiro.doacoes_confirmadas,
+                      )}
+                    />
+                    <Line
+                      label="Receita líquida de anúncios conciliada"
+                      value={dinheiro(resumo.dados.financeiro.liquido)}
+                    />
+                    <Line
+                      label="Saldo registrado nas campanhas"
+                      value={dinheiro(resumo.dados.financeiro.saldo_campanhas)}
+                    />
+                    <Copy muted>
+                      Atualização automática a cada 15 segundos com o painel
+                      aberto. Projeções não entram nestes totais.
+                    </Copy>
+                  </Card>
                   <Heading>Precisam de uma decisão</Heading>
                   <Copy muted>
                     Comece pelos prazos e confira as evidências antes de

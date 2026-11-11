@@ -491,7 +491,7 @@ export function CriacaoSimples() {
           ) : (
             <>
               <Button
-                title={ocupado ? "Salvando…" : "Enviar para análise"}
+                title={ocupado ? "Salvando…" : "Publicar campanha"}
                 disabled={ocupado || !adulto || !perfil.dados}
                 onPress={() => salvar(true)}
               />

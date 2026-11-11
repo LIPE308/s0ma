@@ -143,7 +143,7 @@ export function TutorialIlustracao({ etapa }: { etapa: number }) {
                   fontSize: 13,
                 }}
               >
-                Revisar e enviar
+                Revisar e publicar
               </Text>
             </View>
           </>

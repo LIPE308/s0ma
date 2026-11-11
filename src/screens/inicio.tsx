@@ -30,7 +30,7 @@ export function Inicio() {
   const pessoa = useSessao();
   const { colors, fontsReady } = useTheme();
   const { width } = useWindowDimensions();
-  const campanhas = useDados<Campanha[]>("/campanhas");
+  const campanhas = useDados<Campanha[]>("/campanhas", true);
   const estilos = criarEstilos(colors, fontsReady, width);
   const ativas =
     campanhas.dados?.filter((campanha) => campanha.estado === "ativa") || [];

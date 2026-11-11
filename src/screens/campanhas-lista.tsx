@@ -77,6 +77,7 @@ export function ListaCampanhas() {
     secao === "Campanhas" || secao === "Eventos"
       ? "/descoberta?" + params.toString()
       : null,
+    true,
   );
   const necessidades = useDados<Necessidade[]>(
     secao === "Objetos" || secao === "Voluntariado" ? "/necessidades" : null,

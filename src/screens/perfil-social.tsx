@@ -321,7 +321,7 @@ export function PersonalizarPerfil() {
                 finalidade="capa"
                 aoEnviar={(a) => setCapa(a.id)}
               />
-              <ImagemPrivada id={avatar} altura={120} />
+              <ImagemPrivada id={avatar} altura={120} circular />
               <EnviarArquivo
                 finalidade="avatar"
                 aoEnviar={(a) => setAvatar(a.id)}

@@ -177,11 +177,14 @@ async function atenderSoma2(ctx) {
       const campanha = await obterCampanha(partes[1], consulta, true); exigirResponsavel(usuario, campanha);
       const [perfil] = await consulta('SELECT adulto FROM perfis WHERE usuario_id=?', [campanha.usuario_id]);
       if (!perfil?.adulto) erro('Um responsável maior de 18 anos deve completar o perfil antes de enviar a campanha.', 409);
+      if(campanha.estado==='ativa')return {estado:'ativa',mensagem:'Esta campanha já está publicada em Causas.'};
       if (!['rascunho','ajustes'].includes(campanha.estado)) erro('Esta campanha não está em preparação.', 409);
       await consulta('INSERT INTO campanhas_detalhes (campanha_id,submetida) VALUES (?,1) ON DUPLICATE KEY UPDATE submetida=1', [campanha.id]);
-      await consulta("UPDATE campanhas SET estado='rascunho' WHERE id=?", [campanha.id]);
-      await auditar(consulta, usuario.id, campanha.id, 'enviada_para_analise');
-      return { mensagem: 'Campanha enviada. A publicação depende da revisão administrativa.' };
+      const regular = campanha.estado === 'rascunho' && !campanha.estado_antes_moderacao;
+      const estado = regular ? 'ativa' : 'rascunho';
+      await consulta('UPDATE campanhas SET estado=? WHERE id=?', [estado,campanha.id]);
+      await auditar(consulta, usuario.id, campanha.id, regular ? 'publicada_regular_apos_envio' : 'enviada_para_analise');
+      return { estado, mensagem: regular ? 'Campanha publicada em Causas. Urgência depende de revisão administrativa.' : 'Campanha reenviada para revisão administrativa.' };
     }));
   }
   if ((partes = caminho.match(/^\/api\/campanhas\/([^/]+)\/urgencia$/))) {

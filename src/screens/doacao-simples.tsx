@@ -1,3 +1,4 @@
+import { CampoDinheiro } from "../components/campo-dinheiro";
 import { useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Text, View } from "react-native";
@@ -7,7 +8,6 @@ import {
   Choices,
   Copy,
   Dialog,
-  Field,
   Line,
   Notice,
   Screen,
@@ -41,8 +41,12 @@ export function DoacaoSimples() {
   const propria = necessidade?.responsavel_id === usuarioLogado()?.id;
   function revisar() {
     setErro("");
-    if (!Number.isSafeInteger(centavos) || centavos < 1000) {
-      setErro("Escolha um valor a partir de R$ 10.");
+    if (
+      !Number.isSafeInteger(centavos) ||
+      centavos < 1000 ||
+      centavos > 100000000
+    ) {
+      setErro("Escolha um valor entre R$ 10 e R$ 1.000.000.");
       return;
     }
     setJanela(true);
@@ -172,9 +176,8 @@ export function DoacaoSimples() {
                   </>
                 ) : (
                   <>
-                    <Field
+                    <CampoDinheiro
                       label="Valor da doação (R$)"
-                      numeric
                       value={valor}
                       onChangeText={setValor}
                     />

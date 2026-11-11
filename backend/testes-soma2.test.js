@@ -37,7 +37,7 @@ test('SOMA 2.0: revisão, urgência, anúncios, rota, mapa, perfil e privacidade
       const novo=await chamar(base,{method:'POST',token:admin.token,body:{nome:'Pessoa CRUD',email:'crud@teste.example',senha:'SenhaInicialTeste2026!',telefone:'48999990000',regiao:'Criciúma, SC',administrador:true}});
       const pessoa=await chamar(base+'/'+novo.id,{token:admin.token});
       assert.equal(pessoa.regiao,'Criciúma, SC');assert.equal(Boolean(pessoa.administrador),false);assert.deepEqual(pessoa.campanhas,[]);assert.equal(pessoa.senha_resumo,undefined);
-      const lista=await chamar('/administracao/painel/lista?tipo=usuarios&busca=Criciúma',{token:admin.token});assert.ok(lista.itens.some(p=>p.id===novo.id));
+      const lista=await chamar('/administracao/painel/lista?tipo=usuarios&busca=Criciúma',{token:admin.token});assert.ok(lista.itens.some(p=>p.id===novo.id));assert.ok(lista.itens.every(p=>'avatar_id'in p && 'foto_google'in p));
       await chamar(base+'/'+novo.id,{method:'PUT',token:admin.token,body:{nome:'Pessoa atualizada',email:'crud@teste.example',regiao:'Florianópolis, SC'}});
       assert.equal((await chamar(base+'/'+novo.id,{token:admin.token})).nome,'Pessoa atualizada');
       await chamar(base+'/'+admin.usuario.id,{method:'DELETE',token:admin.token,status:403});
@@ -88,6 +88,16 @@ test('SOMA 2.0: revisão, urgência, anúncios, rota, mapa, perfil e privacidade
       await chamar('/campanhas/'+rascunho.id+'/enviar',{method:'POST',token:a.token,status:409});
       await chamar('/perfil-ampliado',{method:'PUT',token:a.token,body:perfil()});
       assert.ok(!(await chamar('/descoberta')).some(x=>x.id===rascunho.id));
+    });
+    await suite.test('envio de campanha comum publica em Causas sem conceder urgência',async()=>{
+      const nova=await chamar('/campanhas',{method:'POST',token:b.token,body:campanha('Publicação regular automática'),status:201});
+      await chamar('/campanhas/'+nova.id,{status:404});
+      const enviada=await chamar('/campanhas/'+nova.id+'/enviar',{method:'POST',token:b.token});assert.equal(enviada.estado,'ativa');
+      const publica=await chamar('/campanhas/'+nova.id);assert.equal(publica.estado,'ativa');assert.equal(publica.urgencia.classe,'regular');assert.equal(publica.urgencia.revisada,false);
+      assert.ok((await chamar('/descoberta')).some(c=>c.id===nova.id));
+      await chamar('/campanhas/'+nova.id+'/enviar',{method:'POST',token:b.token});
+      await chamar('/administracao/campanhas/'+nova.id,{method:'PATCH',token:admin.token,body:{estado:'suspensa',motivo:'Moderação do caso isolado de teste'}});
+      await chamar('/campanhas/'+nova.id+'/enviar',{method:'POST',token:b.token,status:409});
     });
     await suite.test('documentos privados e assinaturas de arquivo: terceiro não lê nem publica',async()=>{
       await chamar('/arquivos',{method:'POST',token:a.token,body:{campanha_id:rascunho.id,finalidade:'documento',nome:'falso.pdf',base64:Buffer.from('<html>falso</html>').toString('base64')},status:400});
@@ -178,10 +188,12 @@ test('SOMA 2.0: revisão, urgência, anúncios, rota, mapa, perfil e privacidade
       const [sum]=await db.query('SELECT SUM(valor) AS total FROM '+nomeBanco+'.lancamentos WHERE campanha_id=?',[campC.id]);assert.equal(Number(sum[0].total),rota.confirmado);
     });
     await suite.test('doação curta rotulada Simulação confirma uma vez e preserva a meta independente',async()=>{
+      const totalAntes=await chamar('/administracao/painel',{token:admin.token});
       const antes=await chamar('/campanhas/'+campC.id+'/rota'),corpo={necessidade_id:campC.necessidades[1].id,valor:2000,meio:'Simulação'};
       const criar=()=>chamar('/pagamentos',{method:'POST',token:d.token,body:corpo,key:'doacao-curta-unica',status:201});const[p1,p2]=await Promise.all([criar(),criar()]);assert.equal(p1.id,p2.id);assert.equal((await chamar('/pagamentos/'+p1.id,{token:d.token})).meio,'Simulação');
       const confirmar=()=>chamar('/pagamentos/'+p1.id+'/simular',{method:'PATCH',token:d.token,body:{estado:'confirmado'}});await Promise.all([confirmar(),confirmar()]);
       const depois=await chamar('/campanhas/'+campC.id+'/rota');assert.equal(depois.confirmado,antes.confirmado+2000);assert.equal(depois.necessidades[0].recebido,antes.necessidades[0].recebido);
+      const totalDepois=await chamar('/administracao/painel',{token:admin.token});assert.equal(Number(totalDepois.financeiro.doacoes_confirmadas),Number(totalAntes.financeiro.doacoes_confirmadas)+2000);assert.equal(Number(totalDepois.financeiro.saldo_campanhas),Number(totalAntes.financeiro.saldo_campanhas)+2000);
     });
     await suite.test('perfil institucional e privacidade: menor não publica dados ou recebe papel administrativo',async()=>{
       await chamar('/perfis/'+d.usuario.id,{status:404});

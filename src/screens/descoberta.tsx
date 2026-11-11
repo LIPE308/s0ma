@@ -54,7 +54,10 @@ export function DescobertaAvancada() {
   if (/^\d+$/.test(max)) params.set("max", String(Number(max) * 100));
   if (prazo !== "Todos")
     params.set("prazo", prazo === "Até 7 dias" ? "7" : "30");
-  const consulta = useDados<Campanha[]>("/descoberta?" + params.toString());
+  const consulta = useDados<Campanha[]>(
+    "/descoberta?" + params.toString(),
+    true,
+  );
   const filtroInvalido =
     (min !== "" && !/^\d+$/.test(min)) ||
     (max !== "" && !/^\d+$/.test(max)) ||

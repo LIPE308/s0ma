@@ -19,7 +19,7 @@ const passos = [
   {
     titulo: "Dê voz à sua história.",
     texto:
-      "Em Criar, conte a situação, adicione fotos, informe a meta e escolha sua cidade. Revise e envie para análise. Pedidos de urgência dependem de avaliação da equipe.",
+      "Em Criar, conte a situação, adicione fotos, informe a meta e escolha sua cidade. Revise e publique em Causas. Pedidos de urgência dependem de avaliação da equipe.",
   },
   {
     titulo: "Nosso diferencial: anúncios que apoiam urgências.",

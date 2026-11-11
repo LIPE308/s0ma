@@ -2,14 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { useIsFocused } from "@react-navigation/native";
 import { Animated, AppState, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Button, useTheme } from "./ui";
+import { useTheme } from "./ui";
 import { nativeDriver, useReducedMotion } from "../design/motion";
 import { projetarCampanha } from "../servicos/projecao-campanha";
 import { formatarDinheiro } from "../data/formatacao";
 
 // Cenário didático isolado: nunca grava pagamentos, rendimentos ou saldo no banco.
 export function SimuladorCampanha({
-  automatico = false,
   campanhaId,
   confirmado = 0,
   meta = 0,
@@ -26,7 +25,6 @@ export function SimuladorCampanha({
   const { colors, fontsReady } = useTheme();
   const focused = useIsFocused();
   const reduced = useReducedMotion();
-  const [running, setRunning] = useState(automatico);
   const [step, setStep] = useState(0);
   const [active, setActive] = useState(AppState.currentState === "active");
   const pulse = useRef(new Animated.Value(0)).current;
@@ -36,11 +34,12 @@ export function SimuladorCampanha({
     );
     return () => subscription.remove();
   }, []);
+  const concluida = step >= 60;
   useEffect(() => {
-    if (!running || !focused || !active) return;
-    const timer = setInterval(() => setStep((s) => Math.min(60, s + 1)), 2000);
+    if (!focused || !active || concluida) return;
+    const timer = setInterval(() => setStep((s) => Math.min(60, s + 1)), 8000);
     return () => clearInterval(timer);
-  }, [running, focused, active]);
+  }, [focused, active, concluida]);
   useEffect(() => {
     if (reduced || !step) return;
     pulse.setValue(1);
@@ -52,9 +51,6 @@ export function SimuladorCampanha({
     animation.start();
     return () => animation.stop();
   }, [step, reduced, pulse]);
-  useEffect(() => {
-    if (step === 60) setRunning(false);
-  }, [step]);
   const { base, doacoes, anuncios, rendimento, total, percentual, restante } =
     projetarCampanha(campanhaId, confirmado, meta, step, apoioAnuncios);
   return (
@@ -177,20 +173,6 @@ export function SimuladorCampanha({
       <Text style={{ color: colors.success, fontSize: 12, lineHeight: 19 }}>
         Estimativa de evolução, separada do saldo registrado.
       </Text>
-      <Button
-        inverse
-        title={
-          step === 60
-            ? "Reiniciar projeção"
-            : running
-              ? "Pausar evolução"
-              : "Ver valores em movimento"
-        }
-        onPress={() => {
-          if (step === 60) setStep(0);
-          setRunning(!running);
-        }}
-      />
     </View>
   );
 }

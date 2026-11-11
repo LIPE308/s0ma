@@ -26,9 +26,11 @@ export function ImagemPublica({
 export function ImagemPrivada({
   id,
   altura = 180,
+  circular = false,
 }: {
   id?: string | null;
   altura?: number;
+  circular?: boolean;
 }) {
   const consulta = useDados<Arquivo>(id ? "/arquivos/" + id : null);
   return consulta.dados?.base64 ? (
@@ -37,7 +39,12 @@ export function ImagemPrivada({
       source={{
         uri: "data:" + consulta.dados.mime + ";base64," + consulta.dados.base64,
       }}
-      style={{ width: "100%", height: altura, borderRadius: 20 }}
+      style={{
+        width: circular ? altura : "100%",
+        height: altura,
+        borderRadius: circular ? altura / 2 : 20,
+        alignSelf: circular ? "center" : undefined,
+      }}
       resizeMode="cover"
     />
   ) : null;

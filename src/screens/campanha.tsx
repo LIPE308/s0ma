@@ -38,7 +38,7 @@ export function DetalheCampanha() {
   const r = useRouter();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const identificador = id || "familia";
-  const q = useDados<Campanha>("/campanhas/" + identificador);
+  const q = useDados<Campanha>("/campanhas/" + identificador, true);
   const c = q.dados;
   const { colors, fontsReady } = useTheme();
   const [escolher, setEscolher] = useState(false);

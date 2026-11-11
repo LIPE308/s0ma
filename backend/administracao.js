@@ -8,7 +8,7 @@ const { umaVez } = require('./operacoes');
 const listas = {
   campanhas: { from: 'campanhas c JOIN usuarios u ON u.id=c.usuario_id LEFT JOIN campanhas_detalhes cd ON cd.campanha_id=c.id', select: 'c.id,c.titulo,c.estado,c.categoria,c.criada_em,c.usuario_id,u.nome AS responsavel,u.email,COALESCE(cd.submetida,0) AS submetida,(SELECT COALESCE(SUM(meta),0) FROM necessidades WHERE campanha_id=c.id AND tipo=\'dinheiro\') AS meta,(SELECT COALESCE(SUM(recebido),0) FROM necessidades WHERE campanha_id=c.id AND tipo=\'dinheiro\') AS recebido', search: ['c.titulo','u.nome','u.email'], state: 'c.estado', order: 'c.criada_em DESC,c.id' },
   urgencias: { from: 'urgencias a JOIN campanhas c ON c.id=a.campanha_id JOIN usuarios u ON u.id=c.usuario_id', select: 'a.campanha_id AS id,a.*,c.titulo,c.estado AS campanha_estado,u.nome AS responsavel', search: ['c.titulo','u.nome'], state: 'a.estado', order: "(a.estado IN ('pendente','recurso')) DESC,a.prazo_limite,a.campanha_id" },
-  usuarios: { from: 'usuarios a', select: 'a.id,a.nome,a.email,a.telefone,a.regiao,a.administrador,a.bloqueado,(SELECT COUNT(*) FROM campanhas c WHERE c.usuario_id=a.id) AS campanhas,(SELECT COUNT(*) FROM identidades i WHERE i.usuario_id=a.id AND i.provedor=\'google\') AS google', search: ['a.nome','a.email','a.regiao'], state: null, order: 'a.id DESC' },
+  usuarios: { from: 'usuarios a LEFT JOIN perfis p ON p.usuario_id=a.id', select: 'a.id,a.nome,a.email,a.telefone,a.regiao,p.avatar_id,CASE WHEN p.usar_foto_google=1 THEN p.foto_google ELSE NULL END AS foto_google,a.administrador,a.bloqueado,(SELECT COUNT(*) FROM campanhas c WHERE c.usuario_id=a.id) AS campanhas,(SELECT COUNT(*) FROM identidades i WHERE i.usuario_id=a.id AND i.provedor=\'google\') AS google', search: ['a.nome','a.email','a.regiao'], state: null, order: 'a.id DESC' },
   emails: { from: 'email_entregas a JOIN campanhas c ON c.id=a.campanha_id', select: 'a.id,a.evento,a.destinatario,a.assunto,a.estado,a.tentativas,a.criada_em,a.enviada_em,a.erro_codigo,a.campanha_id,c.titulo', search: ['a.destinatario','c.titulo'], state: 'a.estado', order: 'a.id DESC' },
   auditoria: { from: 'auditoria a LEFT JOIN usuarios u ON u.id=a.usuario_id LEFT JOIN campanhas c ON c.id=a.campanha_id', select: 'a.id,a.acao,a.dados,a.criado_em,a.campanha_id,u.nome AS operador,c.titulo', search: ['a.acao','u.nome','c.titulo'], state: null, order: 'a.id DESC' },
   distribuicoes: { from: 'distribuicoes a JOIN campanhas c ON c.id=a.campanha_id JOIN receitas_publicitarias r ON r.id=a.receita_id', select: 'a.id,a.campanha_id,a.valor,a.receita_id,a.criada_em,a.criterios,c.titulo,r.referencia,r.modo', search: ['c.titulo','r.referencia'], state: null, order: 'a.id DESC' },
@@ -28,7 +28,7 @@ async function atenderAdministracao(ctx) {
   const ok = resultado => ({ resultado });
   const params = new URL(requisicao.url,'http://localhost').searchParams;
   if (caminho === '/api/administracao/painel' && metodo === 'GET') {
-    const [campanhas, pessoas, urgencias, receitas, distribuicoes, operacoes, emails, fila, publicacoes] = await Promise.all([
+    const [campanhas, pessoas, urgencias, receitas, distribuicoes, operacoes, emails, fila, publicacoes, totais] = await Promise.all([
       consultar('SELECT estado,COUNT(*) AS total FROM campanhas GROUP BY estado'),
       consultar('SELECT COUNT(*) AS total,COALESCE(SUM(bloqueado),0) AS bloqueados FROM usuarios'),
       consultar("SELECT COUNT(*) AS total FROM urgencias WHERE estado IN ('pendente','recurso')"),
@@ -38,9 +38,10 @@ async function atenderAdministracao(ctx) {
       consultar('SELECT estado,COUNT(*) AS total FROM email_entregas GROUP BY estado'),
       consultar("SELECT u.campanha_id AS id,c.titulo,u.estado,u.prazo_limite,u.recomendacao FROM urgencias u JOIN campanhas c ON c.id=u.campanha_id WHERE u.estado IN ('pendente','recurso') ORDER BY u.prazo_limite LIMIT 6"),
       consultar("SELECT c.id,c.titulo,c.estado FROM campanhas c JOIN campanhas_detalhes d ON d.campanha_id=c.id WHERE c.estado IN ('rascunho','ajustes') AND d.submetida=1 ORDER BY c.criada_em LIMIT 6"),
+      consultar("SELECT (SELECT COALESCE(SUM(valor_liquido),0) FROM pagamentos WHERE estado='confirmado') AS doacoes_confirmadas,(SELECT COALESCE(SUM(recebido),0) FROM necessidades WHERE tipo='dinheiro') AS saldo_campanhas"),
     ]);
     return ok({ atualizado_em: new Date().toISOString(), campanhas, pessoas: pessoas[0], urgencias_pendentes: urgencias[0].total,
-      financeiro: { ...receitas[0], distribuido: distribuicoes[0].total, retido: Number(receitas[0].fundo)-Number(distribuicoes[0].total), operacao: Number(receitas[0].liquido)-Number(receitas[0].fundo), modo: 'simulado' },
+      financeiro: { ...receitas[0], ...totais[0], distribuido: distribuicoes[0].total, retido: Number(receitas[0].fundo)-Number(distribuicoes[0].total), operacao: Number(receitas[0].liquido)-Number(receitas[0].fundo), modo: 'simulado' },
       operacoes: operacoes[0], emails, fila_urgencias: fila, fila_campanhas: publicacoes });
   }
   if (caminho === '/api/administracao/painel/lista' && metodo === 'GET') {

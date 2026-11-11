@@ -186,7 +186,7 @@ export function CompletarPerfil() {
           <EstadoConexao {...q} />
           {p ? (
             <>
-              <ImagemPrivada id={avatar} altura={120} />
+              <ImagemPrivada id={avatar} altura={120} circular />
               {!avatar && p.foto_google && foto ? (
                 <Image
                   source={{ uri: p.foto_google }}

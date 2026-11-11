@@ -1,3 +1,4 @@
+import { CampoDinheiro } from "../components/campo-dinheiro";
 import { useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
@@ -240,9 +241,8 @@ export function RequestTransfer() {
                 Disponível no teste:{" "}
                 {formatarDinheiro(consulta.dados.disponivel / 100)}
               </Copy>
-              <Field
+              <CampoDinheiro
                 label="Valor em reais *"
-                numeric
                 value={valor}
                 onChangeText={definirValor}
               />

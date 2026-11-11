@@ -97,7 +97,9 @@ export function Gerenciar() {
           {salvo ? (
             <Notice success>
               {salvo === "enviada"
-                ? "Campanha enviada. Você pode acompanhar a análise por aqui."
+                ? c.estado === "ativa"
+                  ? "Campanha publicada. Ela já está disponível em Causas."
+                  : "Campanha enviada para revisão. Acompanhe por aqui."
                 : "Rascunho salvo. Continue no seu ritmo."}
             </Notice>
           ) : null}

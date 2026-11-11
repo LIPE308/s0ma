@@ -267,7 +267,7 @@ export function PrepararCampanha() {
                       ? "Enviando…"
                       : contexto.dados.submetida
                         ? "Reenviar para análise"
-                        : "Enviar campanha para análise"
+                        : "Publicar campanha"
                   }
                   disabled={ocupado || !perfil.dados?.adulto}
                   onPress={enviar}

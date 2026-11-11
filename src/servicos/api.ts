@@ -1,6 +1,6 @@
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useIsFocused } from '@react-navigation/native';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
 
@@ -73,26 +73,41 @@ export async function requisitar<T>(caminho: string, metodo = 'GET', dados?: unk
     if (resposta.status === 401) limparSessao();
     throw new Error(resultado.mensagem || 'Não foi possível concluir a operação.');
   }
+  if(metodo!=='GET' && /^\/(pagamentos|administracao\/receitas)(\/|$)/.test(caminho))avisarDadosAtualizados();
   return resultado as T;
 }
 
-// Reconsulta ao voltar à tela; abas fora de foco não fazem requisições em segundo plano.
-export function useDados<T>(caminho: string | null) {
-  const emFoco = useIsFocused();
-  const [dados, definirDados] = useState<T | null>(null);
-  const [erro, definirErro] = useState('');
-  const [carregando, definirCarregando] = useState(true);
-  const [versao, definirVersao] = useState(0);
-  useEffect(() => {
-    if (!emFoco) return;
-    let ativo = true;
-    definirDados(null); definirErro('');
-    if (!caminho) { definirCarregando(false); return; }
-    definirCarregando(true);
-    requisitar<T>(caminho).then(resultado => { if (ativo) definirDados(resultado); }).catch(problema => { if (ativo) definirErro(problema.message); }).finally(() => { if (ativo) definirCarregando(false); });
-    return () => { ativo = false; };
-  }, [caminho, emFoco, versao]);
-  return { dados, erro, carregando, atualizar: () => definirVersao(anterior => anterior + 1) };
+
+let revisaoDados=0;
+const ouvintesDados=new Set<()=>void>();
+function observarDados(f:()=>void){ouvintesDados.add(f);return()=>{ouvintesDados.delete(f);};}
+export function avisarDadosAtualizados(){revisaoDados++;ouvintesDados.forEach(f=>f());}
+export function useDados<T>(caminho: string | null, atualizacaoContinua=false) {
+ const emFoco=useIsFocused();
+ const revisao=useSyncExternalStore(observarDados,()=>atualizacaoContinua?revisaoDados:0,()=>0);
+ const [dados,definirDados]=useState<T|null>(null),[erro,definirErro]=useState(''),[carregando,definirCarregando]=useState(true),[versao,definirVersao]=useState(0);
+ const ultimo=useRef(caminho),primeiro=useRef(true);
+ useEffect(()=>{
+  if(!emFoco)return;
+  let ativo=true;let timer:ReturnType<typeof setTimeout>|undefined;
+  if(ultimo.current!==caminho){ultimo.current=caminho;primeiro.current=true;definirDados(null);}
+  if(!caminho){definirCarregando(false);return;}
+  const endpoint=caminho;
+  const visivel=()=>AppState.currentState!=='background'&&AppState.currentState!=='inactive'&&(typeof document==='undefined'||!document.hidden);
+  function agendar(){if(ativo&&atualizacaoContinua)timer=setTimeout(()=>{if(visivel())void carregar();else agendar();},15000);}
+  async function carregar(){
+   if(primeiro.current)definirCarregando(true);
+   try{const resultado=await requisitar<T>(endpoint);if(ativo){definirDados(resultado);definirErro('');}}
+   catch(e){if(ativo)definirErro(mensagemErro(e));}
+   finally{if(ativo){primeiro.current=false;definirCarregando(false);agendar();}}
+  }
+  void carregar();
+  const voltar=()=>{if(visivel())definirVersao(v=>v+1);};
+  const sub=atualizacaoContinua?AppState.addEventListener('change',estado=>{if(estado==='active')voltar();}):undefined;
+  if(atualizacaoContinua&&typeof document!=='undefined')document.addEventListener('visibilitychange',voltar);
+  return()=>{ativo=false;if(timer)clearTimeout(timer);sub?.remove();if(typeof document!=='undefined')document.removeEventListener('visibilitychange',voltar);};
+ },[caminho,emFoco,versao,revisao,atualizacaoContinua]);
+ return {dados,erro,carregando,atualizar:()=>definirVersao(v=>v+1)};
 }
 
 export function mensagemErro(problema: unknown) { return problema instanceof Error ? problema.message : 'Não foi possível concluir a operação.'; }
