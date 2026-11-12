@@ -304,6 +304,8 @@ function iso(valor: string) {
 }
 export function SolicitarUrgencia() {
   const { id } = useLocalSearchParams<{ id?: string }>();
+  const router = useRouter();
+  const documentos = useDados<Arquivo[]>(id && usuarioLogado() ? "/campanhas/"+id+"/arquivos" : null);
   const consulta = useDados<PedidoUrgencia>(
     id && usuarioLogado() ? "/campanhas/" + id + "/urgencia" : null,
   );
@@ -342,7 +344,7 @@ export function SolicitarUrgencia() {
       setMensagem(
         apelar
           ? "Recurso enviado para nova revisão."
-          : "Solicitação salva. A recomendação automática não concede prioridade.",
+          : "Pedido enviado ao administrador. Você pode acompanhar a decisão na sua campanha.",
       );
       consulta.atualizar();
     } catch (e) {
@@ -355,7 +357,7 @@ export function SolicitarUrgencia() {
     <Screen
       variant="form"
       title="Análise de urgência"
-      heading="Prioridade com responsabilidade."
+      heading="Peça prioridade para sua campanha."
     >
       {!usuarioLogado() ? (
         <PedirLogin />
@@ -365,9 +367,7 @@ export function SolicitarUrgencia() {
         <>
           <EstadoConexao {...consulta} />
           <Copy>
-            Natureza, prazo, consequências, evidências revisadas e recursos
-            disponíveis compõem a recomendação. Popularidade e valor alto não
-            tornam uma causa urgente.
+            Conte por que a ajuda não pode esperar e envie os documentos privados. Após aprovação como urgência crítica, a campanha ganha prioridade em Causas e fica elegível ao apoio por anúncios. O valor depende da receita disponível.
           </Copy>
           {consulta.dados?.solicitacao ? (
             <Card title="Situação do pedido">
@@ -413,13 +413,13 @@ export function SolicitarUrgencia() {
             value={recursos}
             onChangeText={setRecursos}
           />
-          <Notice>
-            Evidências privadas devem ser enviadas na preparação da campanha. A
-            administração verifica sua validade; o sistema não faz diagnóstico
-            nem certifica a necessidade.
-          </Notice>
+          <Heading>Documentos para a revisão</Heading>
+          {id ? <EnviarArquivo finalidade="documento" campanha={id} aoEnviar={() => documentos.atualizar()}/> : null}
+          <EstadoConexao {...documentos}/>
+          {documentos.dados?.filter(a => a.finalidade === "documento").map(a => <AbrirArquivo key={a.id} arquivo={a}/>)}
+          <Copy muted>Os documentos ficam privados. O administrador precisa conferir as evidências e os prazos antes de aprovar a urgência.</Copy>
           <Button
-            title={ocupado ? "Salvando…" : "Solicitar avaliação humana"}
+            title={ocupado ? "Enviando…" : "Enviar para revisão de urgência"}
             disabled={ocupado}
             onPress={() => salvar()}
           />
@@ -444,6 +444,7 @@ export function SolicitarUrgencia() {
           ) : mensagem ? (
             <Notice success>{mensagem}</Notice>
           ) : null}
+          <Button secondary title="Voltar à minha campanha" onPress={() => router.replace({pathname:"/gerenciar",params:{id}})}/>
           <Heading>Histórico do pedido</Heading>
           {consulta.dados?.historico.map((h) => (
             <Card

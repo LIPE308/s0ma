@@ -29,7 +29,7 @@ import {
   mensagemErro,
   type Campanha,
 } from "../servicos/api";
-import type { Rota } from "../servicos/soma2";
+import type { PedidoUrgencia, Rota } from "../servicos/soma2";
 import { parametrosDaCampanha } from "./creation";
 import { formatarDinheiro } from "../data/formatacao";
 export function Gerenciar() {
@@ -45,6 +45,9 @@ export function Gerenciar() {
   const [erro, setErro] = useState("");
   const [ocupado, setOcupado] = useState(false);
   const permitido = c && p && (c.usuario_id === p.id || p.administrador);
+  const urgencia = useDados<PedidoUrgencia>(id && permitido ? "/campanhas/" + id + "/urgencia" : null, true);
+  const revisada = Boolean(c?.urgencia?.revisada && c.urgencia.classe !== "regular");
+  const aguardando = ["pendente", "recurso"].includes(urgencia.dados?.solicitacao?.estado || "");
   async function encerrar() {
     setOcupado(true);
     setErro("");
@@ -128,6 +131,13 @@ export function Gerenciar() {
               {c.titulo}
             </Text>
           </View>
+          {["ativa", "rascunho", "ajustes"].includes(c.estado) ? (
+            <Card title="Urgência e apoio por anúncios">
+              <Copy>{revisada ? "Urgência aprovada: sua campanha tem prioridade em Causas." : aguardando ? "Pedido enviado. A administração está analisando sua solicitação de urgência." : "Sua campanha precisa de ajuda imediata? Envie o caso para revisão do administrador."}</Copy>
+              <Copy muted>Após aprovação como urgência crítica, a campanha fica acima das causas comuns e pode receber apoio do fundo de anúncios, conforme a receita disponível e os critérios de distribuição.</Copy>
+              <Button title={revisada ? "Ver decisão de urgência" : aguardando ? "Acompanhar pedido de urgência" : "Solicitar urgência"} onPress={() => r.push({pathname:"/urgencia",params:{id:c.id}})}/>
+            </Card>
+          ) : null}
           {rota.dados && rota.dados.meta > 0 ? (
             <>
               <ResumoArrecadacao rota={rota.dados} />
@@ -199,13 +209,6 @@ export function Gerenciar() {
               title="Foto e documentos privados"
               onPress={() =>
                 r.push({ pathname: "/preparar-campanha", params: { id: c.id } })
-              }
-            />
-            <Button
-              secondary
-              title="Solicitar análise de urgência"
-              onPress={() =>
-                r.push({ pathname: "/urgencia", params: { id: c.id } })
               }
             />
             <Copy muted>

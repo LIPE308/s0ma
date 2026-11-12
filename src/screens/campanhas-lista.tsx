@@ -128,7 +128,7 @@ export function ListaCampanhas() {
         }}
         ListHeaderComponent={
           <View style={estilosFixos.grupo1}>
-            {p.publicada ? <Notice success>Sua campanha está publicada em Causas.</Notice> : null}
+            {p.publicada ? <><Notice success>Sua campanha está publicada em Causas.</Notice><Button secondary title="Solicitar urgência para minha campanha" onPress={() => roteador.push({pathname:"/urgencia",params:{id:p.publicada}})}/></> : null}
             <View style={estilosFixos.linha1}>
               <Text
                 accessibilityRole="header"
