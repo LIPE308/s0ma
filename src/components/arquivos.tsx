@@ -59,7 +59,7 @@ export async function escolherDocumento(soImagem = false) {
   if (escolha.canceled) return null;
   const arquivo = escolha.assets[0];
   if (!arquivo.size || arquivo.size > 2 * 1024 * 1024)
-    throw new Error("Escolha um JPEG, PNG ou PDF de até 2 MB.");
+    throw new Error("Escolha um JPEG, PNG ou PDF menor para concluir o envio.");
   let base64: string;
   if (Platform.OS === "web") {
     const r = await fetch(arquivo.uri);
@@ -113,7 +113,7 @@ export function EnviarArquivo({
         {finalidade === "documento"
           ? "Somente você e a equipe de revisão podem abrir este documento."
           : "Escolha uma foto autorizada, sem documentos nem informações sensíveis."}{" "}
-        Até 2 MB, JPEG/PNG{finalidade === "documento" ? " ou PDF" : ""}.
+        JPEG/PNG{finalidade === "documento" ? " ou PDF" : ""}.
       </Copy>
       <Button
         secondary

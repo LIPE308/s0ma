@@ -22,3 +22,9 @@ backend/publicar-campanhas-enviadas.js aplica a mesma regra no MySQL local apena
 54 testes isolados MySQL passaram, incluindo publicação regular, recusa de menor/não responsável, preservação de suspensão e diferença exata de 2.000 centavos no total da campanha e do painel após confirmação concorrente. Sete testes de máscara/projeção/fotos passaram, além de tipos, lint e exportações web raiz e /soma.
 
 No navegador, letras não permaneceram no campo e R$ 1.234,56 resultou em 1.234,56; a letra digitada depois não alterou o valor. Com resposta de consulta interceptada apenas para o teste, o saldo refletiu uma mudança na segunda consulta sem recarregar, e não existia botão de pausa. Prévia de imagem mediu 120 × 120 com raio 60 px. Interceptações foram removidas depois; não foram feitas doações reais nem gravadas doações adicionais para esses testes visuais. A API administrativa pública autenticada retornou metadados de foto e os novos totais. Publicidade e pagamentos permanecem no modo simulado existente.
+
+## Ajustes de publicação e acompanhamento
+
+Todos os campos monetários usam máscara BRL; campos numéricos genéricos descartam letras. O cabeçalho consulta o perfil atual ao voltar à tela e em intervalos de 15 segundos. Após envio de campanha comum, a navegação abre Causas com os filtros limpos. Reenvios sujeitos à moderação continuam aguardando revisão.
+
+O painel apresenta uma projeção de potencial publicitário calculada sobre atividade persistida: um centavo por visualização e dois por compartilhamento, divididos em 70% de apoio e 30% de operação. Esses parâmetros são hipóteses de apresentação, não dados de um provedor. A projeção é somente leitura e não gera receita conciliada, saldo ou distribuição. O histórico mantém os valores efetivamente registrados separados.

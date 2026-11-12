@@ -625,7 +625,7 @@ export function Sobre() {
       <Disclosure title="Como faço uma doação?" initiallyOpen>
         <Copy>
           Encontre uma campanha, conheça a história e escolha uma forma de
-          ajudar. Para dinheiro, você escolhe um valor e confirma uma simulação.
+          ajudar. Para dinheiro, você escolhe um valor e confirma uma apresentação.
           Nada é cobrado de verdade.
         </Copy>
       </Disclosure>
@@ -638,7 +638,7 @@ export function Sobre() {
       </Disclosure>
       <Disclosure title="Como os anúncios ajudam?">
         <Copy>
-          O fundo atual é simulado. A regra destina 70% da receita líquida
+          O fundo atual é de apresentação. A regra destina 70% da receita líquida
           elegível a emergências revisadas e 30% à manutenção. Não há dinheiro
           por clique ou compartilhamento e nenhum crescimento é garantido.
         </Copy>

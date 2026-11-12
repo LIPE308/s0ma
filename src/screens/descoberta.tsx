@@ -1,3 +1,4 @@
+import {CampoDinheiro} from "../components/campo-dinheiro";
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import {
@@ -14,7 +15,7 @@ import {
 import { EstadoConexao } from "../components/conexao";
 import { CartaoCampanha } from "../components/campanhas";
 import { useDados, type Campanha } from "../servicos/api";
-import { categorias } from "../data/formatacao";
+import { categorias, converterValor } from "../data/formatacao";
 import { UFS } from "../servicos/soma2";
 
 export function DescobertaAvancada() {
@@ -50,8 +51,8 @@ export function DescobertaAvancada() {
           ? "conclusao"
           : "equilibrada",
   );
-  if (/^\d+$/.test(min)) params.set("min", String(Number(min) * 100));
-  if (/^\d+$/.test(max)) params.set("max", String(Number(max) * 100));
+  if (min) params.set("min", String(Math.round(converterValor(min) * 100)));
+  if (max) params.set("max", String(Math.round(converterValor(max) * 100)));
   if (prazo !== "Todos")
     params.set("prazo", prazo === "Até 7 dias" ? "7" : "30");
   const consulta = useDados<Campanha[]>(
@@ -59,9 +60,9 @@ export function DescobertaAvancada() {
     true,
   );
   const filtroInvalido =
-    (min !== "" && !/^\d+$/.test(min)) ||
-    (max !== "" && !/^\d+$/.test(max)) ||
-    (min !== "" && max !== "" && Number(min) > Number(max));
+    (min !== "" && !Number.isFinite(converterValor(min))) ||
+    (max !== "" && !Number.isFinite(converterValor(max))) ||
+    (min !== "" && max !== "" && converterValor(min) > converterValor(max));
   function limpar() {
     setBusca("");
     setCategoria("Todas");
@@ -116,15 +117,13 @@ export function DescobertaAvancada() {
         selected={uf}
         onSelect={setUf}
       />
-      <Field
-        label="Meta mínima em reais inteiros (opcional)"
-        numeric
+      <CampoDinheiro
+        label="Meta mínima em reais (opcional)"
         value={min}
         onChangeText={setMin}
       />
-      <Field
-        label="Meta máxima em reais inteiros (opcional)"
-        numeric
+      <CampoDinheiro
+        label="Meta máxima em reais (opcional)"
         value={max}
         onChangeText={setMax}
       />

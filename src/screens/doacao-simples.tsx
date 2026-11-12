@@ -135,7 +135,7 @@ export function DoacaoSimples() {
                   <Copy>Obrigado por somar com esta história.</Copy>
                 </View>
                 <Notice success>
-                  Doação simulada confirmada. Nenhum valor foi cobrado. O
+                  Contribuição registrada nesta apresentação. Nenhum valor foi cobrado. O
                   registro já conta no progresso desta campanha.
                 </Notice>
                 <ConviteCompartilharApp />
@@ -160,7 +160,7 @@ export function DoacaoSimples() {
                   Sua contribuição apoia {necessidade.nome.toLocaleLowerCase()}.
                 </Copy>
                 <Notice>
-                  Esta é uma doação de demonstração. Não haverá Pix, cobrança no
+                  Nesta apresentação, você pode registrar uma contribuição. Não haverá Pix, cobrança no
                   cartão ou transferência de dinheiro.
                 </Notice>
                 {pagamento ? (
@@ -209,7 +209,7 @@ export function DoacaoSimples() {
                 {pagamento ? (
                   <Button
                     secondary
-                    title="Cancelar esta simulação"
+                    title="Cancelar esta apresentação"
                     disabled={ocupado}
                     onPress={cancelar}
                   />
@@ -217,7 +217,7 @@ export function DoacaoSimples() {
                 <Copy muted>
                   Depois de doar, convide alguém para conhecer o SOMA. Mais
                   pessoas podem ampliar o apoio por anúncios às emergências
-                  revisadas. Nesta versão, essa receita é simulada.
+                  revisadas. Nesta versão, essa receita é de apresentação.
                 </Copy>
                 <Copy muted>
                   O valor só conta na meta depois da confirmação. Não há taxas
@@ -233,17 +233,17 @@ export function DoacaoSimples() {
                   <Copy>{necessidade.campanha}</Copy>
                   <Line label="Destino" value={necessidade.nome} />
                   <Line
-                    label="Valor simulado"
+                    label="Valor de apresentação"
                     value={formatarDinheiro(centavos / 100)}
                   />
                   <Notice>
                     Nenhum dinheiro será cobrado. Você está confirmando apenas
-                    um registro de demonstração.
+                    um registro de apresentação.
                   </Notice>
                   {erro ? <Notice error>{erro}</Notice> : null}
                   <Button
                     title={
-                      ocupado ? "Confirmando…" : "Confirmar doação simulada"
+                      ocupado ? "Confirmando…" : "Confirmar contribuição"
                     }
                     disabled={ocupado}
                     onPress={confirmar}

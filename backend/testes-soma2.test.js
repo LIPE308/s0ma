@@ -195,6 +195,13 @@ test('SOMA 2.0: revisão, urgência, anúncios, rota, mapa, perfil e privacidade
       const depois=await chamar('/campanhas/'+campC.id+'/rota');assert.equal(depois.confirmado,antes.confirmado+2000);assert.equal(depois.necessidades[0].recebido,antes.necessidades[0].recebido);
       const totalDepois=await chamar('/administracao/painel',{token:admin.token});assert.equal(Number(totalDepois.financeiro.doacoes_confirmadas),Number(totalAntes.financeiro.doacoes_confirmadas)+2000);assert.equal(Number(totalDepois.financeiro.saldo_campanhas),Number(totalAntes.financeiro.saldo_campanhas)+2000);
     });
+    await suite.test('atividade atualiza projeção do painel sem criar receita conciliada',async()=>{
+      const antes=await chamar('/administracao/painel',{token:admin.token});
+      await chamar('/campanhas/'+campC.id+'/visualizacao',{method:'POST',token:d.token});
+      const depois=await chamar('/administracao/painel',{token:admin.token});
+      assert.equal(depois.financeiro.projecao.liquido_estimado,antes.financeiro.projecao.liquido_estimado+1);
+      for(const chave of ['bruto','liquido','fundo','distribuido','doacoes_confirmadas']) assert.equal(depois.financeiro[chave],antes.financeiro[chave]);
+    });
     await suite.test('perfil institucional e privacidade: menor não publica dados ou recebe papel administrativo',async()=>{
       await chamar('/perfis/'+d.usuario.id,{status:404});
       await chamar('/perfil-ampliado',{method:'PUT',token:d.token,body:perfil({tipo:'instituicao',nome_instituicao:'Instituição fictícia',publico:true,local_publico:true,apoios_publicos:true,administrador:true})});

@@ -1,3 +1,4 @@
+const {projetarApoioAtividade}=require('./projecao-apoio');
 const { atenderPessoas } = require('./admin-pessoas');
 const { erro, texto, inteiro } = require('./auxiliares');
 const { configuracaoEmail, criarTransporte } = require('./notificacoes');
@@ -38,10 +39,10 @@ async function atenderAdministracao(ctx) {
       consultar('SELECT estado,COUNT(*) AS total FROM email_entregas GROUP BY estado'),
       consultar("SELECT u.campanha_id AS id,c.titulo,u.estado,u.prazo_limite,u.recomendacao FROM urgencias u JOIN campanhas c ON c.id=u.campanha_id WHERE u.estado IN ('pendente','recurso') ORDER BY u.prazo_limite LIMIT 6"),
       consultar("SELECT c.id,c.titulo,c.estado FROM campanhas c JOIN campanhas_detalhes d ON d.campanha_id=c.id WHERE c.estado IN ('rascunho','ajustes') AND d.submetida=1 ORDER BY c.criada_em LIMIT 6"),
-      consultar("SELECT (SELECT COALESCE(SUM(valor_liquido),0) FROM pagamentos WHERE estado='confirmado') AS doacoes_confirmadas,(SELECT COALESCE(SUM(recebido),0) FROM necessidades WHERE tipo='dinheiro') AS saldo_campanhas"),
+      consultar("SELECT (SELECT COALESCE(SUM(valor_liquido),0) FROM pagamentos WHERE estado='confirmado') AS doacoes_confirmadas,(SELECT COALESCE(SUM(recebido),0) FROM necessidades WHERE tipo='dinheiro') AS saldo_campanhas,(SELECT COALESCE(SUM(visualizacoes),0) FROM campanhas_detalhes) AS visualizacoes,(SELECT COUNT(*) FROM compartilhamentos) AS compartilhamentos"),
     ]);
     return ok({ atualizado_em: new Date().toISOString(), campanhas, pessoas: pessoas[0], urgencias_pendentes: urgencias[0].total,
-      financeiro: { ...receitas[0], ...totais[0], distribuido: distribuicoes[0].total, retido: Number(receitas[0].fundo)-Number(distribuicoes[0].total), operacao: Number(receitas[0].liquido)-Number(receitas[0].fundo), modo: 'simulado' },
+      financeiro: { ...receitas[0], ...totais[0], projecao:projetarApoioAtividade(totais[0].visualizacoes,totais[0].compartilhamentos), distribuido: distribuicoes[0].total, retido: Number(receitas[0].fundo)-Number(distribuicoes[0].total), operacao: Number(receitas[0].liquido)-Number(receitas[0].fundo), modo: 'simulado' },
       operacoes: operacoes[0], emails, fila_urgencias: fila, fila_campanhas: publicacoes });
   }
   if (caminho === '/api/administracao/painel/lista' && metodo === 'GET') {

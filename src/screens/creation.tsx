@@ -1,3 +1,4 @@
+import {CampoDinheiro} from "../components/campo-dinheiro";
 import { SeletorMunicipio } from "../components/seletor-municipio";
 import { useEffect, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -313,10 +314,10 @@ export function EditRequest() {
           )
         }
       />
-      <Field
+      {tipo === "dinheiro" ? <CampoDinheiro label="Meta em reais *" value={meta} onChangeText={definirMeta} /> : (      <Field
         label={
           tipo === "dinheiro"
-            ? "Meta em reais (simulação) *"
+            ? "Meta em reais (apresentação) *"
             : tipo === "tarefa"
               ? "Número de vagas *"
               : "Quantidade de unidades *"
@@ -324,7 +325,8 @@ export function EditRequest() {
         numeric
         value={meta}
         onChangeText={definirMeta}
-      />
+      />)}
+
       {tipo === "dinheiro" ? (
         <>
           <Copy muted>

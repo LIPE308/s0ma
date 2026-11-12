@@ -255,7 +255,7 @@ export function Field({
         placeholder={placeholder}
         placeholderTextColor={colors.muted}
         value={value}
-        onChangeText={onChangeText}
+        onChangeText={v=>onChangeText(numeric?v.replace(/[^0-9,.]/g,""):v)}
         autoComplete={email ? "email" : secret ? "current-password" : undefined}
         secureTextEntry={secret}
         multiline={multiline}

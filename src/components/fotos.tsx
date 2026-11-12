@@ -51,7 +51,7 @@ function FotoEditorial({
   style?: StyleProp<ViewStyle>;
   position?: "top" | "center";
 }) {
-  const { colors, fontsReady } = useTheme();
+  const { colors } = useTheme();
   const reduced = useReducedMotion();
   return (
     <View
@@ -69,33 +69,10 @@ function FotoEditorial({
         transition={reduced ? 0 : 160}
         accessibilityLabel={
           descricao +
-          "; foto ilustrativa, sem relação com os participantes desta campanha"
+          "; foto de referência, sem relação com os participantes desta campanha"
         }
       />
-      {height >= 130 ? (
-        <View
-          pointerEvents="none"
-          style={{
-            alignSelf: "flex-end",
-            margin: 12,
-            paddingHorizontal: 10,
-            paddingVertical: 5,
-            borderRadius: radius.pill,
-            backgroundColor: colors.photoScrim,
-          }}
-        >
-          <Text
-            style={{
-              color: colors.onPhoto,
-              fontSize: 10,
-              lineHeight: 15,
-              fontFamily: fontsReady ? "Manrope-SemiBold" : undefined,
-            }}
-          >
-            Foto ilustrativa
-          </Text>
-        </View>
-      ) : null}
+
     </View>
   );
 }

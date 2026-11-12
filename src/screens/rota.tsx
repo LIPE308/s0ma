@@ -1,3 +1,4 @@
+import {CampoDinheiro} from "../components/campo-dinheiro";
 import { StyleSheet, Pressable, Text, View } from "react-native";
 import { useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -238,7 +239,7 @@ export function RotaInteligente() {
                   value={moeda(rota.disponivel)}
                 />
                 <Copy muted>
-                  Os valores são simulados. Não há aplicação, rendimento
+                  Os valores são de apresentação. Não há aplicação, rendimento
                   creditado nem movimentação bancária.
                 </Copy>
               </Disclosure>
@@ -297,9 +298,8 @@ export function RotaInteligente() {
                   value={dias}
                   onChangeText={setDias}
                 />
-                <Field
+                <CampoDinheiro
                   label="Custos hipotéticos (R$)"
-                  numeric
                   value={custos}
                   onChangeText={setCustos}
                 />

@@ -1,3 +1,4 @@
+import {CampoDinheiro} from "../components/campo-dinheiro";
 import { localizarMunicipio } from "../servicos/municipios";
 import { SeletorMunicipio } from "../components/seletor-municipio";
 import { StyleSheet, BackHandler, Switch, View } from "react-native";
@@ -218,6 +219,7 @@ export function CriacaoSimples() {
           },
           d.chave,
         );
+      let publicada = false;
       if (enviar) {
         const p = perfil.dados;
         if (!p) throw new Error("Reabra o perfil antes de enviar a campanha.");
@@ -234,12 +236,10 @@ export function CriacaoSimples() {
           capa_id: p.capa_id,
           usar_foto_google: Boolean(p.usar_foto_google),
         });
-        await requisitar("/campanhas/" + id + "/enviar", "POST");
+        const resultado = await requisitar<{estado:string}>("/campanhas/" + id + "/enviar", "POST");
+        publicada = resultado.estado === "ativa";
       }
-      roteador.replace({
-        pathname: "/gerenciar",
-        params: { id, salvo: enviar ? "enviada" : "criada" },
-      });
+      if(publicada){roteador.replace({pathname:"/explorar",params:{publicada:id,entrada:String(Date.now())}});}else{roteador.replace({pathname:"/gerenciar",params:{id,salvo:enviar?"enviada":"criada"}});}
     } catch (e) {
       setErro(
         (salva.current
@@ -395,12 +395,10 @@ export function CriacaoSimples() {
             </>
           ) : etapa === 2 ? (
             <>
-              <Field
+              <CampoDinheiro
                 label="Quanto você precisa arrecadar? (R$)"
-                numeric
                 value={meta}
                 onChangeText={setMeta}
-                placeholder="Ex.: 2.000,00"
               />
               <Calendario
                 label="Prazo desejado"
@@ -465,7 +463,7 @@ export function CriacaoSimples() {
                 ) : null}
               </Card>
               <Copy>
-                Ao enviar, a equipe revisa a campanha antes de publicar. Você
+                Ao enviar, sua campanha aparece em Causas. A urgência passa por revisão. Você
                 pode guardar um rascunho e continuar depois.
               </Copy>
               <EstadoConexao {...perfil} />
@@ -480,7 +478,7 @@ export function CriacaoSimples() {
                 </Copy>
               </View>
               <Copy muted>
-                As contribuições financeiras nesta versão são simuladas. Nenhum
+                As contribuições financeiras nesta versão são de apresentação. Nenhum
                 dinheiro será cobrado.
               </Copy>
             </>
@@ -491,7 +489,7 @@ export function CriacaoSimples() {
           ) : (
             <>
               <Button
-                title={ocupado ? "Salvando…" : "Publicar campanha"}
+                title={ocupado ? "Salvando…" : "Publicar e aparecer em Causas"}
                 disabled={ocupado || !adulto || !perfil.dados}
                 onPress={() => salvar(true)}
               />

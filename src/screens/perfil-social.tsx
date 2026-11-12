@@ -138,7 +138,7 @@ export function RetratoPerfil() {
           {[
             { n: p.conquistas.ajudas_confirmadas, l: "ajudas confirmadas" },
             { n: p.conquistas.campanhas_criadas, l: "campanhas criadas" },
-            { n: p.conquistas.doacoes_simuladas, l: "doações simuladas" },
+            { n: p.conquistas.doacoes_simuladas, l: "doações de apresentação" },
           ].map((m) => (
             <View key={m.l} style={estilosFixos.area2}>
               <Text

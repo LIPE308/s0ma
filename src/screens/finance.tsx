@@ -63,7 +63,7 @@ export function Payment() {
           <EstadoConexao {...consulta} />
           {pagamento ? (
             <>
-              <Tag>{pagamento.estado.toLocaleUpperCase()} · SIMULADO</Tag>
+              <Tag>{pagamento.estado.toLocaleUpperCase()} · de apresentação</Tag>
               <Card
                 title={formatarDinheiro(pagamento.valor / 100)}
                 subtitle={`${pagamento.meio} · ${pagamento.necessidade}`}
@@ -75,7 +75,7 @@ export function Payment() {
                   </Copy>
                 ) : null}
                 <Line
-                  label="Valor simulado para a meta"
+                  label="Valor de apresentação para a meta"
                   value={formatarDinheiro(pagamento.valor_liquido / 100)}
                 />
               </Card>
@@ -138,7 +138,7 @@ export function Balance() {
           <EstadoConexao {...consulta} />
           {saldo ? (
             <>
-              <Tag>SALDO SIMULADO</Tag>
+              <Tag>SALDO de apresentação</Tag>
               <Metric
                 label="Disponível no teste"
                 value={formatarDinheiro(saldo.disponivel / 100)}
@@ -172,7 +172,7 @@ export function Balance() {
               ))}
               <Copy muted>
                 Os registros são salvos no banco. Os valores representam uma
-                simulação acadêmica.
+                apresentação acadêmica.
               </Copy>
               <Button
                 title="Solicitar repasse de teste"
@@ -308,7 +308,7 @@ export function TransferDetails() {
           <EstadoConexao {...consulta} />
           {repasse ? (
             <>
-              <Tag>{repasse.estado.toLocaleUpperCase()} · SIMULADO</Tag>
+              <Tag>{repasse.estado.toLocaleUpperCase()} · de apresentação</Tag>
               <Card
                 title={formatarDinheiro(repasse.valor / 100)}
                 subtitle={repasse.finalidade}

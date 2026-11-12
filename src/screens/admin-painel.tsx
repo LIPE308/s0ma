@@ -1,3 +1,4 @@
+import {CampoDinheiro} from "../components/campo-dinheiro";
 import { FotoPerfilAdmin } from "../components/foto-perfil-admin";
 import {
   StyleSheet,
@@ -50,6 +51,7 @@ type Resumo = {
   pessoas: { total: number; bloqueados: number };
   urgencias_pendentes: number;
   financeiro: {
+    projecao: {liquido_estimado:number;fundo_estimado:number;operacao_estimada:number;visualizacoes:number;compartilhamentos:number};
     doacoes_confirmadas: number;
     saldo_campanhas: number;
     bruto: number;
@@ -158,8 +160,13 @@ function FluxoFundo({ financeiro: f }: { financeiro: Resumo["financeiro"] }) {
       }}
     >
       <Heading>Do anúncio ao apoio</Heading>
-      <Copy muted>Valores conciliados de demonstração, gravados no MySQL.</Copy>
-      <Line label="Receita bruta conciliada" value={dinheiro(f.bruto)} />
+      <Copy muted>Potencial de apoio baseado na atividade registrada do aplicativo.</Copy>
+      <Line label="Receita líquida projetada" value={dinheiro(f.projecao?.liquido_estimado)}/>
+      <Progress done={Number(f.projecao?.fundo_estimado||0)} total={Number(f.projecao?.liquido_estimado||0)}/>
+      <Line label="70% de apoio projetado" value={dinheiro(f.projecao?.fundo_estimado)}/>
+      <Line label="30% de operação projetada" value={dinheiro(f.projecao?.operacao_estimada)}/>
+      <Copy muted>Projeção calculada a partir de visualizações e compartilhamentos. A receita conciliada e os créditos ficam no histórico abaixo.</Copy>
+      <Disclosure title="Receita conciliada e créditos registrados">      <Line label="Receita bruta conciliada" value={dinheiro(f.bruto)} />
       <Line label="Tributos e custos registrados" value={dinheiro(f.custos)} />
       <Line label="Receita líquida elegível" value={dinheiro(f.liquido)} />
       <Progress done={Number(f.fundo)} total={Number(f.liquido)} />
@@ -181,7 +188,7 @@ function FluxoFundo({ financeiro: f }: { financeiro: Resumo["financeiro"] }) {
           label="Retido, aguardando elegibilidade"
           value={dinheiro(f.retido)}
         />
-      </View>
+      </View></Disclosure>
     </View>
   );
 }
@@ -425,7 +432,7 @@ export function PainelAdministrativo() {
         <Card
           key={r.id}
           title={valor(r, "referencia")}
-          subtitle={valor(r, "estado") + " · demonstração"}
+          subtitle={valor(r, "estado") + " · apresentação"}
         >
           <Line
             label="Bruto / líquido"
@@ -536,7 +543,7 @@ export function PainelAdministrativo() {
         <Card
           key={r.id}
           title={valor(r, "titulo")}
-          subtitle={dinheiro(r.valor) + " em créditos simulados"}
+          subtitle={dinheiro(r.valor) + " em créditos de apresentação"}
         >
           <Copy>Origem: {valor(r, "referencia")}</Copy>
           <Copy muted>{quando(r.criada_em)}</Copy>
@@ -613,8 +620,8 @@ export function PainelAdministrativo() {
               secondary
               title={
                 tipo === "repasses"
-                  ? "Analisar repasse simulado"
-                  : "Analisar reembolso simulado"
+                  ? "Analisar repasse de apresentação"
+                  : "Analisar reembolso de apresentação"
               }
               onPress={() =>
                 router.push({
@@ -822,12 +829,12 @@ export function PainelAdministrativo() {
                 <>
                   <FluxoFundo financeiro={resumo.dados.financeiro} />
                   <Notice>
-                    As receitas abaixo são de demonstração. Os relatórios reais
+                    As receitas abaixo são de apresentação. Os relatórios reais
                     do provedor ficam separados e não geram saldo distribuível
                     automaticamente.
                   </Notice>
                   <Button
-                    title="Registrar receita de demonstração"
+                    title="Registrar receita de apresentação"
                     onPress={() => {
                       setErro("");
                       setNovaReceita(true);
@@ -1002,7 +1009,7 @@ export function PainelAdministrativo() {
                         <Copy muted>
                           Estimativas são consultadas em BRL e não são tratadas
                           como dinheiro recebido. O fundo e os repasses atuais
-                          continuam sendo uma simulação.
+                          continuam sendo uma apresentação.
                         </Copy>
                       </Card>
                       <Card
@@ -1107,7 +1114,7 @@ export function PainelAdministrativo() {
           acao?.tipo === "bloquear"
             ? "Alterar acesso desta pessoa?"
             : acao?.tipo === "distribuir"
-              ? "Distribuir créditos de demonstração?"
+              ? "Distribuir créditos de apresentação?"
               : acao?.tipo === "conciliar"
                 ? "Confirmar conciliação de teste?"
                 : acao?.tipo === "repetirEmail"
@@ -1148,8 +1155,8 @@ export function PainelAdministrativo() {
         ) : acao?.tipo === "conciliar" ? (
           <Copy>
             Confirme que conferiu a origem, os tributos e os custos desta
-            receita de demonstração. Somente a receita conciliada participa da
-            simulação do fundo.
+            receita de apresentação. Somente a receita conciliada participa da
+            apresentação do fundo.
           </Copy>
         ) : acao?.tipo === "repetirEmail" ? (
           <Copy>
@@ -1177,35 +1184,32 @@ export function PainelAdministrativo() {
       </Dialog>
       <Dialog
         visible={novaReceita}
-        title="Nova receita de demonstração"
+        title="Nova receita de apresentação"
         onClose={() => {
           if (!ocupado) setNovaReceita(false);
         }}
       >
         <Copy>
           Nenhuma receita real será criada. Este formulário registra uma
-          simulação para conferir a distribuição no banco.
+          apresentação para conferir a distribuição no banco.
         </Copy>
         <Field
           label="Referência única"
           value={referencia}
           onChangeText={setReferencia}
         />
-        <Field
+        <CampoDinheiro
           label="Receita bruta (R$)"
-          numeric
           value={bruto}
           onChangeText={setBruto}
         />
-        <Field
+        <CampoDinheiro
           label="Tributos (R$)"
-          numeric
           value={tributos}
           onChangeText={setTributos}
         />
-        <Field
+        <CampoDinheiro
           label="Custos publicitários (R$)"
-          numeric
           value={custos}
           onChangeText={setCustos}
         />

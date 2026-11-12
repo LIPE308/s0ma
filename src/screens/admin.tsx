@@ -251,7 +251,7 @@ export function Analysis() {
                   title={p.nome}
                   subtitle={
                     p.tipo === "dinheiro"
-                      ? `${formatarDinheiro(p.recebido / 100)} simulados · meta ${formatarDinheiro(p.meta / 100)}`
+                      ? `${formatarDinheiro(p.recebido / 100)} registrados · meta ${formatarDinheiro(p.meta / 100)}`
                       : `${p.recebido} confirmados de ${p.meta}`
                   }
                 />
@@ -361,7 +361,7 @@ export function FinancialOperation() {
           <EstadoConexao {...consulta} />
           {consulta.dados ? (
             <>
-              <Tag>{reembolso ? "REEMBOLSO" : "REPASSE"} · SIMULAÇÃO</Tag>
+              <Tag>{reembolso ? "REEMBOLSO" : "REPASSE"} · apresentação</Tag>
               <Card
                 title={consulta.dados.campanha || "Operação de teste"}
                 subtitle={`${formatarDinheiro(consulta.dados.valor / 100)} · ${consulta.dados.estado}`}

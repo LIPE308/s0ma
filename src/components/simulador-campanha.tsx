@@ -37,7 +37,7 @@ export function SimuladorCampanha({
   const concluida = step >= 60;
   useEffect(() => {
     if (!focused || !active || concluida) return;
-    const timer = setInterval(() => setStep((s) => Math.min(60, s + 1)), 8000);
+    const timer = setInterval(() => setStep((s) => Math.min(60, s + 1)), 12000);
     return () => clearInterval(timer);
   }, [focused, active, concluida]);
   useEffect(() => {

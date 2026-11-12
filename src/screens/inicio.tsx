@@ -1,3 +1,5 @@
+import {ImagemPrivada} from "../components/arquivos";
+import type {PerfilAmpliado} from "../servicos/soma2";
 import { ApoioAnuncios } from "../components/apoio-anuncios";
 import { ordenarPrioridade } from "../servicos/campanhas-exemplos";
 import type { Colors } from "../design/theme";
@@ -28,6 +30,7 @@ import { useDados, useSessao, type Campanha } from "../servicos/api";
 export function Inicio() {
   const router = useRouter();
   const pessoa = useSessao();
+  const perfil=useDados<PerfilAmpliado>(pessoa?"/perfil-ampliado":null,true);
   const { colors, fontsReady } = useTheme();
   const { width } = useWindowDimensions();
   const campanhas = useDados<Campanha[]>("/campanhas", true);
@@ -66,9 +69,9 @@ export function Inicio() {
             onPress={() => router.push("/perfil")}
             style={estilos.avatar}
           >
-            <Text style={estilos.inicial}>
+            {perfil.dados?.avatar_id ? <ImagemPrivada id={perfil.dados.avatar_id} altura={44} circular/> : perfil.dados?.usar_foto_google && perfil.dados.foto_google ? <Image source={{uri:perfil.dados.foto_google}} style={{width:44,height:44,borderRadius:22}} contentFit="cover"/> : <Text style={estilos.inicial}>
               {pessoa?.nome.trim()[0]?.toUpperCase() || "S"}
-            </Text>
+            </Text>}
           </Pressable>
         </View>
       }
@@ -82,7 +85,7 @@ export function Inicio() {
       <View style={estilos.destaque}>
         <Image
           source={require("../../assets/photos/familia-pexels-catalina.jpg")}
-          accessibilityLabel="Família em um abraço; imagem ilustrativa da comunidade"
+          accessibilityLabel="Família em um abraço; imagem de referência da comunidade"
           contentFit="cover"
           contentPosition={{ left: "50%", top: "38%" }}
           style={estilos.foto}
@@ -102,7 +105,6 @@ export function Inicio() {
               onPress={() => router.push("/explorar")}
             />
           </View>
-          <Text style={estilos.creditoFoto}>Fotografia ilustrativa</Text>
         </View>
       </View>
       <View style={estilos.atalhos}>

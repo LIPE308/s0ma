@@ -1,3 +1,4 @@
+import {CampoDinheiro} from "../components/campo-dinheiro";
 import { StyleSheet, Switch, View } from "react-native";
 import { useRef, useState } from "react";
 import { useRouter } from "expo-router";
@@ -47,7 +48,7 @@ export function TransparenciaAnuncios() {
         Os anúncios também ajudam. Parte da receita gerada aqui é destinada a
         campanhas que mais precisam.
       </Copy>
-      <Tag>Modelo em simulação · sem provedor de anúncios ativo</Tag>
+      <Tag>Modelo em apresentação · sem provedor de anúncios ativo</Tag>
       <Card title="De cada receita líquida elegível">
         <Line label="Fundo para emergências revisadas" value="70%" />
         <Line label="Operação e manutenção do SOMA" value="30%" />
@@ -65,7 +66,7 @@ export function TransparenciaAnuncios() {
             <Line label="Fundo elegível" value={moeda(f.fundo)} />
             <Line label="Operação" value={moeda(f.operacao)} />
             <Line
-              label="Créditos simulados distribuídos"
+              label="Créditos de apresentação distribuídos"
               value={moeda(f.distribuido)}
             />
             <Line label="Valor retido no fundo" value={moeda(f.retido)} />
@@ -75,7 +76,7 @@ export function TransparenciaAnuncios() {
             <Card
               key={c.id}
               title={c.titulo}
-              subtitle={moeda(Number(c.valor)) + " em créditos simulados"}
+              subtitle={moeda(Number(c.valor)) + " em créditos de apresentação"}
               onPress={() =>
                 router.push({ pathname: "/rota", params: { id: c.id } })
               }
@@ -108,7 +109,7 @@ export function TransparenciaAnuncios() {
       </Card>
       {usuarioLogado()?.administrador ? (
         <Button
-          title="Abrir simulação administrativa"
+          title="Abrir apresentação administrativa"
           onPress={() => router.push("/fundo-solidario")}
         />
       ) : null}
@@ -162,7 +163,7 @@ export function FundoSolidario() {
           ? "Receita de teste salva como pendente."
           : acao === "confirmar"
             ? "Conciliação de teste registrada."
-            : "Distribuição concluída. Os créditos simulados já aparecem nas rotas das campanhas.",
+            : "Distribuição concluída. Os créditos registrados já aparecem nas rotas das campanhas.",
       );
       consulta.atualizar();
     } catch (e) {
@@ -183,11 +184,11 @@ export function FundoSolidario() {
         <Notice>Acesso exclusivo da administração.</Notice>
       ) : (
         <>
-          <Tag>Painel de simulação administrativa</Tag>
+          <Tag>Painel de apresentação administrativa</Tag>
           <Notice>
             Nenhum anúncio real, pagamento, investimento ou transferência é
             realizado. Somente receitas de teste conciliadas podem gerar
-            créditos simulados.
+            créditos de apresentação.
           </Notice>
           <Choices
             options={["Receitas", "Urgências", "Lançamentos", "Auditoria"]}
@@ -197,32 +198,29 @@ export function FundoSolidario() {
           <EstadoConexao {...consulta} />
           {secao === "Receitas" ? (
             <>
-              <Card title="Registrar receita demonstrativa">
+              <Card title="Registrar receita de apresentação">
                 <Field
                   label="Referência única da conciliação *"
                   value={referencia}
                   onChangeText={setReferencia}
                 />
-                <Field
+                <CampoDinheiro
                   label="Receita bruta de teste em reais *"
-                  numeric
                   value={bruto}
                   onChangeText={setBruto}
                 />
-                <Field
-                  label="Tributos demonstrativos em reais"
-                  numeric
+                <CampoDinheiro
+                  label="Tributos de apresentação em reais"
                   value={tributos}
                   onChangeText={setTributos}
                 />
-                <Field
+                <CampoDinheiro
                   label="Custos publicitários em reais"
-                  numeric
                   value={custos}
                   onChangeText={setCustos}
                 />
                 <Field
-                  label="Origem, tributos e custos da simulação *"
+                  label="Origem, tributos e custos da apresentação *"
                   multiline
                   value={justificativa}
                   onChangeText={setJustificativa}
@@ -247,7 +245,7 @@ export function FundoSolidario() {
                 <Card
                   key={r.id}
                   title={r.referencia}
-                  subtitle={r.estado + " · simulado"}
+                  subtitle={r.estado + " · de apresentação"}
                 >
                   <Line label="Receita bruta" value={moeda(r.bruto)} />
                   <Line
@@ -271,7 +269,7 @@ export function FundoSolidario() {
                     />
                   ) : r.estado === "confirmada" ? (
                     <Button
-                      title="Distribuir créditos simulados elegíveis"
+                      title="Distribuir créditos de apresentação elegíveis"
                       disabled={ocupado}
                       onPress={() => executar("distribuir", r.id)}
                     />
@@ -285,7 +283,7 @@ export function FundoSolidario() {
               ))}
               {consulta.dados?.receitas.length === 0 ? (
                 <EmptyState title="Nenhuma receita registrada.">
-                  Use o formulário para criar uma simulação, sem inventar
+                  Use o formulário para criar uma apresentação, sem inventar
                   receita publicitária real.
                 </EmptyState>
               ) : null}
@@ -295,7 +293,7 @@ export function FundoSolidario() {
                   key={d.id}
                   title={d.campanha}
                   subtitle={
-                    moeda(d.valor) + " simulados · receita " + d.receita_id
+                    moeda(d.valor) + " de apresentação · receita " + d.receita_id
                   }
                 />
               ))}
@@ -334,7 +332,7 @@ export function FundoSolidario() {
                 <Card
                   key={l.id}
                   title={l.campanha}
-                  subtitle={l.origem + " · " + moeda(l.valor) + " simulados"}
+                  subtitle={l.origem + " · " + moeda(l.valor) + " de apresentação"}
                 >
                   <Copy muted>
                     {l.referencia} ·{" "}

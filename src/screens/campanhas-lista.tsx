@@ -12,6 +12,7 @@ import {
   Dialog,
   Disclosure,
   EmptyState,
+  Notice,
   Field,
   useTheme,
 } from "../components/ui";
@@ -26,6 +27,7 @@ type Item =
 export function ListaCampanhas() {
   const roteador = useRouter();
   const p = useLocalSearchParams<{
+    publicada?: string;
     secao?: string;
     tipo?: string;
     dinheiro?: string;
@@ -41,6 +43,7 @@ export function ListaCampanhas() {
   const [uf, setUf] = useState("Brasil");
   const [urgencia, setUrgencia] = useState("Todas");
   const [janela, setJanela] = useState(false);
+  useEffect(()=>{if(p.publicada){setSecao("Campanhas");setBusca("");setTermo("");setCategoria("Todas");setUf("Brasil");setUrgencia("Todas");setDinheiro(false);}},[p.publicada,p.entrada]);
   const [dinheiro, setDinheiro] = useState(p.dinheiro === "1");
   useEffect(() => {
     setSecao(
@@ -125,6 +128,7 @@ export function ListaCampanhas() {
         }}
         ListHeaderComponent={
           <View style={estilosFixos.grupo1}>
+            {p.publicada ? <Notice success>Sua campanha está publicada em Causas.</Notice> : null}
             <View style={estilosFixos.linha1}>
               <Text
                 accessibilityRole="header"
@@ -228,7 +232,7 @@ export function ListaCampanhas() {
             ) : null}
             {dinheiro && secao === "Campanhas" ? (
               <Copy muted>
-                Campanhas com meta financeira · doações de demonstração
+                Campanhas com meta financeira · doações de apresentação
               </Copy>
             ) : null}
             <EstadoConexao

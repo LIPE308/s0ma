@@ -217,7 +217,7 @@ export function TutorialIlustracao({ etapa }: { etapa: number }) {
         </View>
       </View>
       <Text style={{ fontSize: 11, color: colors.muted, marginTop: 10 }}>
-        Prévia ilustrada das funcionalidades
+        Prévia das funcionalidades
       </Text>
     </View>
   );

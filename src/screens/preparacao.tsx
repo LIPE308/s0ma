@@ -1,3 +1,4 @@
+import {CampoDinheiro} from "../components/campo-dinheiro";
 import { SeletorMunicipio } from "../components/seletor-municipio";
 import { StyleSheet, Switch, View } from "react-native";
 import { useEffect, useRef, useState } from "react";
@@ -96,10 +97,11 @@ export function PrepararCampanha() {
         municipio,
         mapa_autorizado: mapa,
       });
-      await requisitar("/campanhas/" + id + "/enviar", "POST");
+      const resultado = await requisitar<{estado:string}>("/campanhas/" + id + "/enviar", "POST");
+      if (resultado.estado !== "ativa") {router.replace({pathname:"/gerenciar",params:{id,salvo:"enviada"}});return;}
       router.replace({
-        pathname: "/gerenciar",
-        params: { id, salvo: "enviada" },
+        pathname: "/explorar",
+        params: { publicada: id, entrada: String(Date.now()) },
       });
     } catch (e) {
       setErro(mensagemErro(e));
@@ -233,7 +235,7 @@ export function PrepararCampanha() {
                 <Copy key={n.id}>
                   {n.nome}:{" "}
                   {n.tipo === "dinheiro"
-                    ? formatarDinheiro(n.meta / 100) + " simulados"
+                    ? formatarDinheiro(n.meta / 100) + " de apresentação"
                     : n.meta + (n.tipo === "tarefa" ? " vagas" : " unidades")}
                 </Copy>
               ))}
@@ -406,9 +408,8 @@ export function SolicitarUrgencia() {
             onChangeText={setConsequencias}
             placeholder="Explique as consequências e o que pode ser verificado."
           />
-          <Field
+          <CampoDinheiro
             label="Recursos já disponíveis em reais"
-            numeric
             value={recursos}
             onChangeText={setRecursos}
           />
