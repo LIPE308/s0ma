@@ -68,8 +68,7 @@ function FotoEditorial({
         cachePolicy="memory-disk"
         transition={reduced ? 0 : 160}
         accessibilityLabel={
-          descricao +
-          "; foto de referência, sem relação com os participantes desta campanha"
+          descricao
         }
       />
 

@@ -40,7 +40,7 @@ export function RotaConvite({
           <Progress done={d.arrecadado} total={d.meta} />
           <Copy muted>
             {formatarDinheiro(d.arrecadado / 100)} de{" "}
-            {formatarDinheiro(d.meta / 100)} · apresentação
+            {formatarDinheiro(d.meta / 100)}
           </Copy>
         </>
       ) : null}

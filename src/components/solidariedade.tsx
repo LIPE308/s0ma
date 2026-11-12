@@ -97,7 +97,7 @@ export function ConviteCompartilharApp() {
         titulo="Conheça o SOMA e ajude histórias a encontrar apoio."
       />
       <Text style={{ fontSize: 12, lineHeight: 20, color: colors.muted }}>
-        Nesta versão, os anúncios e o fundo são de apresentação. Compartilhar não gera
+        Compartilhar não gera
         crédito nem garante receita. Na regra do fundo, 70% da receita líquida
         elegível vai para emergências revisadas.
       </Text>
@@ -150,9 +150,9 @@ export function CartaoAnuncios({ rota }: { rota: Rota }) {
           >
             {rota.anuncios_creditados > 0
               ? formatarDinheiro(rota.anuncios_creditados / 100) +
-                " atribuídos no teste."
+                " atribuídos."
               : "Podem ajudar esta causa."}{" "}
-            apresentação, sem rede ativa.
+
           </Text>
         </View>
         <Pressable
@@ -199,7 +199,7 @@ export function ResumoArrecadacao({ rota }: { rota: Rota }) {
       </Text>
       <Progress done={rota.confirmado} total={rota.meta} />
       <Text style={{ fontSize: 13, lineHeight: 20, color: colors.muted }}>
-        {rota.percentual.toFixed(0)}% da meta · valores de apresentação
+        {rota.percentual.toFixed(0)}% da meta · valores
       </Text>
     </View>
   );

@@ -85,7 +85,7 @@ export function Inicio() {
       <View style={estilos.destaque}>
         <Image
           source={require("../../assets/photos/familia-pexels-catalina.jpg")}
-          accessibilityLabel="Família em um abraço; imagem de referência da comunidade"
+          accessibilityLabel="Família em um abraço"
           contentFit="cover"
           contentPosition={{ left: "50%", top: "38%" }}
           style={estilos.foto}

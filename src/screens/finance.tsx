@@ -51,7 +51,7 @@ export function Payment() {
     <Screen
       variant="ledger"
       title="Pagamento"
-      heading="Pagamento de teste."
+      heading="Pagamento."
       subtitle={pagamento?.campanha}
     >
       {!usuarioLogado() ? (
@@ -63,24 +63,18 @@ export function Payment() {
           <EstadoConexao {...consulta} />
           {pagamento ? (
             <>
-              <Tag>{pagamento.estado.toLocaleUpperCase()} · de apresentação</Tag>
+              <Tag>{pagamento.estado.toLocaleUpperCase()} ·</Tag>
               <Card
                 title={formatarDinheiro(pagamento.valor / 100)}
                 subtitle={`${pagamento.meio} · ${pagamento.necessidade}`}
               >
-                {pagamento.taxa_soma || pagamento.taxa_provedor ? (
-                  <Copy muted>
-                    Registro antigo de teste com taxas fictícias preservadas no
-                    histórico.
-                  </Copy>
-                ) : null}
                 <Line
-                  label="Valor de apresentação para a meta"
+                  label="Valor para a meta"
                   value={formatarDinheiro(pagamento.valor_liquido / 100)}
                 />
               </Card>
               <Notice>
-                A confirmação de teste atualiza a meta e o saldo no MySQL. Não
+                A confirmação atualiza a meta e o saldo no MySQL. Não
                 existe Pix, cartão ou movimentação de dinheiro real.
               </Notice>
               {pagamento.estado === "pendente" ? (
@@ -92,7 +86,7 @@ export function Payment() {
                   />
                   <Button
                     secondary
-                    title="Cancelar pagamento de teste"
+                    title="Cancelar pagamento"
                     disabled={ocupado}
                     onPress={() => simular("cancelado")}
                   />
@@ -138,9 +132,9 @@ export function Balance() {
           <EstadoConexao {...consulta} />
           {saldo ? (
             <>
-              <Tag>SALDO de apresentação</Tag>
+              <Tag>SALDO</Tag>
               <Metric
-                label="Disponível no teste"
+                label="Disponível"
                 value={formatarDinheiro(saldo.disponivel / 100)}
               />
               <Card title="Resumo da campanha" icon="wallet-outline">
@@ -170,12 +164,8 @@ export function Balance() {
                   }
                 />
               ))}
-              <Copy muted>
-                Os registros são salvos no banco. Os valores representam uma
-                apresentação acadêmica.
-              </Copy>
               <Button
-                title="Solicitar repasse de teste"
+                title="Solicitar repasse"
                 disabled={saldo.disponivel <= 0}
                 onPress={() =>
                   roteador.push({
@@ -238,7 +228,7 @@ export function RequestTransfer() {
           {consulta.dados ? (
             <>
               <Copy>
-                Disponível no teste:{" "}
+                Disponível:{" "}
                 {formatarDinheiro(consulta.dados.disponivel / 100)}
               </Copy>
               <CampoDinheiro
@@ -258,7 +248,7 @@ export function RequestTransfer() {
               </Notice>
               {erro ? <Notice error>{erro}</Notice> : null}
               <Button
-                title="Salvar solicitação de teste"
+                title="Salvar solicitação"
                 disabled={ocupado}
                 onPress={solicitar}
               />
@@ -296,7 +286,7 @@ export function TransferDetails() {
     <Screen
       variant="ledger"
       title="Detalhe do repasse"
-      heading="Solicitação de teste."
+      heading="Solicitação."
       subtitle={repasse?.campanha}
     >
       {!usuarioLogado() ? (
@@ -308,7 +298,7 @@ export function TransferDetails() {
           <EstadoConexao {...consulta} />
           {repasse ? (
             <>
-              <Tag>{repasse.estado.toLocaleUpperCase()} · de apresentação</Tag>
+              <Tag>{repasse.estado.toLocaleUpperCase()} ·</Tag>
               <Card
                 title={formatarDinheiro(repasse.valor / 100)}
                 subtitle={repasse.finalidade}
@@ -362,13 +352,13 @@ export function Surplus() {
   return (
     <Screen title="Meta financeira" heading="A meta fechada tem um limite.">
       <Notice>
-        Nesta versão básica, o servidor recusa pagamentos de teste que
+        Nesta versão básica, o servidor recusa pagamentos que
         ultrapassem o restante da meta fechada. Pagamentos pendentes já reservam
         esse restante.
       </Notice>
       <Copy>
         Não há fluxo automático de excedentes ou prazo de reembolso. O
-        administrador pode registrar o reembolso de um pagamento de teste
+        administrador pode registrar o reembolso de um pagamento
         confirmado, se houver saldo disponível.
       </Copy>
       <Button

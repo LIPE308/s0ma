@@ -325,9 +325,7 @@ export function MapaSolidario() {
             lineHeight: 20,
           }}
         >
-          {demo
-            ? "apresentação: dados fictícios, sem doações reais."
-            : "Somente localizações autorizadas. Sem registros não significa sem necessidade."}
+          {!demo ? "Somente localizações autorizadas. Sem registros não significa sem necessidade." : null}
         </Text>
       </View>
       {!demo ? (
@@ -394,7 +392,7 @@ export function MapaSolidario() {
                     lineHeight: 20,
                   }}
                 >
-                  Cenário de referência · valores de apresentação
+                  Cenário de referência · valores
                 </Text>
               ) : null}
             </View>
@@ -798,7 +796,7 @@ export function MapaSolidario() {
               {moeda(selecionado.restante)} ainda faltam nas campanhas desta UF.{" "}
               {demo
                 ? "Valores de referência."
-                : "Valores financeiros de apresentação."}
+                : "Valores financeiros."}
             </Copy>
             {selecionado.campanhas.some((c) => !!c.municipio) ? (
               <Choices
@@ -844,9 +842,6 @@ export function MapaSolidario() {
                       (demo ? " de referência." : " com revisão vigente.")
                     : "Sem prioridade de urgência atribuída."}
                 </Copy>
-                {demo ? (
-                  <Copy muted>Campanha fictícia, sem botão de doação.</Copy>
-                ) : null}
               </Card>
             ))}
           </>

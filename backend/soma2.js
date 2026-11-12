@@ -121,6 +121,10 @@ async function atenderSoma2(ctx) {
       const [quantidade] = await consulta('SELECT COUNT(*) AS total FROM arquivos WHERE usuario_id=?',[usuario.id]);
       if (Number(quantidade.total)>=50) erro('Limite de 50 arquivos por conta atingido.',409);
       await consulta('INSERT INTO arquivos (id,usuario_id,campanha_id,nome,mime,finalidade,publico,tamanho,conteudo) VALUES (?,?,?,?,?,?,?,?,?)', [id,usuario.id,campanhaId,nomeSeguro(dados.nome),arquivo.mime,finalidade,Number(finalidade !== 'documento'),arquivo.conteudo.length,arquivo.conteudo]);
+      if (['avatar','capa'].includes(finalidade)) {
+        const coluna = finalidade === 'avatar' ? 'avatar_id' : 'capa_id';
+        await consulta('INSERT INTO perfis (usuario_id,'+coluna+') VALUES (?,?) ON DUPLICATE KEY UPDATE '+coluna+'=VALUES('+coluna+')',[usuario.id,id]);
+      }
       if (finalidade === 'campanha') {
         const [atual] = await consulta('SELECT * FROM campanhas WHERE id=? FOR UPDATE',[campanhaId]);
         await consulta('INSERT INTO campanhas_detalhes (campanha_id,imagem_id) VALUES (?,?) ON DUPLICATE KEY UPDATE imagem_id=VALUES(imagem_id)', [campanhaId,id]);

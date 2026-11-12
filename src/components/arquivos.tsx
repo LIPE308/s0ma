@@ -109,12 +109,7 @@ export function EnviarArquivo({
   }
   return (
     <>
-      <Copy muted>
-        {finalidade === "documento"
-          ? "Somente você e a equipe de revisão podem abrir este documento."
-          : "Escolha uma foto autorizada, sem documentos nem informações sensíveis."}{" "}
-        JPEG/PNG{finalidade === "documento" ? " ou PDF" : ""}.
-      </Copy>
+      {finalidade === "documento" ? <Copy muted>Somente você e a equipe de revisão podem abrir este documento.</Copy> : null}
       <Button
         secondary
         title={

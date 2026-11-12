@@ -78,7 +78,7 @@ export function Tutorial() {
         </View>
         {etapa === 3 ? (
           <Notice>
-            Os valores publicitários desta versão são de apresentação. Projeções não
+            Projeções não
             são receita confirmada; a renda real depende da integração e da
             conciliação do provedor.
           </Notice>

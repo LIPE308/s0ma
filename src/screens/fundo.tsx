@@ -48,7 +48,6 @@ export function TransparenciaAnuncios() {
         Os anúncios também ajudam. Parte da receita gerada aqui é destinada a
         campanhas que mais precisam.
       </Copy>
-      <Tag>Modelo em apresentação · sem provedor de anúncios ativo</Tag>
       <Card title="De cada receita líquida elegível">
         <Line label="Fundo para emergências revisadas" value="70%" />
         <Line label="Operação e manutenção do SOMA" value="30%" />
@@ -61,22 +60,22 @@ export function TransparenciaAnuncios() {
       <EstadoConexao {...consulta} />
       {f ? (
         <>
-          <Card title="O que já foi registrado no teste">
+          <Card title="O que já foi registrado">
             <Line label="Receita líquida conciliada" value={moeda(f.liquido)} />
             <Line label="Fundo elegível" value={moeda(f.fundo)} />
             <Line label="Operação" value={moeda(f.operacao)} />
             <Line
-              label="Créditos de apresentação distribuídos"
+              label="Créditos distribuídos"
               value={moeda(f.distribuido)}
             />
             <Line label="Valor retido no fundo" value={moeda(f.retido)} />
           </Card>
-          <Heading>Campanhas que receberam créditos de teste</Heading>
+          <Heading>Campanhas que receberam créditos</Heading>
           {f.campanhas.map((c) => (
             <Card
               key={c.id}
               title={c.titulo}
-              subtitle={moeda(Number(c.valor)) + " em créditos de apresentação"}
+              subtitle={moeda(Number(c.valor)) + " em créditos"}
               onPress={() =>
                 router.push({ pathname: "/rota", params: { id: c.id } })
               }
@@ -84,9 +83,8 @@ export function TransparenciaAnuncios() {
           ))}
           {!f.campanhas.length ? (
             <EmptyState title="Nenhum crédito distribuído ainda.">
-              A administração precisa conciliar uma receita de teste e encontrar
-              campanhas críticas elegíveis. Não preenchemos este espaço com
-              arrecadação fictícia.
+              A administração precisa conciliar uma receita e encontrar
+              campanhas críticas elegíveis.
             </EmptyState>
           ) : null}
         </>
@@ -109,7 +107,7 @@ export function TransparenciaAnuncios() {
       </Card>
       {usuarioLogado()?.administrador ? (
         <Button
-          title="Abrir apresentação administrativa"
+          title="Abrir administração"
           onPress={() => router.push("/fundo-solidario")}
         />
       ) : null}
@@ -184,11 +182,11 @@ export function FundoSolidario() {
         <Notice>Acesso exclusivo da administração.</Notice>
       ) : (
         <>
-          <Tag>Painel de apresentação administrativa</Tag>
+          <Tag>Painel administrativa</Tag>
           <Notice>
             Nenhum anúncio real, pagamento, investimento ou transferência é
-            realizado. Somente receitas de teste conciliadas podem gerar
-            créditos de apresentação.
+            realizado. Somente receitas conciliadas podem gerar
+            créditos.
           </Notice>
           <Choices
             options={["Receitas", "Urgências", "Lançamentos", "Auditoria"]}
@@ -198,19 +196,19 @@ export function FundoSolidario() {
           <EstadoConexao {...consulta} />
           {secao === "Receitas" ? (
             <>
-              <Card title="Registrar receita de apresentação">
+              <Card title="Registrar receita">
                 <Field
                   label="Referência única da conciliação *"
                   value={referencia}
                   onChangeText={setReferencia}
                 />
                 <CampoDinheiro
-                  label="Receita bruta de teste em reais *"
+                  label="Receita bruta em reais *"
                   value={bruto}
                   onChangeText={setBruto}
                 />
                 <CampoDinheiro
-                  label="Tributos de apresentação em reais"
+                  label="Tributos em reais"
                   value={tributos}
                   onChangeText={setTributos}
                 />
@@ -220,14 +218,14 @@ export function FundoSolidario() {
                   onChangeText={setCustos}
                 />
                 <Field
-                  label="Origem, tributos e custos da apresentação *"
+                  label="Origem, tributos e custos *"
                   multiline
                   value={justificativa}
                   onChangeText={setJustificativa}
                 />
                 <Button
                   title={
-                    ocupado ? "Salvando…" : "Salvar receita pendente de teste"
+                    ocupado ? "Salvando…" : "Salvar receita pendente"
                   }
                   disabled={ocupado}
                   onPress={() => executar("criar")}
@@ -235,17 +233,17 @@ export function FundoSolidario() {
               </Card>
               <View style={estilosFixos.linha1}>
                 <Switch
-                  accessibilityLabel="Confirmei a conciliação da receita de teste"
+                  accessibilityLabel="Confirmei a conciliação da receita"
                   value={conciliada}
                   onValueChange={setConciliada}
                 />
-                <Copy>Confirmei a conciliação da receita de teste</Copy>
+                <Copy>Confirmei a conciliação da receita</Copy>
               </View>
               {consulta.dados?.receitas.map((r) => (
                 <Card
                   key={r.id}
                   title={r.referencia}
-                  subtitle={r.estado + " · de apresentação"}
+                  subtitle={r.estado + " ·"}
                 >
                   <Line label="Receita bruta" value={moeda(r.bruto)} />
                   <Line
@@ -256,20 +254,20 @@ export function FundoSolidario() {
                   <Line label="Fundo solidário (70%)" value={moeda(r.fundo)} />
                   <Line label="Operação (30%)" value={moeda(r.operacao)} />
                   <Line
-                    label="Distribuído no teste"
+                    label="Distribuído"
                     value={moeda(Number(r.distribuido))}
                   />
                   <Line label="Retido" value={moeda(r.retido)} />
                   {r.estado === "pendente" ? (
                     <Button
                       secondary
-                      title="Confirmar conciliação de teste"
+                      title="Confirmar conciliação"
                       disabled={ocupado || !conciliada}
                       onPress={() => executar("confirmar", r.id)}
                     />
                   ) : r.estado === "confirmada" ? (
                     <Button
-                      title="Distribuir créditos de apresentação elegíveis"
+                      title="Distribuir créditos elegíveis"
                       disabled={ocupado}
                       onPress={() => executar("distribuir", r.id)}
                     />
@@ -283,8 +281,7 @@ export function FundoSolidario() {
               ))}
               {consulta.dados?.receitas.length === 0 ? (
                 <EmptyState title="Nenhuma receita registrada.">
-                  Use o formulário para criar uma apresentação, sem inventar
-                  receita publicitária real.
+                  Use o formulário para registrar uma receita.
                 </EmptyState>
               ) : null}
               <Heading>Distribuições registradas</Heading>
@@ -293,7 +290,7 @@ export function FundoSolidario() {
                   key={d.id}
                   title={d.campanha}
                   subtitle={
-                    moeda(d.valor) + " de apresentação · receita " + d.receita_id
+                    moeda(d.valor) + " · receita " + d.receita_id
                   }
                 />
               ))}
@@ -332,7 +329,7 @@ export function FundoSolidario() {
                 <Card
                   key={l.id}
                   title={l.campanha}
-                  subtitle={l.origem + " · " + moeda(l.valor) + " de apresentação"}
+                  subtitle={l.origem + " · " + moeda(l.valor) + ""}
                 >
                   <Copy muted>
                     {l.referencia} ·{" "}

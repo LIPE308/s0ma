@@ -547,8 +547,7 @@ export function Termos() {
     <Screen title="Termos de Uso" heading="Solidariedade com responsabilidade.">
       <Copy>
         O SOMA é um projeto acadêmico. As campanhas podem pedir dinheiro,
-        objetos ou tempo. Doações financeiras, anúncios e repasses desta versão
-        são simulações; não há cobrança, transferência ou investimento real.
+        objetos ou tempo. Não há cobrança, transferência ou investimento real.
       </Copy>
       <Heading>Ao participar</Heading>
       <Copy>
@@ -625,7 +624,7 @@ export function Sobre() {
       <Disclosure title="Como faço uma doação?" initiallyOpen>
         <Copy>
           Encontre uma campanha, conheça a história e escolha uma forma de
-          ajudar. Para dinheiro, você escolhe um valor e confirma uma apresentação.
+          ajudar. Para dinheiro, você escolhe um valor e confirma.
           Nada é cobrado de verdade.
         </Copy>
       </Disclosure>
@@ -638,7 +637,7 @@ export function Sobre() {
       </Disclosure>
       <Disclosure title="Como os anúncios ajudam?">
         <Copy>
-          O fundo atual é de apresentação. A regra destina 70% da receita líquida
+          A regra destina 70% da receita líquida
           elegível a emergências revisadas e 30% à manutenção. Não há dinheiro
           por clique ou compartilhamento e nenhum crescimento é garantido.
         </Copy>

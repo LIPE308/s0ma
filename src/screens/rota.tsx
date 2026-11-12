@@ -231,15 +231,15 @@ export function RotaInteligente() {
                   value={moeda(rota.reservado)}
                 />
                 <Line
-                  label="Repassado no teste"
+                  label="Repassado"
                   value={moeda(rota.repassado)}
                 />
                 <Line
-                  label="Disponível no teste"
+                  label="Disponível"
                   value={moeda(rota.disponivel)}
                 />
                 <Copy muted>
-                  Os valores são de apresentação. Não há aplicação, rendimento
+                  Não há aplicação, rendimento
                   creditado nem movimentação bancária.
                 </Copy>
               </Disclosure>

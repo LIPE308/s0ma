@@ -235,7 +235,7 @@ export function PrepararCampanha() {
                 <Copy key={n.id}>
                   {n.nome}:{" "}
                   {n.tipo === "dinheiro"
-                    ? formatarDinheiro(n.meta / 100) + " de apresentação"
+                    ? formatarDinheiro(n.meta / 100) + ""
                     : n.meta + (n.tipo === "tarefa" ? " vagas" : " unidades")}
                 </Copy>
               ))}

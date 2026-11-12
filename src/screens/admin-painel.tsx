@@ -391,7 +391,7 @@ export function PainelAdministrativo() {
                 {r.submetida ? " · enviada para análise" : ""}
               </Copy>
               <Line
-                label="Recebido / meta de teste"
+                label="Recebido / meta"
                 value={dinheiro(r.recebido) + " / " + dinheiro(r.meta)}
               />
             </>
@@ -432,7 +432,7 @@ export function PainelAdministrativo() {
         <Card
           key={r.id}
           title={valor(r, "referencia")}
-          subtitle={valor(r, "estado") + " · apresentação"}
+          subtitle={valor(r, "estado") + ""}
         >
           <Line
             label="Bruto / líquido"
@@ -447,7 +447,7 @@ export function PainelAdministrativo() {
           {r.estado === "pendente" ? (
             <Button
               secondary
-              title="Conciliar esta receita de teste"
+              title="Conciliar esta receita"
               disabled={ocupado}
               onPress={() => setAcao({ tipo: "conciliar", item: r })}
             />
@@ -543,7 +543,7 @@ export function PainelAdministrativo() {
         <Card
           key={r.id}
           title={valor(r, "titulo")}
-          subtitle={dinheiro(r.valor) + " em créditos de apresentação"}
+          subtitle={dinheiro(r.valor) + " em créditos"}
         >
           <Copy>Origem: {valor(r, "referencia")}</Copy>
           <Copy muted>{quando(r.criada_em)}</Copy>
@@ -620,8 +620,8 @@ export function PainelAdministrativo() {
               secondary
               title={
                 tipo === "repasses"
-                  ? "Analisar repasse de apresentação"
-                  : "Analisar reembolso de apresentação"
+                  ? "Analisar repasse"
+                  : "Analisar reembolso"
               }
               onPress={() =>
                 router.push({
@@ -829,12 +829,12 @@ export function PainelAdministrativo() {
                 <>
                   <FluxoFundo financeiro={resumo.dados.financeiro} />
                   <Notice>
-                    As receitas abaixo são de apresentação. Os relatórios reais
+                    Os relatórios reais
                     do provedor ficam separados e não geram saldo distribuível
                     automaticamente.
                   </Notice>
                   <Button
-                    title="Registrar receita de apresentação"
+                    title="Registrar receita"
                     onPress={() => {
                       setErro("");
                       setNovaReceita(true);
@@ -1009,7 +1009,7 @@ export function PainelAdministrativo() {
                         <Copy muted>
                           Estimativas são consultadas em BRL e não são tratadas
                           como dinheiro recebido. O fundo e os repasses atuais
-                          continuam sendo uma apresentação.
+
                         </Copy>
                       </Card>
                       <Card
@@ -1054,12 +1054,6 @@ export function PainelAdministrativo() {
                       />
                     ) : null}
                   </View>
-                  {tipo === "usuarios" ? (
-                    <Button
-                      title="Cadastrar pessoa"
-                      onPress={() => router.push("/admin-usuario")}
-                    />
-                  ) : null}
                   <EstadoConexao {...lista} />
                   {lista.dados ? (
                     <>
@@ -1114,9 +1108,9 @@ export function PainelAdministrativo() {
           acao?.tipo === "bloquear"
             ? "Alterar acesso desta pessoa?"
             : acao?.tipo === "distribuir"
-              ? "Distribuir créditos de apresentação?"
+              ? "Distribuir créditos?"
               : acao?.tipo === "conciliar"
-                ? "Confirmar conciliação de teste?"
+                ? "Confirmar conciliação?"
                 : acao?.tipo === "repetirEmail"
                   ? "Tentar enviar este e-mail novamente?"
                   : "Concluir análise da denúncia?"
@@ -1155,8 +1149,8 @@ export function PainelAdministrativo() {
         ) : acao?.tipo === "conciliar" ? (
           <Copy>
             Confirme que conferiu a origem, os tributos e os custos desta
-            receita de apresentação. Somente a receita conciliada participa da
-            apresentação do fundo.
+            receita. Somente a receita conciliada participa da
+            fundo.
           </Copy>
         ) : acao?.tipo === "repetirEmail" ? (
           <Copy>
@@ -1184,14 +1178,13 @@ export function PainelAdministrativo() {
       </Dialog>
       <Dialog
         visible={novaReceita}
-        title="Nova receita de apresentação"
+        title="Nova receita"
         onClose={() => {
           if (!ocupado) setNovaReceita(false);
         }}
       >
         <Copy>
-          Nenhuma receita real será criada. Este formulário registra uma
-          apresentação para conferir a distribuição no banco.
+          Nenhuma receita real será criada. Este formulário registra um registro para conferir a distribuição no banco.
         </Copy>
         <Field
           label="Referência única"

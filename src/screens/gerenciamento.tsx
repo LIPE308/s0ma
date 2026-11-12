@@ -186,7 +186,7 @@ export function Gerenciar() {
             {rota.dados?.meta ? (
               <Button
                 secondary
-                title="Registros financeiros de teste"
+                title="Registros financeiros"
                 onPress={() =>
                   r.push({ pathname: "/saldo", params: { campanha: c.id } })
                 }

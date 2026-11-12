@@ -185,8 +185,7 @@ export function SignUp() {
       >
         <Copy>
           Cadastro e atividades são guardados no banco local. A senha é
-          armazenada como um resumo criptográfico. Financeiro é uma apresentação;
-          use dados de teste durante a apresentação.
+          armazenada como um resumo criptográfico.
         </Copy>
         <Button title="Entendi" onPress={() => definirTermos(false)} />
       </Dialog>

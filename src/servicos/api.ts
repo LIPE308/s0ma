@@ -73,7 +73,7 @@ export async function requisitar<T>(caminho: string, metodo = 'GET', dados?: unk
     if (resposta.status === 401) limparSessao();
     throw new Error(resultado.mensagem || 'Não foi possível concluir a operação.');
   }
-  if(metodo!=='GET' && /^\/(pagamentos|administracao\/receitas)(\/|$)/.test(caminho))avisarDadosAtualizados();
+  if(metodo!=='GET' && /^\/(arquivos|pagamentos|administracao\/receitas|perfil-ampliado|perfil)(\/|$)/.test(caminho))avisarDadosAtualizados();
   return resultado as T;
 }
 

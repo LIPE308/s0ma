@@ -232,7 +232,7 @@ export function ListaCampanhas() {
             ) : null}
             {dinheiro && secao === "Campanhas" ? (
               <Copy muted>
-                Campanhas com meta financeira · doações de apresentação
+                Campanhas com meta financeira · doações
               </Copy>
             ) : null}
             <EstadoConexao

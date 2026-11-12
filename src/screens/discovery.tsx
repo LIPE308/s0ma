@@ -52,7 +52,7 @@ export function CartaoNecessidade({
           ? formatarDinheiro(pedido.recebido / 100) +
             " de " +
             formatarDinheiro(pedido.meta / 100) +
-            " líquidos de teste"
+            " líquidos"
           : pedido.recebido +
             " de " +
             pedido.meta +
@@ -115,7 +115,7 @@ export function NeedDetails() {
                 ? formatarDinheiro(pedido.recebido / 100) +
                   " de " +
                   formatarDinheiro(pedido.meta / 100) +
-                  " líquidos de teste"
+                  " líquidos"
                 : pedido.recebido +
                   " de " +
                   pedido.meta +
@@ -160,7 +160,7 @@ export function NeedDetails() {
           <Button
             title={
               pedido.tipo === "dinheiro"
-                ? "Fazer doação de teste"
+                ? "Fazer doação"
                 : pedido.tipo === "tarefa"
                   ? "Participar da tarefa"
                   : "Contribuir com este objeto"
@@ -232,7 +232,7 @@ export function Impact() {
           title={pedido.nome}
           subtitle={
             pedido.tipo === "dinheiro"
-              ? formatarDinheiro(pedido.recebido / 100) + " líquidos de teste"
+              ? formatarDinheiro(pedido.recebido / 100) + " líquidos"
               : pedido.recebido + " de " + pedido.meta + " confirmados"
           }
           icon="checkmark-circle-outline"

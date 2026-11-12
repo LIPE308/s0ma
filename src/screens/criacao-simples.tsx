@@ -478,7 +478,7 @@ export function CriacaoSimples() {
                 </Copy>
               </View>
               <Copy muted>
-                As contribuições financeiras nesta versão são de apresentação. Nenhum
+                Nenhum
                 dinheiro será cobrado.
               </Copy>
             </>

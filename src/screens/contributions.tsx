@@ -504,7 +504,7 @@ export function Activity() {
                 ? consulta.dados?.pagamentos.map((pagamento) => (
                     <Card
                       key={`pagamento-${pagamento.id}`}
-                      title={`${formatarDinheiro(pagamento.valor / 100)} · doação de teste`}
+                      title={`${formatarDinheiro(pagamento.valor / 100)} · doação`}
                       subtitle={`${pagamento.campanha} · ${pagamento.estado}`}
                       icon="wallet-outline"
                       onPress={() =>

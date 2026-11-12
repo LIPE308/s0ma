@@ -138,7 +138,7 @@ export function RetratoPerfil() {
           {[
             { n: p.conquistas.ajudas_confirmadas, l: "ajudas confirmadas" },
             { n: p.conquistas.campanhas_criadas, l: "campanhas criadas" },
-            { n: p.conquistas.doacoes_simuladas, l: "doações de apresentação" },
+            { n: p.conquistas.doacoes_simuladas, l: "doações" },
           ].map((m) => (
             <View key={m.l} style={estilosFixos.area2}>
               <Text
@@ -332,12 +332,6 @@ export function PersonalizarPerfil() {
                 value={bio}
                 onChangeText={setBio}
                 placeholder="Conte sua relação com a comunidade."
-              />
-              <Choices
-                label="Cor do perfil"
-                options={["Azul royal", "Verde cuidado", "Terracota"]}
-                selected={cor}
-                onSelect={setCor}
               />
               <Heading>Privacidade em primeiro lugar</Heading>
               {consulta.dados.foto_google ? (

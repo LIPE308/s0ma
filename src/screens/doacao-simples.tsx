@@ -135,7 +135,7 @@ export function DoacaoSimples() {
                   <Copy>Obrigado por somar com esta história.</Copy>
                 </View>
                 <Notice success>
-                  Contribuição registrada nesta apresentação. Nenhum valor foi cobrado. O
+                  Contribuição registrada. Nenhum valor foi cobrado. O
                   registro já conta no progresso desta campanha.
                 </Notice>
                 <ConviteCompartilharApp />
@@ -159,8 +159,7 @@ export function DoacaoSimples() {
                 <Copy>
                   Sua contribuição apoia {necessidade.nome.toLocaleLowerCase()}.
                 </Copy>
-                <Notice>
-                  Nesta apresentação, você pode registrar uma contribuição. Não haverá Pix, cobrança no
+                <Notice>Não haverá Pix, cobrança no
                   cartão ou transferência de dinheiro.
                 </Notice>
                 {pagamento ? (
@@ -209,7 +208,7 @@ export function DoacaoSimples() {
                 {pagamento ? (
                   <Button
                     secondary
-                    title="Cancelar esta apresentação"
+                    title="Cancelar"
                     disabled={ocupado}
                     onPress={cancelar}
                   />
@@ -217,11 +216,10 @@ export function DoacaoSimples() {
                 <Copy muted>
                   Depois de doar, convide alguém para conhecer o SOMA. Mais
                   pessoas podem ampliar o apoio por anúncios às emergências
-                  revisadas. Nesta versão, essa receita é de apresentação.
+                  revisadas.
                 </Copy>
                 <Copy muted>
-                  O valor só conta na meta depois da confirmação. Não há taxas
-                  neste teste.
+                  O valor só conta na meta depois da confirmação. Não há taxas.
                 </Copy>
                 <Dialog
                   visible={janela}
@@ -233,12 +231,12 @@ export function DoacaoSimples() {
                   <Copy>{necessidade.campanha}</Copy>
                   <Line label="Destino" value={necessidade.nome} />
                   <Line
-                    label="Valor de apresentação"
+                    label="Valor"
                     value={formatarDinheiro(centavos / 100)}
                   />
                   <Notice>
                     Nenhum dinheiro será cobrado. Você está confirmando apenas
-                    um registro de apresentação.
+                    um registro.
                   </Notice>
                   {erro ? <Notice error>{erro}</Notice> : null}
                   <Button

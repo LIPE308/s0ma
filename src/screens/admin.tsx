@@ -158,7 +158,7 @@ export function Admin() {
               <Card
                 key={pagamento.id}
                 title={pagamento.campanha}
-                subtitle={`${formatarDinheiro(pagamento.valor / 100)} · pagamento de teste confirmado`}
+                subtitle={`${formatarDinheiro(pagamento.valor / 100)} · pagamento confirmado`}
                 onPress={() =>
                   roteador.push({
                     pathname: "/operacao",
@@ -173,9 +173,6 @@ export function Admin() {
             onPress={() => roteador.push("/fundo-solidario")}
           />
           {erro ? <Notice error>{erro}</Notice> : null}
-          <Copy muted>
-            Repasses e reembolsos são simulações de apresentação.
-          </Copy>
         </>
       )}
     </Screen>
@@ -337,7 +334,7 @@ export function FinancialOperation() {
       );
       definirAcao("");
       definirMensagem(
-        "Operação de teste salva. Nenhum dinheiro real foi movimentado.",
+        "Operação salva. Nenhum dinheiro real foi movimentado.",
       );
       consulta.atualizar();
     } catch (problema) {
@@ -361,9 +358,9 @@ export function FinancialOperation() {
           <EstadoConexao {...consulta} />
           {consulta.dados ? (
             <>
-              <Tag>{reembolso ? "REEMBOLSO" : "REPASSE"} · apresentação</Tag>
+              <Tag>{reembolso ? "REEMBOLSO" : "REPASSE"}</Tag>
               <Card
-                title={consulta.dados.campanha || "Operação de teste"}
+                title={consulta.dados.campanha || "Operação"}
                 subtitle={`${formatarDinheiro(consulta.dados.valor / 100)} · ${consulta.dados.estado}`}
               />
               <Field
@@ -375,8 +372,8 @@ export function FinancialOperation() {
               <Button
                 title={
                   reembolso
-                    ? "Reembolsar pagamento de teste"
-                    : "Concluir repasse de teste"
+                    ? "Reembolsar pagamento"
+                    : "Concluir repasse"
                 }
                 disabled={
                   ocupado ||
@@ -401,7 +398,7 @@ export function FinancialOperation() {
       {mensagem ? <Notice>{mensagem}</Notice> : null}
       <Dialog
         visible={!!acao}
-        title="Confirmar operação de teste?"
+        title="Confirmar operação?"
         onClose={() => definirAcao("")}
       >
         <Copy>

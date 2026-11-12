@@ -317,7 +317,7 @@ export function EditRequest() {
       {tipo === "dinheiro" ? <CampoDinheiro label="Meta em reais *" value={meta} onChangeText={definirMeta} /> : (      <Field
         label={
           tipo === "dinheiro"
-            ? "Meta em reais (apresentação) *"
+            ? "Meta em reais *"
             : tipo === "tarefa"
               ? "Número de vagas *"
               : "Quantidade de unidades *"
@@ -330,7 +330,7 @@ export function EditRequest() {
       {tipo === "dinheiro" ? (
         <>
           <Copy muted>
-            O valor confirmado no teste conta integralmente para a meta. Nenhum
+            O valor confirmado conta integralmente para a meta. Nenhum
             dinheiro real é movimentado.
           </Copy>
           <Choices
